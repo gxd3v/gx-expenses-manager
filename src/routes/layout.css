@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+
+@layer base {
+	body {
+		@apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+	}
+}
+
+@utility input {
+	@apply w-full rounded-md border-slate-300 bg-white text-sm dark:border-slate-700 dark:bg-slate-800;
+}
+
+@utility btn {
+	@apply rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50;
+}
+
+@utility btn-primary {
+	@apply btn bg-indigo-600 text-white hover:bg-indigo-500;
+}
+
+@utility btn-secondary {
+	@apply btn border border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800;
+}
