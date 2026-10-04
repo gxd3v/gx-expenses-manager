@@ -3,52 +3,71 @@
 
 	let { initialized, onunlock }: { initialized: boolean; onunlock: () => void } = $props();
 
+	const MIN_LENGTH = 8;
+
 	let password = $state('');
 	let confirmation = $state('');
 	let error = $state('');
 	let busy = $state(false);
 
+	function validate(): string {
+		if (initialized) return '';
+		if (password.length < MIN_LENGTH) return `A password tem de ter pelo menos ${MIN_LENGTH} caracteres.`;
+		if (password !== confirmation) return 'As passwords não coincidem.';
+		return '';
+	}
+
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
-		if (!initialized && password !== confirmation) {
-			error = 'As passwords não coincidem.';
-			return;
-		}
+		error = validate();
+		if (error) return;
 
 		busy = true;
 		try {
 			await unlock(password);
+			password = '';
+			confirmation = '';
 			onunlock();
 		} catch (e) {
-			error = e === 'wrong password' ? 'Password incorreta.' : String(e);
+			error = String(e);
 		} finally {
 			busy = false;
 		}
 	}
 </script>
 
-<div class="flex h-screen items-center justify-center bg-slate-100 dark:bg-slate-950">
-	<form onsubmit={submit} class="w-80 space-y-4 rounded-xl bg-white p-6 shadow dark:bg-slate-900">
-		<h1 class="text-lg font-semibold">{initialized ? 'Desbloquear' : 'Criar password'}</h1>
+<div class="flex h-screen items-center justify-center bg-stone-100 dark:bg-stone-950">
+	<form onsubmit={submit} class="card w-96 space-y-4 shadow">
+		<div>
+			<h1 class="text-lg font-semibold">GX Expenses</h1>
+			<p class="muted">{initialized ? 'Introduz a password para desbloquear.' : 'Cria a password que protege os teus dados.'}</p>
+		</div>
 
 		{#if !initialized}
-			<p class="text-sm text-slate-500">
-				Os dados ficam encriptados com esta password. Se a perderes, não há forma de os recuperar.
+			<p class="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+				Os dados ficam encriptados com esta password. Se a perderes, não há forma de os recuperar — guarda-a num gestor de
+				passwords.
 			</p>
 		{/if}
 
-		<input type="password" bind:value={password} placeholder="Password" class="input" required />
+		<label class="label">
+			Password
+			<input type="password" bind:value={password} class="input" autocomplete="current-password" required />
+		</label>
 
 		{#if !initialized}
-			<input type="password" bind:value={confirmation} placeholder="Confirmar password" class="input" required />
+			<label class="label">
+				Confirmar password
+				<input type="password" bind:value={confirmation} class="input" autocomplete="new-password" required />
+			</label>
 		{/if}
 
 		{#if error}
-			<p class="text-sm text-red-600">{error}</p>
+			<p class="text-sm text-red-600" role="alert">{error}</p>
 		{/if}
 
 		<button type="submit" disabled={busy} class="btn-primary w-full">
-			{initialized ? 'Desbloquear' : 'Criar'}
+			{busy ? 'A abrir…' : initialized ? 'Desbloquear' : 'Criar'}
 		</button>
 	</form>
 </div>

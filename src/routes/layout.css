@@ -1,18 +1,62 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+	--surface: #fcfcfb;
+	--chart-grid: #e7e6e2;
+	--chart-text: #52514e;
+	--series-1: #2a78d6;
+	--series-2: #eb6834;
+	--series-3: #1baf7a;
+	--series-4: #eda100;
+	--series-5: #e87ba4;
+	--series-6: #008300;
+	--series-7: #4a3aa7;
+	--series-8: #e34948;
+	--positive: #1baf7a;
+	--negative: #e34948;
+	color-scheme: light;
+}
+
+:root.dark {
+	--surface: #1a1a19;
+	--chart-grid: #383835;
+	--chart-text: #c3c2b7;
+	--series-1: #3987e5;
+	--series-2: #d95926;
+	--series-3: #199e70;
+	--series-4: #c98500;
+	--series-5: #d55181;
+	--series-6: #008300;
+	--series-7: #9085e9;
+	--series-8: #e66767;
+	--positive: #199e70;
+	--negative: #e66767;
+	color-scheme: dark;
+}
+
 @layer base {
 	body {
-		@apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+		@apply bg-stone-50 text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-100;
+	}
+
+	:focus-visible {
+		@apply outline-2 outline-offset-2 outline-indigo-500;
 	}
 }
 
 @utility input {
-	@apply w-full rounded-md border-slate-300 bg-white text-sm dark:border-slate-700 dark:bg-slate-800;
+	@apply w-full rounded-md border-stone-300 bg-white text-sm dark:border-stone-700 dark:bg-stone-900;
+}
+
+@utility label {
+	@apply flex flex-col gap-1 text-sm text-stone-600 dark:text-stone-400;
 }
 
 @utility btn {
-	@apply rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50;
+	@apply inline-flex items-center justify-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 @utility btn-primary {
@@ -20,5 +64,35 @@
 }
 
 @utility btn-secondary {
-	@apply btn border border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800;
+	@apply btn border border-stone-300 hover:bg-stone-100 dark:border-stone-700 dark:hover:bg-stone-800;
+}
+
+@utility btn-danger {
+	@apply btn border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950;
+}
+
+@utility btn-ghost {
+	@apply btn px-2 text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800;
+}
+
+@utility card {
+	@apply rounded-xl border border-stone-200 bg-white p-5 dark:border-stone-800 dark:bg-stone-900;
+}
+
+@utility muted {
+	@apply text-sm text-stone-500 dark:text-stone-400;
+}
+
+@utility badge {
+	@apply inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600 dark:bg-stone-800 dark:text-stone-300;
+}
+
+@utility table-base {
+	@apply w-full text-sm;
+	& th {
+		@apply border-b border-stone-200 px-3 py-2 text-left text-xs font-medium tracking-wide text-stone-500 uppercase dark:border-stone-800;
+	}
+	& td {
+		@apply border-b border-stone-100 px-3 py-2 dark:border-stone-800/60;
+	}
 }

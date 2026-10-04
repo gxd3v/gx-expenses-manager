@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { accountKinds, createAccount, updateAccount, type Account } from '#lib/accounts.ts';
-	import { fromCents, toCents } from '#lib/money.ts';
+	import { accountKinds, saveAccount, type Account } from '#lib/api/accounts.ts';
+	import MoneyInput from '#lib/components/MoneyInput.svelte';
+	import { errorMessage } from '#lib/graphql.ts';
+	import { app } from '#lib/settings.svelte.ts';
+	import { notify } from '#lib/toasts.svelte.ts';
 
-	let {
-		account,
-		onsaved,
-		oncancel
-	}: { account: Account | null; onsaved: () => void; oncancel: () => void } = $props();
+	let { account, onsaved, oncancel }: { account: Account | null; onsaved: () => void; oncancel: () => void } = $props();
 
 	let form = $state(
 		untrack(() => ({
 			name: account?.name ?? '',
 			kind: account?.kind ?? 'BANK',
-			currency: account?.currency ?? 'EUR',
-			initialBalance: fromCents(account?.initialBalance ?? 0),
-			color: account?.color ?? '#6366f1'
+			currency: account?.currency ?? app.settings?.currency ?? 'EUR',
+			initialBalance: account?.initialBalance ?? 0 as number | null,
+			color: account?.color ?? '#2a78d6',
+			icon: account?.icon ?? ''
 		}))
 	);
 	let error = $state('');
@@ -23,57 +23,53 @@
 
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
-		const initialBalance = toCents(form.initialBalance);
-		if (initialBalance === null) {
-			error = 'Saldo inicial inválido.';
-			return;
-		}
-
 		busy = true;
 		try {
-			const input = { ...form, initialBalance };
-			await (account ? updateAccount(account.id, input) : createAccount(input));
+			await saveAccount(account?.id ?? null, { ...form, initialBalance: form.initialBalance ?? 0, icon: form.icon || null });
+			notify(account ? 'Conta atualizada' : 'Conta criada');
 			onsaved();
 		} catch (e) {
-			error = String(e);
+			error = errorMessage(e);
 		} finally {
 			busy = false;
 		}
 	}
 </script>
 
-<form onsubmit={submit} class="grid max-w-lg grid-cols-2 gap-4 rounded-xl border border-slate-200 p-6 dark:border-slate-800">
-	<label class="col-span-2 space-y-1 text-sm">
-		<span>Nome</span>
+<form onsubmit={submit} class="grid grid-cols-2 gap-4">
+	<label class="label col-span-2">
+		Nome
 		<input bind:value={form.name} class="input" required />
 	</label>
-
-	<label class="space-y-1 text-sm">
-		<span>Tipo</span>
+	<label class="label">
+		Tipo
 		<select bind:value={form.kind} class="input">
 			{#each Object.entries(accountKinds) as [value, label] (value)}
 				<option {value}>{label}</option>
 			{/each}
 		</select>
 	</label>
-
-	<label class="space-y-1 text-sm">
-		<span>Moeda</span>
+	<label class="label">
+		Moeda
 		<input bind:value={form.currency} maxlength="3" class="input uppercase" required />
 	</label>
-
-	<label class="space-y-1 text-sm">
-		<span>Saldo inicial</span>
-		<input bind:value={form.initialBalance} inputmode="decimal" class="input text-right" />
+	<label class="label">
+		Saldo inicial
+		<MoneyInput bind:value={form.initialBalance} />
 	</label>
-
-	<label class="space-y-1 text-sm">
-		<span>Cor</span>
-		<input type="color" bind:value={form.color} class="block h-9 w-full rounded-md" />
-	</label>
+	<div class="grid grid-cols-2 gap-2">
+		<label class="label">
+			Cor
+			<input type="color" bind:value={form.color} class="h-9 w-full rounded-md" />
+		</label>
+		<label class="label">
+			Ícone
+			<input bind:value={form.icon} maxlength="2" class="input text-center" placeholder="🏦" />
+		</label>
+	</div>
 
 	{#if error}
-		<p class="col-span-2 text-sm text-red-600">{error}</p>
+		<p class="col-span-2 text-sm text-red-600" role="alert">{error}</p>
 	{/if}
 
 	<div class="col-span-2 flex justify-end gap-2">

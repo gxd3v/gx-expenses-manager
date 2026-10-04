@@ -1,0 +1,22 @@
+<script lang="ts">
+	let {
+		label,
+		value,
+		hint = '',
+		tone = 'neutral'
+	}: { label: string; value: string; hint?: string; tone?: 'neutral' | 'positive' | 'negative' } = $props();
+
+	const toneClass = {
+		neutral: '',
+		positive: 'text-emerald-700 dark:text-emerald-400',
+		negative: 'text-red-700 dark:text-red-400'
+	};
+</script>
+
+<div class="card">
+	<p class="muted">{label}</p>
+	<p class="mt-1 text-2xl font-semibold tabular-nums {toneClass[tone]}">{value}</p>
+	{#if hint}
+		<p class="mt-1 text-xs text-stone-500">{hint}</p>
+	{/if}
+</div>

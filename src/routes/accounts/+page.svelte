@@ -1,87 +1,117 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { untrack } from 'svelte';
 	import AccountForm from './AccountForm.svelte';
-	import { accountKinds, archiveAccount, listAccounts, type Account } from '#lib/accounts.ts';
-	import { formatMoney } from '#lib/money.ts';
+	import { accountKinds, deleteAccount, listAccounts, setAccountArchived, type Account } from '#lib/api/accounts.ts';
+	import Modal from '#lib/components/Modal.svelte';
+	import PageHeader from '#lib/components/PageHeader.svelte';
+	import States from '#lib/components/States.svelte';
+	import { confirmAction } from '#lib/dialogs.ts';
+	import { formatMoney } from '#lib/format.ts';
+	import { dataChanged, refs } from '#lib/refs.svelte.ts';
+	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 
-	let accounts = $state<Account[]>([]);
 	let showArchived = $state(false);
-	let formOpen = $state(false);
-	let editing = $state<Account | null>(null);
-	let error = $state('');
+	let editing = $state<Account | null | undefined>(undefined);
+	let request = $state<Promise<Account[]>>(new Promise(() => {}));
 
-	async function load() {
-		try {
-			accounts = await listAccounts(showArchived);
-			error = '';
-		} catch (e) {
-			error = String(e);
-		}
+	function load() {
+		request = listAccounts(showArchived);
 	}
 
-	function openForm(account: Account | null) {
-		editing = account;
-		formOpen = true;
-	}
+	$effect(() => {
+		refs.version;
+		untrack(load);
+	});
 
 	async function saved() {
-		formOpen = false;
-		await load();
+		editing = undefined;
+		await dataChanged();
 	}
 
-	async function archive(account: Account) {
-		if (!confirm(`Arquivar a conta "${account.name}"?`)) return;
+	async function toggleArchive(account: Account) {
+		const archive = !account.archivedAt;
+		if (archive && !(await confirmAction(`Arquivar a conta "${account.name}"? Deixa de aparecer nas listas e previsões.`))) return;
+		await setAccountArchived(account.id, archive).catch(notifyError);
+		notify(archive ? 'Conta arquivada' : 'Conta reativada');
+		await dataChanged();
+	}
+
+	async function remove(account: Account) {
+		if (!(await confirmAction(`Eliminar definitivamente a conta "${account.name}"?`))) return;
 		try {
-			await archiveAccount(account.id);
-			await load();
+			await deleteAccount(account.id);
+			notify('Conta eliminada');
+			await dataChanged();
 		} catch (e) {
-			error = String(e);
+			notifyError(e);
 		}
 	}
-
-	onMount(load);
 </script>
 
-<div class="space-y-6">
-	<header class="flex items-center justify-between">
-		<h1 class="text-2xl font-semibold">Contas</h1>
-		<div class="flex items-center gap-4">
-			<label class="flex items-center gap-2 text-sm">
-				<input type="checkbox" bind:checked={showArchived} onchange={load} class="rounded" />
-				Mostrar arquivadas
-			</label>
-			<button onclick={() => openForm(null)} class="btn-primary">Nova conta</button>
-		</div>
-	</header>
+<PageHeader title="Contas" subtitle="Contas bancárias, poupanças, cartões e dinheiro físico.">
+	{#snippet actions()}
+		<label class="flex items-center gap-2 text-sm">
+			<input type="checkbox" bind:checked={showArchived} onchange={load} class="rounded" />
+			Mostrar arquivadas
+		</label>
+		<button class="btn-primary" onclick={() => (editing = null)}>Nova conta</button>
+	{/snippet}
+</PageHeader>
 
-	{#if formOpen}
-		{#key editing}
-			<AccountForm account={editing} onsaved={saved} oncancel={() => (formOpen = false)} />
-		{/key}
-	{/if}
-
-	{#if error}
-		<p class="text-sm text-red-600">{error}</p>
-	{/if}
-
+{#await request}
+	<States state="loading" />
+{:then accounts}
 	{#if accounts.length === 0}
-		<p class="text-sm text-slate-500">Ainda não tens contas. Cria a primeira para começar.</p>
+		<States state="empty" message="Ainda não tens contas.">
+			<button class="btn-primary" onclick={() => (editing = null)}>Criar a primeira conta</button>
+		</States>
 	{:else}
-		<ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+		<p class="mb-4 text-sm">
+			<span class="muted">Saldo total:</span>
+			<span class="font-semibold tabular-nums">{formatMoney(accounts.filter((a) => !a.archivedAt).reduce((sum, a) => sum + a.balance, 0))}</span>
+		</p>
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each accounts as account (account.id)}
-				<li class="flex items-center gap-4 px-4 py-3" class:opacity-50={account.archivedAt}>
-					<span class="size-3 rounded-full" style:background-color={account.color ?? 'gray'}></span>
-					<div class="flex-1">
-						<p class="font-medium">{account.name}</p>
-						<p class="text-xs text-slate-500">{accountKinds[account.kind]}</p>
+				<article class="card flex flex-col gap-3" class:opacity-60={account.archivedAt}>
+					<a href="/accounts/{account.id}" class="flex items-center gap-3">
+						<span class="flex size-9 items-center justify-center rounded-full text-lg" style:background-color={account.color ?? 'gray'}>
+							{account.icon ?? ''}
+						</span>
+						<div class="flex-1">
+							<h2 class="font-medium">{account.name}</h2>
+							<p class="text-xs text-stone-500">{accountKinds[account.kind]} · {account.currency}</p>
+						</div>
+					</a>
+					<dl class="grid grid-cols-3 gap-2 text-sm">
+						<div>
+							<dt class="text-xs text-stone-500">Saldo atual</dt>
+							<dd class="font-semibold tabular-nums">{formatMoney(account.balance, account.currency)}</dd>
+						</div>
+						<div>
+							<dt class="text-xs text-stone-500" title="Saldo atual menos despesas futuras já registadas">Disponível</dt>
+							<dd class="tabular-nums">{formatMoney(account.availableBalance, account.currency)}</dd>
+						</div>
+						<div>
+							<dt class="text-xs text-stone-500" title="Inclui todos os movimentos futuros registados">Projetado</dt>
+							<dd class="tabular-nums">{formatMoney(account.projectedBalance, account.currency)}</dd>
+						</div>
+					</dl>
+					<div class="flex flex-wrap gap-1">
+						<a class="btn-ghost" href="/accounts/{account.id}">Histórico</a>
+						<button class="btn-ghost" onclick={() => (editing = account)}>Editar</button>
+						<button class="btn-ghost" onclick={() => toggleArchive(account)}>{account.archivedAt ? 'Reativar' : 'Arquivar'}</button>
+						<button class="btn-ghost text-red-600" onclick={() => remove(account)}>Eliminar</button>
 					</div>
-					<span class="tabular-nums">{formatMoney(account.initialBalance, account.currency)}</span>
-					{#if !account.archivedAt}
-						<button onclick={() => openForm(account)} class="btn-secondary">Editar</button>
-						<button onclick={() => archive(account)} class="btn-secondary">Arquivar</button>
-					{/if}
-				</li>
+				</article>
 			{/each}
-		</ul>
+		</div>
 	{/if}
-</div>
+{:catch error}
+	<States state="error" {error} />
+{/await}
+
+{#if editing !== undefined}
+	<Modal title={editing ? 'Editar conta' : 'Nova conta'} onclose={() => (editing = undefined)}>
+		<AccountForm account={editing} onsaved={saved} oncancel={() => (editing = undefined)} />
+	</Modal>
+{/if}

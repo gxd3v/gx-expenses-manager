@@ -1,0 +1,199 @@
+<script lang="ts">
+	import { untrack } from 'svelte';
+	import {
+		categoryKinds,
+		categoryLabel,
+		deleteCategory,
+		listCategories,
+		saveCategory,
+		setCategoryArchived,
+		type Category,
+		type CategoryInput
+	} from '#lib/api/categories.ts';
+	import Modal from '#lib/components/Modal.svelte';
+	import PageHeader from '#lib/components/PageHeader.svelte';
+	import States from '#lib/components/States.svelte';
+	import { confirmAction } from '#lib/dialogs.ts';
+	import { errorMessage } from '#lib/graphql.ts';
+	import { dataChanged, refs } from '#lib/refs.svelte.ts';
+	import { notify, notifyError } from '#lib/toasts.svelte.ts';
+
+	let showArchived = $state(false);
+	let categories = $state<Category[]>([]);
+	let status = $state<'loading' | 'ready' | 'error'>('loading');
+	let loadError = $state<unknown>(null);
+	let editing = $state<{ id: string | null; form: CategoryInput } | null>(null);
+	let removing = $state<{ category: Category; reassignTo: string | null } | null>(null);
+	let formError = $state('');
+
+	async function load() {
+		try {
+			categories = await listCategories(showArchived);
+			status = 'ready';
+		} catch (e) {
+			loadError = e;
+			status = 'error';
+		}
+	}
+
+	$effect(() => {
+		refs.version;
+		untrack(load);
+	});
+
+	const parents = $derived(categories.filter((c) => !c.parentId));
+	const childrenOf = (id: string) => categories.filter((c) => c.parentId === id);
+
+	function create(parent: Category | null = null) {
+		formError = '';
+		editing = {
+			id: null,
+			form: { parentId: parent?.id ?? null, name: '', kind: parent?.kind ?? 'OUTCOME', icon: null, color: parent?.color ?? null }
+		};
+	}
+
+	function edit(category: Category) {
+		formError = '';
+		const { parentId, name, kind, icon, color } = category;
+		editing = { id: category.id, form: { parentId, name, kind, icon, color } };
+	}
+
+	async function submit(event: SubmitEvent) {
+		event.preventDefault();
+		if (!editing) return;
+		try {
+			await saveCategory(editing.id, { ...editing.form, icon: editing.form.icon || null });
+			notify('Categoria guardada');
+			editing = null;
+			await dataChanged();
+		} catch (e) {
+			formError = errorMessage(e);
+		}
+	}
+
+	async function toggleArchive(category: Category) {
+		await setCategoryArchived(category.id, !category.archivedAt).catch(notifyError);
+		await dataChanged();
+	}
+
+	async function remove() {
+		if (!removing) return;
+		const { category, reassignTo } = removing;
+		if (!(await confirmAction(`Eliminar a categoria "${category.name}"?`))) return;
+		try {
+			await deleteCategory(category.id, reassignTo);
+			notify('Categoria eliminada');
+			removing = null;
+			await dataChanged();
+		} catch (e) {
+			notifyError(e);
+		}
+	}
+</script>
+
+{#snippet row(category: Category, nested: boolean)}
+	<li class="flex items-center gap-3 py-2 {nested ? 'pl-8' : ''}" class:opacity-60={category.archivedAt}>
+		<span class="size-3 rounded-full" style:background-color={category.color ?? 'transparent'}></span>
+		<span class="flex-1 {nested ? '' : 'font-medium'}">{category.icon ?? ''} {category.name}</span>
+		<span class="badge">{categoryKinds[category.kind]}</span>
+		<span class="w-24 text-right text-xs text-stone-500">{category.transactionCount} movimentos</span>
+		<div class="flex">
+			{#if !nested}<button class="btn-ghost" onclick={() => create(category)}>+ Sub</button>{/if}
+			<button class="btn-ghost" onclick={() => edit(category)}>Editar</button>
+			<button class="btn-ghost" onclick={() => toggleArchive(category)}>{category.archivedAt ? 'Reativar' : 'Arquivar'}</button>
+			<button class="btn-ghost text-red-600" onclick={() => (removing = { category, reassignTo: null })}>Eliminar</button>
+		</div>
+	</li>
+{/snippet}
+
+<PageHeader title="Categorias" subtitle="Organiza receitas e despesas em categorias e subcategorias.">
+	{#snippet actions()}
+		<label class="flex items-center gap-2 text-sm">
+			<input type="checkbox" bind:checked={showArchived} onchange={load} class="rounded" />
+			Mostrar arquivadas
+		</label>
+		<button class="btn-primary" onclick={() => create()}>Nova categoria</button>
+	{/snippet}
+</PageHeader>
+
+{#if status === 'loading'}
+	<States state="loading" />
+{:else if status === 'error'}
+	<States state="error" error={loadError} />
+{:else if categories.length === 0}
+	<States state="empty" message="Sem categorias." />
+{:else}
+	<ul class="card divide-y divide-stone-100 py-1 dark:divide-stone-800">
+		{#each parents as parent (parent.id)}
+			{@render row(parent, false)}
+			{#each childrenOf(parent.id) as child (child.id)}
+				{@render row(child, true)}
+			{/each}
+		{/each}
+	</ul>
+{/if}
+
+{#if editing}
+	<Modal title={editing.id ? 'Editar categoria' : 'Nova categoria'} onclose={() => (editing = null)}>
+		<form onsubmit={submit} class="grid grid-cols-2 gap-4">
+			<label class="label col-span-2">
+				Nome
+				<input bind:value={editing.form.name} class="input" required />
+			</label>
+			<label class="label">
+				Categoria principal
+				<select bind:value={editing.form.parentId} class="input">
+					<option value={null}>Nenhuma</option>
+					{#each parents.filter((p) => p.id !== editing?.id) as parent (parent.id)}
+						<option value={parent.id}>{parent.name}</option>
+					{/each}
+				</select>
+			</label>
+			<label class="label">
+				Tipo
+				<select bind:value={editing.form.kind} class="input">
+					{#each Object.entries(categoryKinds) as [value, label] (value)}
+						<option {value}>{label}</option>
+					{/each}
+				</select>
+			</label>
+			<label class="label">
+				Cor
+				<input type="color" value={editing.form.color ?? '#2a78d6'} oninput={(e) => editing && (editing.form.color = e.currentTarget.value)} class="h-9 w-full rounded-md" />
+			</label>
+			<label class="label">
+				Ícone
+				<input bind:value={editing.form.icon} maxlength="2" class="input text-center" placeholder="🛒" />
+			</label>
+			{#if formError}<p class="col-span-2 text-sm text-red-600" role="alert">{formError}</p>{/if}
+			<div class="col-span-2 flex justify-end gap-2">
+				<button type="button" class="btn-secondary" onclick={() => (editing = null)}>Cancelar</button>
+				<button type="submit" class="btn-primary">Guardar</button>
+			</div>
+		</form>
+	</Modal>
+{/if}
+
+{#if removing}
+	<Modal title="Eliminar categoria" onclose={() => (removing = null)}>
+		<div class="space-y-4">
+			<p class="text-sm">
+				<strong>{removing.category.name}</strong> tem {removing.category.transactionCount} movimentos. Para eliminar uma categoria em uso,
+				escolhe outra para onde mover os movimentos, recorrências e templates.
+			</p>
+			<label class="label">
+				Mover para
+				<select bind:value={removing.reassignTo} class="input">
+					<option value={null}>Não mover (só se não estiver em uso)</option>
+					{#each categories.filter((c) => c.id !== removing?.category.id) as category (category.id)}
+						<option value={category.id}>{categoryLabel(category, categories)}</option>
+					{/each}
+				</select>
+			</label>
+			<div class="flex justify-end gap-2">
+				<button class="btn-secondary" onclick={() => (removing = null)}>Cancelar</button>
+				<button class="btn-danger" onclick={remove}>Eliminar</button>
+			</div>
+		</div>
+	</Modal>
+{/if}

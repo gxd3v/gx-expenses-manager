@@ -3,7 +3,7 @@ use chrono::{Days, NaiveDate};
 use super::forecasts::{ForecastRequest, ForecastsManager};
 use super::recurrences::RecurrencesManager;
 use crate::errors::AppError;
-use crate::models::{EntryKind, Settings};
+use crate::models::{AccountKind, EntryKind, Settings};
 use crate::repositories::accounts::AccountsRepository;
 use crate::repositories::goals::GoalsRepository;
 use crate::repositories::settings::SettingsRepository;
@@ -144,7 +144,7 @@ impl AlertsManager {
         let accounts = self.accounts.list(today, false).await?;
         Ok(accounts
             .into_iter()
-            .filter(|a| a.balance < threshold)
+            .filter(|a| a.kind != AccountKind::Card && a.balance < threshold)
             .map(|a| Alert {
                 key: format!("low-balance:{}:{today}", a.id),
                 kind: AlertKind::LowBalance,
@@ -172,6 +172,7 @@ impl AlertsManager {
 
         Ok(accounts
             .into_iter()
+            .filter(|account| account.kind != AccountKind::Card)
             .filter_map(|account| {
                 let month = forecast.months.iter().find(|m| {
                     m.balances
