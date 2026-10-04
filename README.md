@@ -26,16 +26,18 @@ No account, no cloud, no subscription. Your data is one encrypted file, and only
 - **Backups.** Automatic backups run in the background. You can also export a file and import it on another machine, with optional encryption.
 - **Light and dark themes.**
 
-## 100% offline
+## Offline by design
 
-The app never connects to the internet.
+Your data never leaves your computer.
 
-- **No network calls.** The interface talks to the backend inside the same process. The app opens no ports and runs no local web server.
-- **Network access is blocked.** The window's content security policy only allows that in-process channel, so nothing on the page can reach out.
-- **No telemetry.** There are no analytics, no crash reporting and no update checks.
+- **No data goes out.** The interface talks to the backend inside the same process. The app opens no ports and runs no local web server.
+- **The page can't reach the internet.** The window's content security policy only allows that in-process channel.
+- **No telemetry.** There are no analytics and no crash reporting.
 - **Your data stays local.** Everything lives in one SQLite database on your disk, encrypted with SQLCipher (AES-256).
 
-The one exception is the installer. If your Windows doesn't have the Microsoft WebView2 runtime yet, the installer may download it. Windows 10 (recent updates) and Windows 11 already include it.
+There is exactly one network request: the **update check**. While the app is unlocked, it downloads a small public file (`latest.json`) from this repository's GitHub releases to see whether a newer version exists. It sends nothing about you or your finances. You can turn it off in **Definições → Atualizações**, and then the app makes no network requests at all.
+
+The installer may also download the Microsoft WebView2 runtime if your Windows doesn't have it yet. Windows 10 (recent updates) and Windows 11 already include it.
 
 ### About your password
 
@@ -54,7 +56,9 @@ Your password is never stored anywhere. The app turns it into the key that encry
 
 ### Updating
 
-Run the newer installer over the existing installation. Your data is kept, and the database is backed up automatically before any upgrade that changes its structure.
+When a new version is out, a bar appears at the top of the app. Click **Ver novidades** to read the release notes, then **Atualizar agora**. The app downloads the installer, checks its signature, installs it and restarts. Your data is kept, and the database is backed up automatically before any upgrade that changes its structure.
+
+You can also update by hand: run the newer installer over the existing installation.
 
 ### Uninstalling
 
