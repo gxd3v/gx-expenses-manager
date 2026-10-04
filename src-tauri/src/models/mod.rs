@@ -16,7 +16,7 @@ mod transfer;
 pub use account::{Account, AccountInput, AccountKind};
 pub use category::{Category, CategoryInput, CategoryKind};
 pub use credit::{
-    AmortizationMode, Credit, CreditInput, CreditPayment, PaymentInput, ScheduleEntry,
+    AmortizationMode, BalanceAt, Credit, CreditInput, CreditPayment, PaymentInput, ScheduleEntry,
     ScheduleSummary, Simulation, SimulationInput,
 };
 pub use forecast::{
@@ -31,7 +31,8 @@ pub use recurrence::{
     RecurrenceInput,
 };
 pub use report::{
-    BalancePoint, CategoryAmount, CategoryComparison, CategoryGrouping, MonthSummary, MonthlyTotal,
+    BalancePoint, BalanceSummary, CategoryAmount, CategoryComparison, CategoryGrouping,
+    MonthComparison, MonthSummary, MonthlyTotal,
 };
 pub use settings::{DateFormat, Settings, Theme};
 pub use template::{Template, TemplateInput};

@@ -51,3 +51,20 @@ pub struct MonthSummary {
     pub average_outcome: i64,
     pub categories: Vec<CategoryComparison>,
 }
+
+#[derive(Debug, Clone)]
+pub struct BalanceSummary {
+    pub total: i64,
+    pub available: i64,
+    pub projected: i64,
+    pub debt: i64,
+}
+
+#[derive(Debug, Clone)]
+pub struct MonthComparison {
+    pub category_id: Option<Uuid>,
+    pub name: String,
+    pub color: Option<String>,
+    pub first: i64,
+    pub second: i64,
+}

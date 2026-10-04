@@ -68,6 +68,26 @@ pub async fn rekey(path: &Path, password: &str, new_password: &str) -> Result<()
     Ok(())
 }
 
+pub fn replace(database: &Path, backup: &Path, safety_dir: &Path) -> Result<(), AppError> {
+    fs::create_dir_all(safety_dir)?;
+    let stamp = Utc::now().format("%Y%m%d-%H%M%S");
+    fs::copy(
+        database,
+        safety_dir.join(format!("gx-expenses-pre-restore-{stamp}.db")),
+    )?;
+
+    for suffix in ["-wal", "-shm"] {
+        let mut sidecar = database.as_os_str().to_owned();
+        sidecar.push(suffix);
+        let sidecar = std::path::PathBuf::from(sidecar);
+        if sidecar.exists() {
+            fs::remove_file(sidecar)?;
+        }
+    }
+    fs::copy(backup, database)?;
+    Ok(())
+}
+
 fn options(path: &Path, password: &str) -> SqliteConnectOptions {
     SqliteConnectOptions::new()
         .filename(path)

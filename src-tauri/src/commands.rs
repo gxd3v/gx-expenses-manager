@@ -2,7 +2,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use age::secrecy::{ExposeSecret, SecretString};
-use chrono::Utc;
 use serde::Serialize;
 use sqlx::SqlitePool;
 use tauri::{AppHandle, Manager, State};
@@ -14,6 +13,7 @@ use crate::graphql::{self, AppSchema};
 use crate::module::AppContext;
 
 const DATABASE_FILE: &str = "expenses.db";
+const DATA_DIR_ENV: &str = "GX_DATA_DIR";
 
 struct Unlocked {
     pool: SqlitePool,
@@ -122,7 +122,11 @@ pub async fn restore_backup(
     }
 
     unlocked.pool.close().await;
-    replace_database(&data_dir, &backup)?;
+    database::replace(
+        &data_dir.join(DATABASE_FILE),
+        &backup,
+        &data_dir.join("backups"),
+    )?;
     *guard = Some(open_session(&data_dir, password).await?);
     Ok(())
 }
@@ -145,28 +149,12 @@ async fn open_session(data_dir: &Path, password: String) -> Result<Unlocked, App
     })
 }
 
-fn replace_database(data_dir: &Path, backup: &Path) -> Result<(), AppError> {
-    let database = data_dir.join(DATABASE_FILE);
-    let safety_dir = data_dir.join("backups");
-    fs::create_dir_all(&safety_dir)?;
-    let safety = safety_dir.join(format!(
-        "gx-expenses-pre-restore-{}.db",
-        Utc::now().format("%Y%m%d-%H%M%S")
-    ));
-    fs::copy(&database, safety)?;
-
-    for suffix in ["-wal", "-shm"] {
-        let file = data_dir.join(format!("{DATABASE_FILE}{suffix}"));
-        if file.exists() {
-            fs::remove_file(file)?;
-        }
-    }
-    fs::copy(backup, &database)?;
-    Ok(())
-}
-
 fn data_dir(app: &AppHandle) -> Result<PathBuf, AppError> {
-    let dir = app.path().app_data_dir()?;
+    let dir = match std::env::var_os(DATA_DIR_ENV) {
+        Some(dir) => PathBuf::from(dir),
+        None if cfg!(debug_assertions) => app.path().app_data_dir()?.join("dev"),
+        None => app.path().app_data_dir()?,
+    };
     fs::create_dir_all(&dir)?;
     Ok(dir)
 }

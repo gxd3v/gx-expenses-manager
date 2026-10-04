@@ -54,7 +54,7 @@ impl TransactionsQuery {
             credits: result
                 .credits
                 .into_iter()
-                .map(|c| Credit::from_model(c, today))
+                .map(|c| Credit::from_model(c, today, None))
                 .collect(),
             goals: result
                 .goals

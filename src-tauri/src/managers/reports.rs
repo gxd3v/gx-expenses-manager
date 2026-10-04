@@ -7,8 +7,8 @@ use super::recurrences::RecurrencesManager;
 use crate::errors::AppError;
 use crate::models::dates::{add_months, month_end, month_start, months_between};
 use crate::models::{
-    BalancePoint, CategoryAmount, CategoryComparison, CategoryGrouping, Credit, CreditPayment,
-    EntryKind, MonthSummary, MonthlyTotal, TransactionKind,
+    BalancePoint, BalanceSummary, CategoryAmount, CategoryComparison, CategoryGrouping, Credit,
+    CreditPayment, EntryKind, MonthComparison, MonthSummary, MonthlyTotal, TransactionKind,
 };
 use crate::repositories::accounts::AccountsRepository;
 use crate::repositories::credits::CreditsRepository;
@@ -68,6 +68,90 @@ impl ReportsManager {
                 )
             })
             .collect())
+    }
+
+    pub async fn balance_summary(&self, today: NaiveDate) -> Result<BalanceSummary, AppError> {
+        let accounts = self.accounts.list(today, false).await?;
+        let credits = self.credits.list(false).await?;
+        Ok(BalanceSummary {
+            total: accounts.iter().map(|a| a.balance).sum(),
+            available: accounts.iter().map(|a| a.available_balance).sum(),
+            projected: accounts.iter().map(|a| a.projected_balance).sum(),
+            debt: credits.iter().map(Credit::remaining).sum(),
+        })
+    }
+
+    pub async fn category_averages(
+        &self,
+        today: NaiveDate,
+        kind: EntryKind,
+        months: u32,
+    ) -> Result<Vec<CategoryAmount>, AppError> {
+        let months = months.clamp(1, 24);
+        let start = month_start(today);
+        let to = start.pred_opt().unwrap_or(start);
+        let amounts = self
+            .repository
+            .by_category(
+                kind,
+                add_months(start, -(months as i32)),
+                to,
+                CategoryGrouping::Parent,
+                None,
+            )
+            .await?;
+        Ok(amounts
+            .into_iter()
+            .map(|a| CategoryAmount {
+                amount: a.amount / i64::from(months),
+                ..a
+            })
+            .collect())
+    }
+
+    pub async fn compare_months(
+        &self,
+        first: NaiveDate,
+        second: NaiveDate,
+    ) -> Result<Vec<MonthComparison>, AppError> {
+        let spending = |month: NaiveDate| {
+            self.repository.by_category(
+                EntryKind::Outcome,
+                month_start(month),
+                month_end(month),
+                CategoryGrouping::Parent,
+                None,
+            )
+        };
+        let (first, second) = (spending(first).await?, spending(second).await?);
+
+        let mut rows: Vec<MonthComparison> = first
+            .into_iter()
+            .map(|c| MonthComparison {
+                category_id: c.category_id,
+                name: c.name,
+                color: c.color,
+                first: c.amount,
+                second: 0,
+            })
+            .collect();
+        for category in second {
+            match rows
+                .iter_mut()
+                .find(|r| r.category_id == category.category_id)
+            {
+                Some(row) => row.second = category.amount,
+                None => rows.push(MonthComparison {
+                    category_id: category.category_id,
+                    name: category.name,
+                    color: category.color,
+                    first: 0,
+                    second: category.amount,
+                }),
+            }
+        }
+        rows.sort_by_key(|r| std::cmp::Reverse(r.first.max(r.second)));
+        Ok(rows)
     }
 
     pub async fn by_category(

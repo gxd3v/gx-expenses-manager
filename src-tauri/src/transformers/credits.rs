@@ -1,11 +1,16 @@
 use chrono::NaiveDate;
+use uuid::Uuid;
 
 use crate::errors::AppError;
 use crate::graphql::credits::types;
 use crate::models;
 
 impl types::Credit {
-    pub fn from_model(credit: models::Credit, today: NaiveDate) -> Self {
+    pub fn from_model(
+        credit: models::Credit,
+        today: NaiveDate,
+        recurrence_id: Option<Uuid>,
+    ) -> Self {
         let summary = credit.summary(today);
         Self {
             id: credit.id,
@@ -29,7 +34,18 @@ impl types::Credit {
             next_payment_date: summary.next_payment_date,
             remaining_installments: summary.remaining_installments,
             projected_end_date: summary.projected_end_date,
+            recurrence_id,
             schedule: summary.schedule.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<models::BalanceAt> for types::CreditBalance {
+    fn from(point: models::BalanceAt) -> Self {
+        Self {
+            date: point.date,
+            balance: point.balance,
+            projected: point.projected,
         }
     }
 }

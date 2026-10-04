@@ -1,11 +1,13 @@
+use std::collections::HashMap;
+
 use chrono::{NaiveDate, Utc};
 use uuid::Uuid;
 
 use super::{archived_at, optional, positive, required};
 use crate::errors::AppError;
 use crate::models::{
-    Credit, CreditInput, CreditPayment, EntryKind, PaymentInput, RecurrenceInput, Simulation,
-    SimulationInput, TransactionKind, TransactionRecord,
+    BalanceAt, Credit, CreditInput, CreditPayment, EntryKind, PaymentInput, RecurrenceInput,
+    Simulation, SimulationInput, TransactionKind, TransactionRecord,
 };
 use crate::repositories::categories::CategoriesRepository;
 use crate::repositories::credits::CreditsRepository;
@@ -135,6 +137,34 @@ impl CreditsManager {
             .insert_payment(&payment, record.as_ref())
             .await?;
         Ok(payment)
+    }
+
+    pub async fn balance_history(
+        &self,
+        id: Uuid,
+        today: NaiveDate,
+    ) -> Result<Vec<BalanceAt>, AppError> {
+        let credit = self.repository.get(id).await?;
+        let payments = self.repository.payments(Some(id)).await?;
+        Ok(credit.balance_history(&payments, today))
+    }
+
+    pub async fn recurrence_links(&self) -> Result<HashMap<Uuid, Uuid>, AppError> {
+        let recurrences = self.recurrences.list().await?;
+        Ok(recurrences
+            .into_iter()
+            .filter_map(|r| Some((r.credit_id?, r.id)))
+            .collect())
+    }
+
+    pub async fn add_recurrence(&self, id: Uuid, today: NaiveDate) -> Result<(), AppError> {
+        if self.recurrence_links().await?.contains_key(&id) {
+            return Err(AppError::conflict(
+                "este crédito já tem uma recorrência associada",
+            ));
+        }
+        let credit = self.repository.get(id).await?;
+        self.create_recurrence(&credit, today).await
     }
 
     pub async fn delete_payment(&self, id: Uuid) -> Result<(), AppError> {

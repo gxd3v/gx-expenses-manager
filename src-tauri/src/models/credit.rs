@@ -88,6 +88,13 @@ pub struct ScheduleSummary {
 }
 
 #[derive(Debug, Clone)]
+pub struct BalanceAt {
+    pub date: NaiveDate,
+    pub balance: i64,
+    pub projected: bool,
+}
+
+#[derive(Debug, Clone)]
 pub struct CreditSummary {
     pub remaining: i64,
     pub principal_paid: i64,
@@ -145,6 +152,34 @@ impl Credit {
             projected_end_date: schedule.last().map(|entry| entry.date),
             schedule,
         }
+    }
+
+    pub fn balance_history(&self, payments: &[CreditPayment], today: NaiveDate) -> Vec<BalanceAt> {
+        let mut ordered: Vec<&CreditPayment> = payments.iter().collect();
+        ordered.sort_by_key(|p| p.date);
+
+        let mut balance = self.opening_balance;
+        let past: Vec<BalanceAt> = ordered
+            .into_iter()
+            .map(|payment| {
+                balance -= payment.principal;
+                BalanceAt {
+                    date: payment.date,
+                    balance: balance.max(0),
+                    projected: false,
+                }
+            })
+            .collect();
+        let future = self
+            .summary(today)
+            .schedule
+            .into_iter()
+            .map(|entry| BalanceAt {
+                date: entry.date,
+                balance: entry.balance,
+                projected: true,
+            });
+        past.into_iter().chain(future).collect()
     }
 
     pub fn split(&self, amount: i64) -> (i64, i64) {

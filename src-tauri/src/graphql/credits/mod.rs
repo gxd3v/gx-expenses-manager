@@ -4,8 +4,11 @@ use async_graphql::{Context, Object, Result};
 use uuid::Uuid;
 
 use super::module;
+use crate::models;
 use crate::models::dates::today;
-use types::{Credit, CreditInput, CreditPayment, PaymentInput, Simulation, SimulationInput};
+use types::{
+    Credit, CreditBalance, CreditInput, CreditPayment, PaymentInput, Simulation, SimulationInput,
+};
 
 #[derive(Default)]
 pub struct CreditsQuery;
@@ -17,19 +20,26 @@ impl CreditsQuery {
         ctx: &Context<'_>,
         #[graphql(default)] include_archived: bool,
     ) -> Result<Vec<Credit>> {
-        let today = today();
-        let credits = module(ctx).credits.list(include_archived).await?;
+        let manager = &module(ctx).credits;
+        let links = manager.recurrence_links().await?;
+        let credits = manager.list(include_archived).await?;
         Ok(credits
             .into_iter()
-            .map(|c| Credit::from_model(c, today))
+            .map(|c| {
+                let recurrence_id = links.get(&c.id).copied();
+                Credit::from_model(c, today(), recurrence_id)
+            })
             .collect())
     }
 
     async fn credit(&self, ctx: &Context<'_>, id: Uuid) -> Result<Credit> {
-        Ok(Credit::from_model(
-            module(ctx).credits.get(id).await?,
-            today(),
-        ))
+        let credit = module(ctx).credits.get(id).await?;
+        to_graphql(ctx, credit).await
+    }
+
+    async fn credit_history(&self, ctx: &Context<'_>, id: Uuid) -> Result<Vec<CreditBalance>> {
+        let history = module(ctx).credits.balance_history(id, today()).await?;
+        Ok(history.into_iter().map(CreditBalance::from).collect())
     }
 
     async fn credit_payments(
@@ -66,12 +76,11 @@ impl CreditsMutation {
         input: CreditInput,
         #[graphql(default)] create_recurrence: bool,
     ) -> Result<Credit> {
-        let today = today();
         let credit = module(ctx)
             .credits
-            .create(today, input.try_into()?, create_recurrence)
+            .create(today(), input.try_into()?, create_recurrence)
             .await?;
-        Ok(Credit::from_model(credit, today))
+        to_graphql(ctx, credit).await
     }
 
     async fn update_credit(
@@ -80,10 +89,8 @@ impl CreditsMutation {
         id: Uuid,
         input: CreditInput,
     ) -> Result<Credit> {
-        Ok(Credit::from_model(
-            module(ctx).credits.update(id, input.try_into()?).await?,
-            today(),
-        ))
+        let credit = module(ctx).credits.update(id, input.try_into()?).await?;
+        to_graphql(ctx, credit).await
     }
 
     async fn set_credit_archived(
@@ -92,14 +99,17 @@ impl CreditsMutation {
         id: Uuid,
         archived: bool,
     ) -> Result<Credit> {
-        Ok(Credit::from_model(
-            module(ctx).credits.set_archived(id, archived).await?,
-            today(),
-        ))
+        let credit = module(ctx).credits.set_archived(id, archived).await?;
+        to_graphql(ctx, credit).await
     }
 
     async fn delete_credit(&self, ctx: &Context<'_>, id: Uuid) -> Result<bool> {
         module(ctx).credits.delete(id).await?;
+        Ok(true)
+    }
+
+    async fn create_credit_recurrence(&self, ctx: &Context<'_>, id: Uuid) -> Result<bool> {
+        module(ctx).credits.add_recurrence(id, today()).await?;
         Ok(true)
     }
 
@@ -119,4 +129,10 @@ impl CreditsMutation {
         module(ctx).credits.delete_payment(id).await?;
         Ok(true)
     }
+}
+
+async fn to_graphql(ctx: &Context<'_>, credit: models::Credit) -> Result<Credit> {
+    let links = module(ctx).credits.recurrence_links().await?;
+    let recurrence_id = links.get(&credit.id).copied();
+    Ok(Credit::from_model(credit, today(), recurrence_id))
 }

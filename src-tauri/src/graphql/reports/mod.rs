@@ -7,7 +7,10 @@ use uuid::Uuid;
 use super::module;
 use crate::graphql::transactions::types::EntryKind;
 use crate::models::dates::today;
-use types::{Alert, BalancePoint, CategoryAmount, CategoryGrouping, MonthSummary, MonthlyTotal};
+use types::{
+    Alert, BalancePoint, BalanceSummary, CategoryAmount, CategoryGrouping, MonthComparison,
+    MonthSummary, MonthlyTotal,
+};
 
 #[derive(Default)]
 pub struct ReportsQuery;
@@ -63,6 +66,33 @@ impl ReportsQuery {
             .month_summary(today(), month)
             .await?
             .into())
+    }
+
+    async fn balance_summary(&self, ctx: &Context<'_>) -> Result<BalanceSummary> {
+        Ok(module(ctx).reports.balance_summary(today()).await?.into())
+    }
+
+    async fn category_averages(
+        &self,
+        ctx: &Context<'_>,
+        kind: EntryKind,
+        #[graphql(default = 6)] months: u32,
+    ) -> Result<Vec<CategoryAmount>> {
+        let averages = module(ctx)
+            .reports
+            .category_averages(today(), kind.into(), months)
+            .await?;
+        Ok(averages.into_iter().map(CategoryAmount::from).collect())
+    }
+
+    async fn compare_months(
+        &self,
+        ctx: &Context<'_>,
+        first: NaiveDate,
+        second: NaiveDate,
+    ) -> Result<Vec<MonthComparison>> {
+        let rows = module(ctx).reports.compare_months(first, second).await?;
+        Ok(rows.into_iter().map(MonthComparison::from).collect())
     }
 
     async fn alerts(&self, ctx: &Context<'_>) -> Result<Vec<Alert>> {

@@ -67,6 +67,9 @@ pub struct Milestone {
 
 #[derive(SimpleObject)]
 pub struct Forecast {
+    pub total_income: i64,
+    pub total_outcome: i64,
+    pub total_net: i64,
     pub months: Vec<ForecastMonth>,
     pub goals_reached: Vec<Milestone>,
     pub credits_paid: Vec<Milestone>,

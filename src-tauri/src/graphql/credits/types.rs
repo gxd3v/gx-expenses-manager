@@ -45,7 +45,15 @@ pub struct Credit {
     pub next_payment_date: Option<NaiveDate>,
     pub remaining_installments: u32,
     pub projected_end_date: Option<NaiveDate>,
+    pub recurrence_id: Option<Uuid>,
     pub schedule: Vec<ScheduleEntry>,
+}
+
+#[derive(SimpleObject)]
+pub struct CreditBalance {
+    pub date: NaiveDate,
+    pub balance: i64,
+    pub projected: bool,
 }
 
 #[derive(InputObject)]

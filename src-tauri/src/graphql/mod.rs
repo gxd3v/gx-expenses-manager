@@ -16,7 +16,8 @@ use sqlx::SqlitePool;
 
 use crate::module::{AppContext, Module};
 
-const MAX_DEPTH: usize = 12;
+const MAX_DEPTH: usize = 16;
+const MAX_COMPLEXITY: usize = 1000;
 
 pub type AppSchema = Schema<Query, Mutation, EmptySubscription>;
 
@@ -54,6 +55,7 @@ pub fn schema(pool: SqlitePool, context: AppContext) -> AppSchema {
     Schema::build(Query::default(), Mutation::default(), EmptySubscription)
         .data(Module::new(pool, context))
         .limit_depth(MAX_DEPTH)
+        .limit_complexity(MAX_COMPLEXITY)
         .finish()
 }
 

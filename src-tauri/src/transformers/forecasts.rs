@@ -4,7 +4,12 @@ use crate::models;
 
 impl From<Forecast> for types::Forecast {
     fn from(forecast: Forecast) -> Self {
+        let total_income: i64 = forecast.months.iter().map(|m| m.income).sum();
+        let total_outcome: i64 = forecast.months.iter().map(|m| m.outcome).sum();
         Self {
+            total_income,
+            total_outcome,
+            total_net: total_income - total_outcome,
             months: forecast.months.into_iter().map(Into::into).collect(),
             goals_reached: forecast.goals_reached.into_iter().map(Into::into).collect(),
             credits_paid: forecast.credits_paid.into_iter().map(Into::into).collect(),

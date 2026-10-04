@@ -551,3 +551,223 @@ async fn reports_and_reconciliation_work_together() {
         .unwrap();
     assert_eq!(status.unconfirmed_count, 0);
 }
+
+async fn populated(module: &Module) -> Account {
+    let main = account(module, "Principal", 100_000).await;
+    let savings = account(module, "Poupança", 0).await;
+    module
+        .transactions
+        .create(transaction(main.id, EntryKind::Outcome, 1_000, today()))
+        .await
+        .unwrap();
+    let transfer = TransferInput {
+        from_account_id: main.id,
+        to_account_id: savings.id,
+        amount: 5_000,
+        date: today(),
+        description: "Poupar".into(),
+    };
+    module.transfers.create(today(), transfer).await.unwrap();
+    let rent = RecurrenceInput {
+        account_id: main.id,
+        category_id: None,
+        kind: EntryKind::Outcome,
+        amount: 50_000,
+        description: "Renda".into(),
+        start_date: add_months(today(), 1),
+        end_date: None,
+        frequency: monthly(),
+    };
+    module.recurrences.create(rent).await.unwrap();
+    let goal = crate::models::GoalInput {
+        name: "Fundo".into(),
+        account_id: savings.id,
+        target_amount: 100_000,
+        target_date: None,
+    };
+    module.goals.create(today(), goal).await.unwrap();
+    main
+}
+
+fn horizon() -> ForecastRequest {
+    ForecastRequest {
+        months: 6,
+        method: ForecastMethod::History,
+        history_months: 3,
+        adjustments: Vec::new(),
+        recurrence_changes: Vec::new(),
+    }
+}
+
+#[tokio::test]
+async fn migration_to_another_machine_keeps_everything() {
+    let source = TestDatabase::new().await;
+    let source_module = module(&source);
+    populated(&source_module).await;
+    let file = source.dir.join("export.gxbackup");
+    source_module.backups.export(&file, None).await.unwrap();
+
+    let target = TestDatabase::new().await;
+    let target_module = module(&target);
+    target_module
+        .backups
+        .import(&file, None, true)
+        .await
+        .unwrap();
+
+    let dump = |pool| async move {
+        crate::repositories::backups::BackupsRepository::new(pool)
+            .dump()
+            .await
+            .unwrap()
+    };
+    assert_eq!(
+        dump(source.pool.clone()).await,
+        dump(target.pool.clone()).await
+    );
+
+    let before = source_module
+        .forecasts
+        .forecast(today(), &horizon())
+        .await
+        .unwrap();
+    let after = target_module
+        .forecasts
+        .forecast(today(), &horizon())
+        .await
+        .unwrap();
+    let totals = |f: &crate::managers::forecasts::Forecast| {
+        f.months.iter().map(|m| m.total).collect::<Vec<_>>()
+    };
+    assert_eq!(totals(&before), totals(&after));
+}
+
+#[tokio::test]
+async fn restore_replaces_database_and_keeps_safety_copy() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = populated(&module).await;
+    let backup = module.backups.create_backup("").await.unwrap();
+    module
+        .transactions
+        .create(transaction(main.id, EntryKind::Outcome, 7_000, today()))
+        .await
+        .unwrap();
+    db.pool.close().await;
+
+    let database = db.dir.join("test.db");
+    let safety = db.dir.join("safety");
+    crate::database::replace(&database, &backup.path, &safety).unwrap();
+    assert_eq!(std::fs::read_dir(&safety).unwrap().count(), 1);
+
+    let pool = crate::database::open(&database, PASSWORD, &safety)
+        .await
+        .unwrap();
+    let restored = Module::new(
+        pool,
+        AppContext {
+            data_dir: db.dir.clone(),
+            password: SecretString::from(PASSWORD.to_string()),
+        },
+    );
+    let balance = restored
+        .accounts
+        .get(today(), main.id)
+        .await
+        .unwrap()
+        .balance;
+    assert_eq!(balance, 100_000 - 1_000 - 5_000);
+}
+
+#[tokio::test]
+async fn interrupted_writes_leave_database_consistent() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = populated(&module).await;
+
+    let mut tx = db.pool.begin().await.unwrap();
+    sqlx::query("UPDATE accounts SET initial_balance = 0 WHERE id = ?1")
+        .bind(main.id.hyphenated())
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    drop(tx);
+    db.pool.close().await;
+
+    let path = db.dir.join("test.db");
+    crate::database::verify(&path, PASSWORD).await.unwrap();
+    let pool = crate::database::open(&path, PASSWORD, &db.dir)
+        .await
+        .unwrap();
+    let initial: i64 = sqlx::query_scalar("SELECT initial_balance FROM accounts WHERE id = ?1")
+        .bind(main.id.hyphenated())
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(initial, 100_000);
+}
+
+#[tokio::test]
+async fn introspection_fits_query_limits() {
+    let db = TestDatabase::new().await;
+    let context = AppContext {
+        data_dir: db.dir.clone(),
+        password: SecretString::from(PASSWORD.to_string()),
+    };
+    let schema = crate::graphql::schema(db.pool.clone(), context);
+    let query = "query { __schema { types { name fields { name args { name type { ...Ref } } type { ...Ref } } } } } \
+        fragment Ref on __Type { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name \
+        ofType { kind name ofType { kind name ofType { kind name } } } } } } } }";
+    let response = schema.execute(query).await;
+    assert!(response.errors.is_empty(), "{:?}", response.errors);
+}
+
+#[tokio::test]
+async fn credits_expose_history_and_link_one_recurrence() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = account(&module, "Principal", 1_000_000).await;
+    let input = CreditInput {
+        name: "Carro".into(),
+        institution: None,
+        principal: 600_000,
+        opening_balance: 600_000,
+        annual_rate: 6.0,
+        installment: 50_000,
+        frequency: monthly(),
+        start_date: today(),
+        end_date: None,
+        installments: None,
+        account_id: Some(main.id),
+    };
+    let credit = module.credits.create(today(), input, false).await.unwrap();
+    let payment = crate::models::PaymentInput {
+        credit_id: credit.id,
+        date: today(),
+        amount: 50_000,
+        account_id: None,
+        transaction_id: None,
+        principal: None,
+        interest: None,
+    };
+    module.credits.register_payment(payment).await.unwrap();
+
+    let history = module
+        .credits
+        .balance_history(credit.id, today())
+        .await
+        .unwrap();
+    assert_eq!(history[0].balance, 600_000 - 47_000);
+    assert!(!history[0].projected);
+    assert_eq!(history.last().unwrap().balance, 0);
+
+    module
+        .credits
+        .add_recurrence(credit.id, today())
+        .await
+        .unwrap();
+    assert!(matches!(
+        module.credits.add_recurrence(credit.id, today()).await,
+        Err(AppError::Conflict(_))
+    ));
+}
