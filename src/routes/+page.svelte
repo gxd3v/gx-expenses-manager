@@ -11,6 +11,7 @@
 	import HBarChart from '#lib/charts/HBarChart.svelte';
 	import LineChart from '#lib/charts/LineChart.svelte';
 	import Amount from '#lib/components/Amount.svelte';
+	import BalanceRecords from '#lib/components/BalanceRecords.svelte';
 	import Money from '#lib/components/Money.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
@@ -115,7 +116,7 @@
 		/>
 	</div>
 
-	<div class="mb-6 grid gap-4 xl:grid-cols-2">
+	<div class="mb-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
 		<section class="card">
 			<h2 class="mb-3 font-medium">Saldo por conta</h2>
 			{#if data.accounts.length === 0}
@@ -142,6 +143,7 @@
 				<HBarChart items={data.categories.map((c) => ({ label: c.name, value: c.amount }))} format={(v) => formatMoney(v)} />
 			{/if}
 		</section>
+		<BalanceRecords selectable />
 	</div>
 
 	<div class="mb-6 grid gap-4 xl:grid-cols-3">

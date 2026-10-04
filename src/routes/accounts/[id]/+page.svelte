@@ -5,6 +5,7 @@
 	import { balanceHistory, monthlyTotals } from '#lib/api/reports.ts';
 	import BarChart from '#lib/charts/BarChart.svelte';
 	import LineChart from '#lib/charts/LineChart.svelte';
+	import BalanceRecords from '#lib/components/BalanceRecords.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
@@ -50,7 +51,7 @@
 		<StatCard label="Saldo projetado" value={formatMoney(account.projectedBalance, account.currency)} hint="Com todos os movimentos futuros" />
 	</div>
 
-	<div class="mb-6 grid gap-4 xl:grid-cols-2">
+	<div class="mb-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
 		<section class="card">
 			<h2 class="mb-3 font-medium">Evolução do saldo</h2>
 			<LineChart
@@ -70,6 +71,7 @@
 				format={(v) => formatMoney(v, account.currency)}
 			/>
 		</section>
+		<BalanceRecords accountId={account.id} currency={account.currency} />
 	</div>
 
 	<h2 class="mb-3 text-lg font-semibold">Histórico</h2>

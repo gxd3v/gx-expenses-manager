@@ -31,6 +31,10 @@ export type MonthSummary = {
 	categories: CategoryComparison[];
 };
 
+export type RecordPeriod = 'ALL_TIME' | 'YEAR' | 'MONTH' | 'WEEK';
+export type BalanceMark = { date: string; balance: number };
+export type BalanceRecord = { period: RecordPeriod; high: BalanceMark; low: BalanceMark };
+
 export type BalanceSummary = { total: number; available: number; projected: number; debt: number; netWorth: number };
 
 export type MonthComparison = {
@@ -77,6 +81,14 @@ export async function balanceHistory(months: number, accountId: string | null = 
 		{ months, accountId }
 	);
 	return data.balanceHistory;
+}
+
+export async function balanceRecords(accountId: string | null = null): Promise<BalanceRecord[]> {
+	const data = await gql<{ balanceRecords: BalanceRecord[] }>(
+		`query ($accountId: UUID) { balanceRecords(accountId: $accountId) { period high { date balance } low { date balance } } }`,
+		{ accountId }
+	);
+	return data.balanceRecords;
 }
 
 export async function monthSummary(month: string): Promise<MonthSummary> {
