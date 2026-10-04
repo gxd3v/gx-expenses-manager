@@ -8,6 +8,8 @@ use sqlx::{ConnectOptions, Connection};
 use crate::errors::AppError;
 
 const SQLITE_NOTADB: &str = "26";
+const CACHE_SIZE_KIB: &str = "-32768";
+const MAX_CONNECTIONS: u32 = 4;
 const MIGRATIONS_TABLE: &str =
     "SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE name = '_sqlx_migrations')";
 const APPLIED: &str = "SELECT version FROM _sqlx_migrations WHERE success = 1";
@@ -18,6 +20,7 @@ pub async fn open(path: &Path, password: &str, backup_dir: &Path) -> Result<Sqli
     }
 
     let pool = SqlitePoolOptions::new()
+        .max_connections(MAX_CONNECTIONS)
         .connect_with(
             options(path, password)
                 .create_if_missing(true)
@@ -92,6 +95,7 @@ fn options(path: &Path, password: &str) -> SqliteConnectOptions {
     SqliteConnectOptions::new()
         .filename(path)
         .pragma("key", quote(password))
+        .pragma("cache_size", CACHE_SIZE_KIB)
         .foreign_keys(true)
 }
 
