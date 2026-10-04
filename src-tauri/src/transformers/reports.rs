@@ -35,6 +35,25 @@ impl From<models::BalancePoint> for types::BalancePoint {
     }
 }
 
+impl From<models::BalanceMark> for types::BalanceMark {
+    fn from(mark: models::BalanceMark) -> Self {
+        Self {
+            date: mark.date,
+            balance: mark.balance,
+        }
+    }
+}
+
+impl From<models::BalanceRecord> for types::BalanceRecord {
+    fn from(record: models::BalanceRecord) -> Self {
+        Self {
+            period: record.period.into(),
+            high: record.high.into(),
+            low: record.low.into(),
+        }
+    }
+}
+
 impl From<models::CategoryComparison> for types::CategoryComparison {
     fn from(category: models::CategoryComparison) -> Self {
         Self {

@@ -1,14 +1,15 @@
 use std::collections::{BTreeMap, HashMap};
 
-use chrono::{Days, NaiveDate};
+use chrono::{Datelike, Days, NaiveDate};
 use uuid::Uuid;
 
 use super::recurrences::RecurrencesManager;
 use crate::errors::AppError;
 use crate::models::dates::{add_months, month_end, month_start, months_between};
 use crate::models::{
-    BalancePoint, BalanceSummary, CategoryAmount, CategoryComparison, CategoryGrouping, Credit,
-    CreditPayment, EntryKind, MonthComparison, MonthSummary, MonthlyTotal, TransactionKind,
+    BalancePoint, BalanceRecord, BalanceSummary, CategoryAmount, CategoryComparison,
+    CategoryGrouping, Credit, CreditPayment, EntryKind, MonthComparison, MonthSummary,
+    MonthlyTotal, RecordPeriod, TransactionKind, balance_record, week_start,
 };
 use crate::repositories::accounts::AccountsRepository;
 use crate::repositories::credits::CreditsRepository;
@@ -210,6 +211,35 @@ impl ReportsManager {
                 debt: debt_at(&credits, &payments, month_end(month).min(today)),
             })
             .collect())
+    }
+
+    pub async fn balance_records(
+        &self,
+        today: NaiveDate,
+        first_day_of_week: u8,
+        account_id: Option<Uuid>,
+    ) -> Result<Vec<BalanceRecord>, AppError> {
+        let opening: i64 = self
+            .accounts
+            .list(today, account_id.is_some())
+            .await?
+            .iter()
+            .filter(|a| account_id.is_none_or(|id| id == a.id))
+            .map(|a| a.initial_balance)
+            .sum();
+        let changes = self.repository.daily_changes(today, account_id).await?;
+
+        let first = changes.first().map_or(today, |(date, _)| *date);
+        let year = today.with_ordinal(1).unwrap_or(today);
+        Ok([
+            (RecordPeriod::AllTime, first),
+            (RecordPeriod::Year, year),
+            (RecordPeriod::Month, month_start(today)),
+            (RecordPeriod::Week, week_start(today, first_day_of_week)),
+        ]
+        .into_iter()
+        .map(|(period, from)| balance_record(period, opening, &changes, from))
+        .collect())
     }
 
     pub async fn month_summary(

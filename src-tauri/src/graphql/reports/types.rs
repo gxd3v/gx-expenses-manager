@@ -11,6 +11,28 @@ pub enum CategoryGrouping {
     Leaf,
 }
 
+#[derive(Enum, Clone, Copy, PartialEq, Eq)]
+#[graphql(remote = "models::RecordPeriod")]
+pub enum RecordPeriod {
+    AllTime,
+    Year,
+    Month,
+    Week,
+}
+
+#[derive(SimpleObject)]
+pub struct BalanceMark {
+    pub date: NaiveDate,
+    pub balance: i64,
+}
+
+#[derive(SimpleObject)]
+pub struct BalanceRecord {
+    pub period: RecordPeriod,
+    pub high: BalanceMark,
+    pub low: BalanceMark,
+}
+
 #[derive(SimpleObject)]
 pub struct MonthlyTotal {
     pub month: NaiveDate,

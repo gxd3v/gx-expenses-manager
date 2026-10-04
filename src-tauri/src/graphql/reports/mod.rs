@@ -8,8 +8,8 @@ use super::module;
 use crate::graphql::transactions::types::EntryKind;
 use crate::models::dates::today;
 use types::{
-    Alert, BalancePoint, BalanceSummary, CategoryAmount, CategoryGrouping, MonthComparison,
-    MonthSummary, MonthlyTotal,
+    Alert, BalancePoint, BalanceRecord, BalanceSummary, CategoryAmount, CategoryGrouping,
+    MonthComparison, MonthSummary, MonthlyTotal,
 };
 
 #[derive(Default)]
@@ -58,6 +58,20 @@ impl ReportsQuery {
             .balance_history(today(), months, account_id)
             .await?;
         Ok(points.into_iter().map(BalancePoint::from).collect())
+    }
+
+    async fn balance_records(
+        &self,
+        ctx: &Context<'_>,
+        account_id: Option<Uuid>,
+    ) -> Result<Vec<BalanceRecord>> {
+        let module = module(ctx);
+        let settings = module.settings.get().await?;
+        let records = module
+            .reports
+            .balance_records(today(), settings.first_day_of_week, account_id)
+            .await?;
+        Ok(records.into_iter().map(BalanceRecord::from).collect())
     }
 
     async fn month_summary(&self, ctx: &Context<'_>, month: NaiveDate) -> Result<MonthSummary> {

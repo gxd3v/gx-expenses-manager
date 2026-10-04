@@ -31,8 +31,9 @@ pub use recurrence::{
     RecurrenceInput,
 };
 pub use report::{
-    BalancePoint, BalanceSummary, CategoryAmount, CategoryComparison, CategoryGrouping,
-    MonthComparison, MonthSummary, MonthlyTotal,
+    BalanceMark, BalancePoint, BalanceRecord, BalanceSummary, CategoryAmount, CategoryComparison,
+    CategoryGrouping, MonthComparison, MonthSummary, MonthlyTotal, RecordPeriod, balance_record,
+    week_start,
 };
 pub use settings::{DateFormat, Settings, Theme};
 pub use template::{Template, TemplateInput};

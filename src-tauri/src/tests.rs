@@ -552,6 +552,44 @@ async fn reports_and_reconciliation_work_together() {
     assert_eq!(status.unconfirmed_count, 0);
 }
 
+#[tokio::test]
+async fn balance_records_ignore_future_and_other_accounts() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = account(&module, "Principal", 10_000).await;
+    let other = account(&module, "Outra", 50_000).await;
+    let earlier = add_months(today(), -14);
+    let tomorrow = today().checked_add_days(Days::new(1)).unwrap();
+    for (kind, amount, date) in [
+        (EntryKind::Outcome, 9_000, earlier),
+        (EntryKind::Income, 30_000, today()),
+        (EntryKind::Income, 99_000, tomorrow),
+    ] {
+        module
+            .transactions
+            .create(transaction(main.id, kind, amount, date))
+            .await
+            .unwrap();
+    }
+
+    let records = module
+        .reports
+        .balance_records(today(), 1, Some(main.id))
+        .await
+        .unwrap();
+    let all = &records[0];
+    assert_eq!((all.low.balance, all.low.date), (1_000, earlier));
+    assert_eq!((all.high.balance, all.high.date), (31_000, today()));
+
+    let total = module
+        .reports
+        .balance_records(today(), 1, None)
+        .await
+        .unwrap();
+    assert_eq!(total[0].high.balance, 31_000 + other.initial_balance);
+    assert_eq!(total[3].low.balance, 1_000 + other.initial_balance);
+}
+
 async fn populated(module: &Module) -> Account {
     let main = account(module, "Principal", 100_000).await;
     let savings = account(module, "Poupança", 0).await;
