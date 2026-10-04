@@ -88,7 +88,7 @@
 	}
 
 	async function exportAll() {
-		const path = await pickSavePath(`gx-expenses-${today()}.gxbackup`, 'gxbackup');
+		const path = await pickSavePath(`expenses-manager-${today()}.gxbackup`, 'gxbackup');
 		if (!path) return;
 		busy = true;
 		try {

@@ -132,7 +132,7 @@
 	<div class="flex h-full flex-col md:flex-row">
 		<header class="flex items-center justify-between border-b border-stone-200 px-4 py-2 md:hidden dark:border-stone-800">
 			<button class="btn-ghost" onclick={() => (menuOpen = !menuOpen)} aria-expanded={menuOpen} aria-label="Menu">☰</button>
-			<span class="font-semibold">GX Expenses</span>
+			<span class="font-semibold">Expenses Manager</span>
 			<button class="btn-primary" onclick={() => openQuickAdd()} aria-label="Adicionar">+</button>
 		</header>
 		{#if menuOpen}
@@ -144,7 +144,7 @@
 				: '-translate-x-full'}"
 			aria-label="Navegação principal"
 		>
-			<span class="mb-3 px-3 pt-2 font-semibold">GX Expenses</span>
+			<span class="mb-3 px-3 pt-2 font-semibold">Expenses Manager</span>
 			<button class="btn-primary mb-2" onclick={() => openQuickAdd()} title="Atalho: N">+ Adicionar</button>
 			<button class="btn-secondary mb-3 justify-between" onclick={() => (ui.search = true)}>
 				Pesquisar <kbd class="text-xs text-stone-400">Ctrl K</kbd>
