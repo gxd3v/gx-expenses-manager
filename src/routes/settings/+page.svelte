@@ -266,6 +266,7 @@
 	{#if backups.length === 0}
 		<p class="muted">Ainda não há backups.</p>
 	{:else}
+		<div class="overflow-x-auto">
 		<table class="table-base">
 			<thead><tr><th>Ficheiro</th><th>Data</th><th class="text-right">Tamanho</th><th></th></tr></thead>
 			<tbody>
@@ -282,6 +283,7 @@
 				{/each}
 			</tbody>
 		</table>
+		</div>
 	{/if}
 </section>
 

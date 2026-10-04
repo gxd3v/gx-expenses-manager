@@ -36,8 +36,8 @@
 	}
 </script>
 
-<div class="flex h-screen items-center justify-center bg-stone-100 dark:bg-stone-950">
-	<form onsubmit={submit} class="card w-96 space-y-4 shadow">
+<div class="flex h-screen items-center justify-center bg-stone-100 p-4 dark:bg-stone-950">
+	<form onsubmit={submit} class="card w-full max-w-sm space-y-4 shadow">
 		<div>
 			<h1 class="text-lg font-semibold">GX Expenses</h1>
 			<p class="muted">{initialized ? 'Introduz a password para desbloquear.' : 'Cria a password que protege os teus dados.'}</p>

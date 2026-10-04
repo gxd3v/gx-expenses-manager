@@ -92,12 +92,12 @@
 </script>
 
 {#snippet row(category: Category, nested: boolean)}
-	<li class="flex items-center gap-3 py-2 {nested ? 'pl-8' : ''}" class:opacity-60={category.archivedAt}>
+	<li class="flex flex-wrap items-center gap-3 py-2 {nested ? 'pl-8' : ''}" class:opacity-60={category.archivedAt}>
 		<span class="size-3 rounded-full" style:background-color={category.color ?? 'transparent'}></span>
 		<span class="flex-1 {nested ? '' : 'font-medium'}">{category.icon ?? ''} {category.name}</span>
 		<span class="badge">{categoryKinds[category.kind]}</span>
 		<span class="w-24 text-right text-xs text-stone-500">{category.transactionCount} movimentos</span>
-		<div class="flex">
+		<div class="flex flex-wrap">
 			{#if !nested}<button class="btn-ghost" onclick={() => create(category)}>+ Sub</button>{/if}
 			<button class="btn-ghost" onclick={() => edit(category)}>Editar</button>
 			<button class="btn-ghost" onclick={() => toggleArchive(category)}>{category.archivedAt ? 'Reativar' : 'Arquivar'}</button>

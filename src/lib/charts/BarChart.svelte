@@ -13,7 +13,7 @@
 
 	const pad = { top: 12, right: 16, bottom: 28, left: 56 };
 	const gap = 2;
-	let width = $state(600);
+	let width = $state(0);
 	let hover = $state<number | null>(null);
 
 	const values = $derived(series.flatMap((s) => s.values));

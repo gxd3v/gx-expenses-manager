@@ -184,6 +184,7 @@
 
 	<section class="card mb-6 overflow-x-auto">
 		<h2 class="mb-3 font-medium">Mês a mês</h2>
+		<div class="overflow-x-auto">
 		<table class="table-base">
 			<thead>
 				<tr>
@@ -208,6 +209,7 @@
 				{/each}
 			</tbody>
 		</table>
+		</div>
 		<p class="mt-2 text-xs text-stone-500">
 			Fixas: recorrências e movimentos futuros registados. Variáveis: média dos movimentos sem recorrência nos últimos {historyMonths} meses.
 		</p>
@@ -287,6 +289,7 @@
 	{#if recurrences.length}
 		<details>
 			<summary class="cursor-pointer text-sm font-medium">Alterar recorrências</summary>
+			<div class="overflow-x-auto">
 			<table class="table-base mt-2">
 				<thead><tr><th>Recorrência</th><th class="text-right">Valor atual</th><th>No cenário</th></tr></thead>
 				<tbody>
@@ -305,6 +308,7 @@
 					{/each}
 				</tbody>
 			</table>
+			</div>
 		</details>
 	{/if}
 </section>

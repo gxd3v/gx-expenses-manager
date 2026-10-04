@@ -170,6 +170,7 @@
 				<div class="col-span-2 flex justify-end"><button class="btn-secondary">Simular</button></div>
 			</form>
 			{#if simulationResult}
+				<div class="overflow-x-auto">
 				<table class="table-base mt-4">
 					<thead><tr><th></th><th class="text-right">Atual</th><th class="text-right">Cenário</th></tr></thead>
 					<tbody>
@@ -179,6 +180,7 @@
 						<tr><td>Fim</td><td class="text-right">{formatDate(simulationResult.baseline.endDate)}</td><td class="text-right">{formatDate(simulationResult.scenario.endDate)}</td></tr>
 					</tbody>
 				</table>
+				</div>
 				<p class="mt-2 text-sm">
 					Poupança de juros: <strong>{formatMoney(simulationResult.interestSaved)}</strong> · {simulationResult.periodsSaved} prestações a menos
 				</p>
@@ -191,6 +193,7 @@
 		{#if payments.length === 0}
 			<p class="muted">Ainda não há pagamentos registados.</p>
 		{:else}
+			<div class="overflow-x-auto">
 			<table class="table-base">
 				<thead><tr><th>Data</th><th class="text-right">Total</th><th class="text-right">Capital</th><th class="text-right">Juros</th><th></th></tr></thead>
 				<tbody>
@@ -205,6 +208,7 @@
 					{/each}
 				</tbody>
 			</table>
+			</div>
 		{/if}
 	</section>
 
@@ -214,6 +218,7 @@
 		</button>
 		{#if showSchedule}
 			<div class="mt-3 max-h-96 overflow-y-auto">
+				<div class="overflow-x-auto">
 				<table class="table-base">
 					<thead><tr><th>#</th><th>Data</th><th class="text-right">Prestação</th><th class="text-right">Capital</th><th class="text-right">Juros</th><th class="text-right">Em dívida</th></tr></thead>
 					<tbody>
@@ -229,6 +234,7 @@
 						{/each}
 					</tbody>
 				</table>
+				</div>
 			</div>
 		{/if}
 	</section>

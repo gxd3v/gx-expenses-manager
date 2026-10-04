@@ -109,7 +109,7 @@
 				{:else}
 					<ul class="divide-y divide-stone-100 text-sm dark:divide-stone-800">
 						{#each unconfirmed as transaction (transaction.id)}
-							<li class="flex items-center gap-3 py-1.5">
+							<li class="flex flex-wrap items-center gap-3 py-1.5">
 								<span class="w-24 text-stone-500">{formatDate(transaction.date)}</span>
 								<span class="flex-1 truncate">{transaction.description || '—'}</span>
 								<Amount value={transaction.amount} />
@@ -142,6 +142,7 @@
 			{#if history.length === 0}
 				<p class="muted">Ainda não fizeste reconciliações nesta conta.</p>
 			{:else}
+				<div class="overflow-x-auto">
 				<table class="table-base">
 					<thead><tr><th>Data</th><th class="text-right">Banco</th><th class="text-right">Calculado</th><th class="text-right">Diferença</th></tr></thead>
 					<tbody>
@@ -155,6 +156,7 @@
 						{/each}
 					</tbody>
 				</table>
+				</div>
 			{/if}
 		</section>
 	{:catch error}

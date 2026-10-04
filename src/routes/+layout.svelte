@@ -38,6 +38,7 @@
 	let ready = $state(false);
 	let startupError = $state('');
 	let alerts = $state<Alert[]>([]);
+	let menuOpen = $state(false);
 	let idleTimer: ReturnType<typeof setTimeout>;
 	let backgroundTimer: ReturnType<typeof setInterval>;
 
@@ -90,6 +91,11 @@
 		}
 	}
 
+	$effect(() => {
+		page.url.pathname;
+		menuOpen = false;
+	});
+
 	const active = (href: string) => (href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href));
 
 	onMount(() => {
@@ -117,8 +123,21 @@
 		</div>
 	</div>
 {:else if ready}
-	<div class="flex h-screen">
-		<nav class="flex w-56 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-stone-200 p-3 dark:border-stone-800" aria-label="Navegação principal">
+	<div class="flex h-screen flex-col md:flex-row">
+		<header class="flex items-center justify-between border-b border-stone-200 px-4 py-2 md:hidden dark:border-stone-800">
+			<button class="btn-ghost" onclick={() => (menuOpen = !menuOpen)} aria-expanded={menuOpen} aria-label="Menu">☰</button>
+			<span class="font-semibold">GX Expenses</span>
+			<button class="btn-primary" onclick={() => openQuickAdd()} aria-label="Adicionar">+</button>
+		</header>
+		{#if menuOpen}
+			<button class="fixed inset-0 z-20 bg-black/40 md:hidden" onclick={() => (menuOpen = false)} aria-label="Fechar menu"></button>
+		{/if}
+		<nav
+			class="fixed inset-y-0 left-0 z-30 flex w-64 flex-col gap-0.5 overflow-y-auto border-r border-stone-200 bg-stone-50 p-3 transition-transform md:static md:transition-none md:w-56 md:shrink-0 md:translate-x-0 dark:border-stone-800 dark:bg-stone-950 {menuOpen
+				? 'translate-x-0'
+				: '-translate-x-full'}"
+			aria-label="Navegação principal"
+		>
 			<span class="mb-3 px-3 pt-2 font-semibold">GX Expenses</span>
 			<button class="btn-primary mb-2" onclick={() => openQuickAdd()} title="Atalho: N">+ Adicionar</button>
 			<button class="btn-secondary mb-3 justify-between" onclick={() => (ui.search = true)}>
@@ -140,7 +159,7 @@
 			{/each}
 			<button onclick={handleLock} class="btn-secondary mt-auto" title="Atalho: Ctrl L">Bloquear</button>
 		</nav>
-		<main class="flex-1 overflow-y-auto p-8">
+		<main class="flex-1 overflow-y-auto p-4 md:p-8">
 			{@render children()}
 		</main>
 	</div>

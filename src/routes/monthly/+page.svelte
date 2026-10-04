@@ -86,6 +86,7 @@
 
 	<section class="card mb-6">
 		<h2 class="mb-3 font-medium">Comparação</h2>
+		<div class="overflow-x-auto">
 		<table class="table-base">
 			<thead>
 				<tr><th></th><th class="text-right">Este mês</th><th class="text-right">Mês anterior</th><th class="text-right">Média 6 meses</th></tr>
@@ -105,6 +106,7 @@
 				</tr>
 			</tbody>
 		</table>
+		</div>
 	</section>
 
 	<div class="mb-6 grid gap-4 xl:grid-cols-2">
@@ -141,6 +143,7 @@
 		{#if summary.categories.length === 0}
 			<p class="muted">Sem despesas no período.</p>
 		{:else}
+			<div class="overflow-x-auto">
 			<table class="table-base">
 				<thead>
 					<tr>
@@ -163,6 +166,7 @@
 					{/each}
 				</tbody>
 			</table>
+			</div>
 			<p class="mt-2 text-xs text-stone-500">Diferença positiva significa que gastaste menos do que a média.</p>
 		{/if}
 	</section>
