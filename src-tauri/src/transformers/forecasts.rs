@@ -19,6 +19,10 @@ impl From<models::ForecastMonth> for types::ForecastMonth {
             income: month.income,
             outcome: month.outcome,
             net: month.income - month.outcome,
+            fixed_income: month.income - month.variable_income,
+            fixed_outcome: month.outcome - month.variable_outcome,
+            variable_income: month.variable_income,
+            variable_outcome: month.variable_outcome,
             total: month.total,
             balances: month
                 .balances

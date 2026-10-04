@@ -50,6 +50,10 @@ pub struct ForecastMonth {
     pub income: i64,
     pub outcome: i64,
     pub net: i64,
+    pub fixed_income: i64,
+    pub fixed_outcome: i64,
+    pub variable_income: i64,
+    pub variable_outcome: i64,
     pub total: i64,
     pub balances: Vec<AccountBalance>,
 }

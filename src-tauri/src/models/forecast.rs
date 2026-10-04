@@ -57,6 +57,8 @@ pub struct ForecastMonth {
     pub month: NaiveDate,
     pub income: i64,
     pub outcome: i64,
+    pub variable_income: i64,
+    pub variable_outcome: i64,
     pub total: i64,
     pub balances: Vec<AccountBalance>,
 }
@@ -130,17 +132,21 @@ pub fn project(input: &ForecastInput) -> Vec<ForecastMonth> {
                 }
             }
 
+            let mut variable_income = 0;
+            let mut variable_outcome = 0;
             for average in &input.averages {
                 let (avg_income, avg_outcome) = average.for_month(offset == 0);
                 apply(&mut balances, average.account_id, avg_income - avg_outcome);
-                income += avg_income;
-                outcome += avg_outcome;
+                variable_income += avg_income;
+                variable_outcome += avg_outcome;
             }
 
             ForecastMonth {
                 month,
-                income,
-                outcome,
+                income: income + variable_income,
+                outcome: outcome + variable_outcome,
+                variable_income,
+                variable_outcome,
                 total: balances.iter().map(|b| b.balance).sum(),
                 balances: balances.clone(),
             }
@@ -224,6 +230,7 @@ mod tests {
         assert_eq!(months[0].income, 200_000);
         assert_eq!(months[1].balances[1].balance, 10_000);
         assert_eq!(months[1].outcome, 80_000 + 30_000);
+        assert_eq!(months[1].variable_outcome, 30_000);
         assert_eq!(
             months[2].balances[0].balance,
             290_000 - 110_000 - 10_000 - 30_000 - 10_000
