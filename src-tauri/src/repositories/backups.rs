@@ -7,8 +7,9 @@ use sqlx::{Column, Row, Sqlite, SqliteConnection, SqlitePool, TypeInfo, ValueRef
 
 use crate::errors::AppError;
 
-pub const TABLES: [&str; 13] = [
+pub const TABLES: [&str; 15] = [
     "accounts",
+    "interest_tiers",
     "categories",
     "transfers",
     "credits",
@@ -21,6 +22,7 @@ pub const TABLES: [&str; 13] = [
     "reconciliations",
     "saved_filters",
     "settings",
+    "dismissed_alerts",
 ];
 
 const SCHEMA_VERSION: &str = "SELECT COALESCE(MAX(version), 0) FROM _sqlx_migrations";

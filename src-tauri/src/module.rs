@@ -19,6 +19,7 @@ use crate::managers::templates::TemplatesManager;
 use crate::managers::transactions::TransactionsManager;
 use crate::managers::transfers::TransfersManager;
 use crate::repositories::accounts::AccountsRepository;
+use crate::repositories::alerts::AlertsRepository;
 use crate::repositories::backups::BackupsRepository;
 use crate::repositories::categories::CategoriesRepository;
 use crate::repositories::credits::CreditsRepository;
@@ -111,6 +112,7 @@ impl Module {
                 SavedFiltersRepository::new(pool.clone()),
             ),
             alerts: AlertsManager::new(
+                AlertsRepository::new(pool.clone()),
                 settings.clone(),
                 recurrences_manager.clone(),
                 accounts,

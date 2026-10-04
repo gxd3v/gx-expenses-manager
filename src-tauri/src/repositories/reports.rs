@@ -12,6 +12,7 @@ const MONTHLY_TOTALS: &str = "SELECT substr(t.date, 1, 7) AS month, \
      COALESCE(SUM(CASE WHEN t.kind = 'outcome' THEN -t.amount END), 0) AS outcome \
      FROM transactions t \
      WHERE t.kind <> 'transfer' AND t.date >= ?1 AND t.date <= ?2 AND (?3 IS NULL OR t.account_id = ?3) \
+     AND (?4 = 0 OR t.one_off = 0) \
      GROUP BY month ORDER BY month";
 
 const BY_PARENT: &str = "SELECT COALESCE(p.id, c.id) AS category_id, COALESCE(p.name, c.name, 'Sem categoria') AS name, \
@@ -32,7 +33,8 @@ const BY_LEAF: &str = "SELECT c.id AS category_id, \
      GROUP BY 1 ORDER BY amount DESC";
 
 const CATEGORY_MONTHS: &str = "SELECT COALESCE(p.id, c.id) AS category_id, COALESCE(p.name, c.name, 'Sem categoria') AS name, \
-     COALESCE(p.color, c.color) AS color, substr(t.date, 1, 7) AS month, SUM(-t.amount) AS amount \
+     COALESCE(p.color, c.color) AS color, substr(t.date, 1, 7) AS month, SUM(-t.amount) AS amount, \
+     SUM(CASE WHEN t.one_off = 0 THEN -t.amount ELSE 0 END) AS regular \
      FROM transactions t \
      LEFT JOIN categories c ON c.id = t.category_id \
      LEFT JOIN categories p ON p.id = c.parent_id \
@@ -50,7 +52,7 @@ const VARIABLE_AVERAGES: &str = "SELECT t.account_id, \
      COALESCE(SUM(CASE WHEN t.kind = 'income' AND t.date >= ?2 THEN t.amount END), 0) AS current_income, \
      COALESCE(SUM(CASE WHEN t.kind = 'outcome' AND t.date >= ?2 THEN -t.amount END), 0) AS current_outcome \
      FROM transactions t \
-     WHERE t.kind <> 'transfer' AND t.recurrence_id IS NULL \
+     WHERE t.kind <> 'transfer' AND t.recurrence_id IS NULL AND t.one_off = 0 \
      AND NOT EXISTS (SELECT 1 FROM credit_payments cp WHERE cp.transaction_id = t.id) \
      AND NOT EXISTS (SELECT 1 FROM recurrences r \
          WHERE r.paused_at IS NULL AND (r.end_date IS NULL OR r.end_date >= ?3) \
@@ -81,6 +83,7 @@ pub struct CategoryMonthRow {
     pub color: Option<String>,
     pub month: String,
     pub amount: i64,
+    pub regular: i64,
 }
 
 #[derive(FromRow)]
@@ -120,11 +123,13 @@ impl ReportsRepository {
         from: NaiveDate,
         to: NaiveDate,
         account_id: Option<Uuid>,
+        regular_only: bool,
     ) -> Result<Vec<MonthlyTotal>, AppError> {
         let rows: Vec<MonthlyRow> = sqlx::query_as(MONTHLY_TOTALS)
             .bind(from)
             .bind(to)
             .bind(opt_id(account_id))
+            .bind(regular_only)
             .fetch_all(&self.pool)
             .await?;
 

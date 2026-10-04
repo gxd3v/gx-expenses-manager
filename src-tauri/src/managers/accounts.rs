@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use super::{archived_at, currency, optional, required};
 use crate::errors::AppError;
-use crate::models::{Account, AccountInput};
+use crate::models::{Account, AccountInput, Interest};
 use crate::repositories::accounts::AccountsRepository;
 
 #[derive(Clone)]
@@ -69,6 +69,9 @@ impl AccountsManager {
 }
 
 fn normalize(input: AccountInput) -> Result<AccountInput, AppError> {
+    if let Some(interest) = &input.interest {
+        validate_interest(interest)?;
+    }
     Ok(AccountInput {
         name: required(&input.name, "o nome é obrigatório")?,
         currency: currency(&input.currency)?,
@@ -78,10 +81,39 @@ fn normalize(input: AccountInput) -> Result<AccountInput, AppError> {
     })
 }
 
+fn validate_interest(interest: &Interest) -> Result<(), AppError> {
+    if !(1..=120).contains(&interest.period_months) {
+        return Err(AppError::validation(
+            "o vencimento dos juros tem de estar entre 1 e 120 meses",
+        ));
+    }
+    if interest.tiers.is_empty() {
+        return Err(AppError::validation("indica pelo menos uma taxa de juro"));
+    }
+    if interest
+        .tiers
+        .iter()
+        .any(|t| t.min_balance < 0 || !(0.0..=100.0).contains(&t.rate))
+    {
+        return Err(AppError::validation(
+            "as taxas têm de estar entre 0% e 100% e os saldos mínimos não podem ser negativos",
+        ));
+    }
+    let mut minimums: Vec<i64> = interest.tiers.iter().map(|t| t.min_balance).collect();
+    minimums.sort_unstable();
+    minimums.dedup();
+    if minimums.len() != interest.tiers.len() {
+        return Err(AppError::validation(
+            "não podem existir dois escalões com o mesmo saldo mínimo",
+        ));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::AccountKind;
+    use crate::models::{AccountKind, InterestTier};
 
     fn input(name: &str, currency: &str) -> AccountInput {
         AccountInput {
@@ -91,6 +123,7 @@ mod tests {
             initial_balance: 0,
             color: Some("  ".into()),
             icon: None,
+            interest: None,
         }
     }
 
@@ -107,5 +140,22 @@ mod tests {
         assert!(normalize(input("   ", "EUR")).is_err());
         assert!(normalize(input("Main", "EU")).is_err());
         assert!(normalize(input("Main", "E1R")).is_err());
+    }
+
+    #[test]
+    fn normalize_validates_interest_tiers() {
+        let tier = |min_balance, rate| InterestTier { min_balance, rate };
+        let with = |period_months, tiers| AccountInput {
+            interest: Some(Interest {
+                period_months,
+                tiers,
+            }),
+            ..input("Fundo", "EUR")
+        };
+        assert!(normalize(with(3, vec![tier(0, 1.0), tier(500_000, 1.25)])).is_ok());
+        assert!(normalize(with(0, vec![tier(0, 1.0)])).is_err());
+        assert!(normalize(with(1, Vec::new())).is_err());
+        assert!(normalize(with(1, vec![tier(0, 1.0), tier(0, 2.0)])).is_err());
+        assert!(normalize(with(1, vec![tier(0, 101.0)])).is_err());
     }
 }

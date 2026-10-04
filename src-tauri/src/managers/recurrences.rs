@@ -220,6 +220,7 @@ impl RecurrencesManager {
             confirmed: false,
             transfer_id: None,
             recurrence_id: Some(occurrence.recurrence_id),
+            one_off: false,
         };
 
         let payment = match occurrence.credit_id {

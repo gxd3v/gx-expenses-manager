@@ -47,6 +47,7 @@ pub struct Mutation(
     goals::GoalsMutation,
     reconciliation::ReconciliationMutation,
     templates::TemplatesMutation,
+    reports::ReportsMutation,
     settings::SettingsMutation,
     backups::BackupsMutation,
 );

@@ -161,6 +161,7 @@ async fn insert_legs(
             confirmed: false,
             transfer_id: Some(id),
             recurrence_id,
+            one_off: false,
         };
         transactions::insert(conn, &record, now).await?;
     }

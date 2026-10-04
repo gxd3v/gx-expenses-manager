@@ -114,3 +114,14 @@ impl ReportsQuery {
         Ok(alerts.into_iter().map(Alert::from).collect())
     }
 }
+
+#[derive(Default)]
+pub struct ReportsMutation;
+
+#[Object]
+impl ReportsMutation {
+    async fn dismiss_alert(&self, ctx: &Context<'_>, key: String) -> Result<bool> {
+        module(ctx).alerts.dismiss(&key).await?;
+        Ok(true)
+    }
+}

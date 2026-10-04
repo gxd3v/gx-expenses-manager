@@ -39,6 +39,7 @@ pub struct Transaction {
     pub confirmed: bool,
     pub transfer_id: Option<Uuid>,
     pub recurrence_id: Option<Uuid>,
+    pub one_off: bool,
     pub created_at: DateTime<Utc>,
     pub counterpart_account_id: Option<Uuid>,
     pub counterpart_account_name: Option<String>,
@@ -65,6 +66,8 @@ pub struct TransactionInput {
     pub notes: Option<String>,
     #[graphql(default)]
     pub confirmed: bool,
+    #[graphql(default)]
+    pub one_off: bool,
 }
 
 #[derive(InputObject, Default)]

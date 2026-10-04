@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::dates::{add_months, month_end, month_start};
+use super::{Interest, net_interest};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -50,6 +53,7 @@ pub struct ForecastInput {
     pub balances: Vec<AccountBalance>,
     pub events: Vec<ForecastEvent>,
     pub averages: Vec<VariableAverage>,
+    pub interest: Vec<(Uuid, Interest)>,
 }
 
 #[derive(Debug, Clone)]
@@ -59,6 +63,7 @@ pub struct ForecastMonth {
     pub outcome: i64,
     pub variable_income: i64,
     pub variable_outcome: i64,
+    pub interest: i64,
     pub total: i64,
     pub balances: Vec<AccountBalance>,
 }
@@ -111,6 +116,7 @@ impl Adjustment {
 
 pub fn project(input: &ForecastInput) -> Vec<ForecastMonth> {
     let mut balances = input.balances.clone();
+    let mut accrued: HashMap<Uuid, f64> = HashMap::new();
     let start = month_start(input.today);
 
     (0..input.months as i32)
@@ -141,17 +147,38 @@ pub fn project(input: &ForecastInput) -> Vec<ForecastMonth> {
                 variable_outcome += avg_outcome;
             }
 
+            let mut interest = 0;
+            for (account_id, rule) in &input.interest {
+                let balance = balance_of(&balances, *account_id);
+                let pending = accrued.entry(*account_id).or_default();
+                *pending += rule.monthly_gross(balance);
+                if (offset + 1) % rule.period_months.max(1) as i32 == 0 {
+                    let paid = net_interest(*pending);
+                    *pending = 0.0;
+                    apply(&mut balances, *account_id, paid);
+                    interest += paid;
+                }
+            }
+
             ForecastMonth {
                 month,
-                income: income + variable_income,
+                income: income + variable_income + interest,
                 outcome: outcome + variable_outcome,
                 variable_income,
                 variable_outcome,
+                interest,
                 total: balances.iter().map(|b| b.balance).sum(),
                 balances: balances.clone(),
             }
         })
         .collect()
+}
+
+fn balance_of(balances: &[AccountBalance], account_id: Uuid) -> i64 {
+    balances
+        .iter()
+        .find(|b| b.account_id == account_id)
+        .map_or(0, |b| b.balance)
 }
 
 fn apply(balances: &mut [AccountBalance], account_id: Uuid, amount: i64) {
@@ -223,6 +250,7 @@ mod tests {
                 current_income: 0,
                 current_outcome: 20_000,
             }],
+            interest: Vec::new(),
         };
 
         let months = project(&input);
@@ -235,5 +263,37 @@ mod tests {
             months[2].balances[0].balance,
             290_000 - 110_000 - 10_000 - 30_000 - 10_000
         );
+    }
+
+    #[test]
+    fn interest_is_paid_net_at_the_end_of_each_period() {
+        let savings = Uuid::from_u128(3);
+        let input = ForecastInput {
+            today: date(2026, 1, 10),
+            months: 6,
+            balances: vec![AccountBalance {
+                account_id: savings,
+                balance: 1_200_000,
+            }],
+            events: Vec::new(),
+            averages: Vec::new(),
+            interest: vec![(
+                savings,
+                Interest {
+                    period_months: 3,
+                    tiers: vec![crate::models::InterestTier {
+                        min_balance: 0,
+                        rate: 1.25,
+                    }],
+                },
+            )],
+        };
+
+        let months = project(&input);
+        assert_eq!(months[0].interest, 0);
+        assert_eq!(months[2].interest, 2_700);
+        assert_eq!(months[2].income, 2_700);
+        assert_eq!(months[3].total, 1_202_700);
+        assert!(months[5].interest > 2_700);
     }
 }

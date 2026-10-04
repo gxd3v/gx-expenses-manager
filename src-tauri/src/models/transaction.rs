@@ -44,6 +44,7 @@ pub struct Transaction {
     pub confirmed: bool,
     pub transfer_id: Option<Uuid>,
     pub recurrence_id: Option<Uuid>,
+    pub one_off: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub counterpart_account_id: Option<Uuid>,
@@ -63,6 +64,7 @@ pub struct TransactionRecord {
     pub confirmed: bool,
     pub transfer_id: Option<Uuid>,
     pub recurrence_id: Option<Uuid>,
+    pub one_off: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -75,6 +77,7 @@ pub struct TransactionInput {
     pub description: String,
     pub notes: Option<String>,
     pub confirmed: bool,
+    pub one_off: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -112,6 +115,7 @@ impl TransactionRecord {
             confirmed: input.confirmed,
             transfer_id: None,
             recurrence_id: None,
+            one_off: input.one_off,
         }
     }
 }

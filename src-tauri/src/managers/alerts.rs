@@ -1,10 +1,11 @@
-use chrono::{Days, NaiveDate};
+use chrono::{Days, NaiveDate, Utc};
 
 use super::forecasts::{ForecastRequest, ForecastsManager};
 use super::recurrences::RecurrencesManager;
 use crate::errors::AppError;
 use crate::models::{AccountKind, EntryKind, Settings};
 use crate::repositories::accounts::AccountsRepository;
+use crate::repositories::alerts::AlertsRepository;
 use crate::repositories::goals::GoalsRepository;
 use crate::repositories::settings::SettingsRepository;
 
@@ -30,6 +31,7 @@ pub struct Alert {
 
 #[derive(Clone)]
 pub struct AlertsManager {
+    repository: AlertsRepository,
     settings: SettingsRepository,
     recurrences: RecurrencesManager,
     accounts: AccountsRepository,
@@ -39,6 +41,7 @@ pub struct AlertsManager {
 
 impl AlertsManager {
     pub fn new(
+        repository: AlertsRepository,
         settings: SettingsRepository,
         recurrences: RecurrencesManager,
         accounts: AccountsRepository,
@@ -46,6 +49,7 @@ impl AlertsManager {
         forecasts: ForecastsManager,
     ) -> Self {
         Self {
+            repository,
             settings,
             recurrences,
             accounts,
@@ -76,7 +80,13 @@ impl AlertsManager {
         if settings.notify_negative_forecast {
             alerts.extend(self.negative_forecast(today, &settings).await?);
         }
+        let dismissed = self.repository.dismissed().await?;
+        alerts.retain(|alert| !dismissed.contains(&alert.key));
         Ok(alerts)
+    }
+
+    pub async fn dismiss(&self, key: &str) -> Result<(), AppError> {
+        self.repository.dismiss(key, Utc::now()).await
     }
 
     async fn upcoming(

@@ -104,6 +104,7 @@ impl TransactionsRepository {
             .bind(&record.description)
             .bind(&record.notes)
             .bind(record.confirmed)
+            .bind(record.one_off)
             .bind(now)
             .execute(&self.pool)
             .await?;
@@ -153,6 +154,7 @@ pub async fn insert(
         .bind(record.confirmed)
         .bind(opt_id(record.transfer_id))
         .bind(opt_id(record.recurrence_id))
+        .bind(record.one_off)
         .bind(now)
         .execute(conn)
         .await?;

@@ -8,8 +8,8 @@ use crate::managers::forecasts::ForecastRequest;
 use crate::models::dates::{add_months, today};
 use crate::models::{
     Account, AccountInput, AccountKind, CreditInput, EntryKind, ForecastMethod, Frequency,
-    FrequencyUnit, RecurrenceInput, TransactionFilter, TransactionInput, TransactionKind,
-    TransferInput,
+    FrequencyUnit, Interest, InterestTier, RecurrenceInput, TransactionFilter, TransactionInput,
+    TransactionKind, TransferInput,
 };
 use crate::module::{AppContext, Module};
 
@@ -31,6 +31,7 @@ async fn account(module: &Module, name: &str, initial_balance: i64) -> Account {
         initial_balance,
         color: None,
         icon: None,
+        interest: None,
     };
     module.accounts.create(today(), input).await.unwrap()
 }
@@ -50,6 +51,7 @@ fn transaction(
         description: "Supermercado".into(),
         notes: None,
         confirmed: false,
+        one_off: false,
     }
 }
 
@@ -700,6 +702,134 @@ async fn variable_recurrences_wait_for_confirmation_and_endings_warn() {
             .unwrap()
             .is_empty()
     );
+}
+
+#[tokio::test]
+async fn one_off_movements_stay_out_of_averages() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = account(&module, "Principal", 0).await;
+    let last_month = add_months(today(), -1);
+    module
+        .transactions
+        .create(transaction(main.id, EntryKind::Outcome, 10_000, last_month))
+        .await
+        .unwrap();
+    let air_conditioning = TransactionInput {
+        one_off: true,
+        ..transaction(main.id, EntryKind::Outcome, 200_000, last_month)
+    };
+    let created = module.transactions.create(air_conditioning).await.unwrap();
+    assert!(created.one_off);
+
+    let summary = module
+        .reports
+        .month_summary(today(), today())
+        .await
+        .unwrap();
+    assert_eq!(summary.previous_outcome, 10_000);
+    assert_eq!(summary.categories[0].previous, 10_000);
+
+    let request = ForecastRequest {
+        months: 2,
+        method: ForecastMethod::History,
+        history_months: 1,
+        adjustments: Vec::new(),
+        recurrence_changes: Vec::new(),
+    };
+    let forecast = module.forecasts.forecast(today(), &request).await.unwrap();
+    assert_eq!(forecast.months[1].variable_outcome, 10_000);
+}
+
+#[tokio::test]
+async fn interest_accounts_round_trip_and_feed_forecasts() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let input = AccountInput {
+        name: "Fundo de emergência".into(),
+        kind: AccountKind::Savings,
+        currency: "EUR".into(),
+        initial_balance: 1_200_000,
+        color: None,
+        icon: None,
+        interest: Some(Interest {
+            period_months: 1,
+            tiers: vec![
+                InterestTier {
+                    min_balance: 0,
+                    rate: 1.0,
+                },
+                InterestTier {
+                    min_balance: 500_000,
+                    rate: 1.25,
+                },
+            ],
+        }),
+    };
+    let fund = module.accounts.create(today(), input).await.unwrap();
+    let interest = fund.interest.clone().unwrap();
+    assert_eq!(interest.tiers.len(), 2);
+    assert_eq!(interest.rate_for(fund.balance), 1.25);
+
+    let meal = AccountInput {
+        name: "Cartão refeição".into(),
+        kind: AccountKind::Meal,
+        interest: None,
+        ..AccountInput {
+            name: String::new(),
+            kind: AccountKind::Meal,
+            currency: "EUR".into(),
+            initial_balance: 0,
+            color: None,
+            icon: None,
+            interest: None,
+        }
+    };
+    let meal = module.accounts.create(today(), meal).await.unwrap();
+    assert_eq!(meal.kind, AccountKind::Meal);
+    assert!(meal.interest.is_none());
+
+    let request = ForecastRequest {
+        months: 1,
+        method: ForecastMethod::Recurring,
+        history_months: 6,
+        adjustments: Vec::new(),
+        recurrence_changes: Vec::new(),
+    };
+    let forecast = module.forecasts.forecast(today(), &request).await.unwrap();
+    assert_eq!(forecast.months[0].interest, 900);
+}
+
+#[tokio::test]
+async fn dismissed_alerts_stay_hidden() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = account(&module, "Principal", 0).await;
+    let rent = RecurrenceInput {
+        account_id: main.id,
+        category_id: None,
+        kind: EntryKind::Outcome,
+        amount: 50_000,
+        description: "Renda".into(),
+        start_date: today().checked_add_days(Days::new(1)).unwrap(),
+        end_date: None,
+        frequency: monthly(),
+        to_account_id: None,
+        variable_amount: false,
+    };
+    module.recurrences.create(rent).await.unwrap();
+
+    let alerts = module.alerts.alerts(today()).await.unwrap();
+    let key = alerts
+        .iter()
+        .find(|a| a.key.starts_with("occurrence:"))
+        .unwrap()
+        .key
+        .clone();
+    module.alerts.dismiss(&key).await.unwrap();
+    module.alerts.dismiss(&key).await.unwrap();
+    let alerts = module.alerts.alerts(today()).await.unwrap();
+    assert!(alerts.iter().all(|a| a.key != key));
 }
 
 async fn populated(module: &Module) -> Account {

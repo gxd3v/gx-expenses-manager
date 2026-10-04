@@ -1,4 +1,5 @@
 pub mod accounts;
+pub mod alerts;
 pub mod backups;
 pub mod categories;
 pub mod credits;

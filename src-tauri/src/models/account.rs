@@ -1,11 +1,14 @@
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
+use super::Interest;
+
 string_enum!(AccountKind {
     Bank => "bank",
     Savings => "savings",
     Card => "card",
     Cash => "cash",
+    Meal => "meal",
     Other => "other",
 });
 
@@ -24,6 +27,7 @@ pub struct Account {
     pub balance: i64,
     pub available_balance: i64,
     pub projected_balance: i64,
+    pub interest: Option<Interest>,
 }
 
 #[derive(Debug, Clone)]
@@ -34,4 +38,5 @@ pub struct AccountInput {
     pub initial_balance: i64,
     pub color: Option<String>,
     pub icon: Option<String>,
+    pub interest: Option<Interest>,
 }

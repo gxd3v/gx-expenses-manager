@@ -51,8 +51,21 @@ impl ReportsManager {
         to: NaiveDate,
         account_id: Option<Uuid>,
     ) -> Result<Vec<MonthlyTotal>, AppError> {
+        self.totals(from, to, account_id, false).await
+    }
+
+    async fn totals(
+        &self,
+        from: NaiveDate,
+        to: NaiveDate,
+        account_id: Option<Uuid>,
+        regular_only: bool,
+    ) -> Result<Vec<MonthlyTotal>, AppError> {
         let (from, to) = (month_start(from), month_end(to));
-        let totals = self.repository.monthly_totals(from, to, account_id).await?;
+        let totals = self
+            .repository
+            .monthly_totals(from, to, account_id, regular_only)
+            .await?;
         let by_month: HashMap<NaiveDate, &MonthlyTotal> =
             totals.iter().map(|t| (t.month, t)).collect();
 
@@ -253,10 +266,10 @@ impl ReportsManager {
         let previous = add_months(start, -1);
         let history_start = add_months(start, -HISTORY_MONTHS);
 
-        let totals = self.monthly_totals(history_start, end, None).await?;
+        let totals = self.totals(history_start, end, None, true).await?;
         let realized = self
             .repository
-            .monthly_totals(start, realized_end, None)
+            .monthly_totals(start, realized_end, None, false)
             .await?;
         let realized = realized.first().cloned().unwrap_or(MonthlyTotal {
             month: start,
@@ -371,10 +384,10 @@ fn compare_categories(
         match row_month {
             m if m == month => entry.current += row.amount,
             m if m == previous => {
-                entry.previous += row.amount;
-                entry.average += row.amount;
+                entry.previous += row.regular;
+                entry.average += row.regular;
             }
-            _ => entry.average += row.amount,
+            _ => entry.average += row.regular,
         }
     }
 

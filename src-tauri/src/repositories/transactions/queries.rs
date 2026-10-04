@@ -2,7 +2,7 @@ macro_rules! select {
     () => {
         "SELECT t.id, t.account_id, a.name AS account_name, a.currency, t.category_id, \
          CASE WHEN p.name IS NULL THEN c.name ELSE p.name || ' / ' || c.name END AS category_name, \
-         t.kind, t.amount, t.date, t.description, t.notes, t.confirmed, t.transfer_id, t.recurrence_id, t.created_at, t.updated_at, \
+         t.kind, t.amount, t.date, t.description, t.notes, t.confirmed, t.transfer_id, t.recurrence_id, t.one_off, t.created_at, t.updated_at, \
          ca.id AS counterpart_account_id, ca.name AS counterpart_account_name \
          FROM transactions t \
          JOIN accounts a ON a.id = t.account_id \
@@ -36,11 +36,11 @@ pub const TOTALS: &str = "SELECT COUNT(*) AS total_count, \
 pub const ORDER: &str = " ORDER BY t.date DESC, t.created_at DESC";
 
 pub const INSERT: &str = "INSERT INTO transactions \
-     (id, account_id, category_id, kind, amount, date, description, notes, confirmed, transfer_id, recurrence_id, created_at, updated_at) \
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?12)";
+     (id, account_id, category_id, kind, amount, date, description, notes, confirmed, transfer_id, recurrence_id, one_off, created_at, updated_at) \
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?13)";
 
 pub const UPDATE: &str = "UPDATE transactions \
-     SET account_id = ?2, category_id = ?3, kind = ?4, amount = ?5, date = ?6, description = ?7, notes = ?8, confirmed = ?9, updated_at = ?10 \
+     SET account_id = ?2, category_id = ?3, kind = ?4, amount = ?5, date = ?6, description = ?7, notes = ?8, confirmed = ?9, one_off = ?10, updated_at = ?11 \
      WHERE id = ?1 AND transfer_id IS NULL";
 
 pub const DELETE: &str = "DELETE FROM transactions WHERE id = ?1";

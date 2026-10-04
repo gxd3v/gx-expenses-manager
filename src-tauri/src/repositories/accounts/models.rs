@@ -4,7 +4,7 @@ use uuid::Uuid;
 use uuid::fmt::Hyphenated;
 
 use crate::errors::AppError;
-use crate::models::Account;
+use crate::models::{Account, Interest};
 
 #[derive(Debug, FromRow)]
 pub struct AccountRow {
@@ -18,6 +18,7 @@ pub struct AccountRow {
     pub archived_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub interest_period_months: Option<u32>,
     pub balance: i64,
     pub available_balance: i64,
     pub projected_balance: i64,
@@ -41,6 +42,17 @@ impl TryFrom<AccountRow> for Account {
             balance: row.balance,
             available_balance: row.available_balance,
             projected_balance: row.projected_balance,
+            interest: row.interest_period_months.map(|period_months| Interest {
+                period_months,
+                tiers: Vec::new(),
+            }),
         })
     }
+}
+
+#[derive(Debug, FromRow)]
+pub struct TierRow {
+    pub account_id: Hyphenated,
+    pub min_balance: i64,
+    pub rate: f64,
 }

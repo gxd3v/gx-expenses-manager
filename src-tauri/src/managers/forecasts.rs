@@ -86,10 +86,12 @@ impl ForecastsManager {
         }
 
         let end = month_end(add_months(month_start(today), request.months as i32 - 1));
-        let balances = self
-            .accounts
-            .list(today, false)
-            .await?
+        let accounts = self.accounts.list(today, false).await?;
+        let interest = accounts
+            .iter()
+            .filter_map(|a| Some((a.id, a.interest.clone()?)))
+            .collect();
+        let balances = accounts
             .into_iter()
             .map(|a| AccountBalance {
                 account_id: a.id,
@@ -115,6 +117,7 @@ impl ForecastsManager {
             balances,
             events,
             averages,
+            interest,
         });
         Ok(Forecast {
             goals_reached: self.goals_reached(today, &months).await?,

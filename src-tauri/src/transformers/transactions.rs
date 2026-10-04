@@ -19,6 +19,7 @@ impl From<models::Transaction> for types::Transaction {
             confirmed: transaction.confirmed,
             transfer_id: transaction.transfer_id,
             recurrence_id: transaction.recurrence_id,
+            one_off: transaction.one_off,
             created_at: transaction.created_at,
             counterpart_account_id: transaction.counterpart_account_id,
             counterpart_account_name: transaction.counterpart_account_name,
@@ -49,6 +50,7 @@ impl From<types::TransactionInput> for models::TransactionInput {
             description: input.description,
             notes: input.notes,
             confirmed: input.confirmed,
+            one_off: input.one_off,
         }
     }
 }

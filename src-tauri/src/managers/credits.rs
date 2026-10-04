@@ -241,6 +241,7 @@ impl CreditsManager {
             confirmed: false,
             transfer_id: None,
             recurrence_id: None,
+            one_off: false,
         })
     }
 
