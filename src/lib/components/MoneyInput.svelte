@@ -15,7 +15,8 @@
 		if (toCents(text) !== value) text = fromCents(value);
 	});
 
-	function input() {
+	function input(event: Event & { currentTarget: HTMLInputElement }) {
+		text = event.currentTarget.value;
 		const cents = toCents(text);
 		invalid = text.trim() !== '' && cents === null;
 		value = cents;
@@ -24,7 +25,7 @@
 
 <input
 	{id}
-	bind:value={text}
+	value={text}
 	oninput={input}
 	inputmode="decimal"
 	{placeholder}
