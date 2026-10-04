@@ -29,6 +29,7 @@
 			description: '',
 			notes: null,
 			confirmed: false,
+			oneOff: false,
 			...initial
 		};
 	}

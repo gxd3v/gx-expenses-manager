@@ -1,6 +1,9 @@
 import { gql } from '../graphql.ts';
 
-export type AccountKind = 'BANK' | 'SAVINGS' | 'CARD' | 'CASH' | 'OTHER';
+export type AccountKind = 'BANK' | 'SAVINGS' | 'CARD' | 'CASH' | 'MEAL' | 'OTHER';
+
+export type InterestTier = { minBalance: number; rate: number };
+export type Interest = { periodMonths: number; tiers: InterestTier[] };
 
 export type Account = {
 	id: string;
@@ -14,19 +17,25 @@ export type Account = {
 	balance: number;
 	availableBalance: number;
 	projectedBalance: number;
+	interest: Interest | null;
+	interestRate: number | null;
+	estimatedInterest: number | null;
 };
 
-export type AccountInput = Pick<Account, 'name' | 'kind' | 'currency' | 'initialBalance' | 'color' | 'icon'>;
+export type AccountInput = Pick<Account, 'name' | 'kind' | 'currency' | 'initialBalance' | 'color' | 'icon' | 'interest'>;
+
+export const interestPeriods: Record<number, string> = { 1: 'Mensal', 3: 'Trimestral', 6: 'Semestral', 12: 'Anual' };
 
 export const accountKinds: Record<AccountKind, string> = {
 	BANK: 'Conta bancária',
 	SAVINGS: 'Poupança',
 	CARD: 'Cartão',
 	CASH: 'Dinheiro físico',
+	MEAL: 'Cartão refeição',
 	OTHER: 'Outro'
 };
 
-const fields = 'id name kind currency initialBalance color icon archivedAt balance availableBalance projectedBalance';
+const fields = 'id name kind currency initialBalance color icon archivedAt balance availableBalance projectedBalance interest { periodMonths tiers { minBalance rate } } interestRate estimatedInterest';
 
 export async function listAccounts(includeArchived = false): Promise<Account[]> {
 	const data = await gql<{ accounts: Account[] }>(

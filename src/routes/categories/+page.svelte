@@ -13,6 +13,7 @@
 	import Modal from '#lib/components/Modal.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import States from '#lib/components/States.svelte';
+	import TransactionsModal from '#lib/components/TransactionsModal.svelte';
 	import Toggle from '#lib/components/Toggle.svelte';
 	import { confirmAction } from '#lib/dialogs.ts';
 	import { errorMessage } from '#lib/graphql.ts';
@@ -20,6 +21,7 @@
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 
 	let showArchived = $state(false);
+	let viewing = $state<Category | null>(null);
 	let categories = $state<Category[]>([]);
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let loadError = $state<unknown>(null);
@@ -95,7 +97,9 @@
 {#snippet row(category: Category, nested: boolean)}
 	<li class="flex flex-wrap items-center gap-3 py-2 {nested ? 'pl-8' : ''}" class:opacity-60={category.archivedAt}>
 		<span class="size-3 rounded-full" style:background-color={category.color ?? 'transparent'}></span>
-		<span class="flex-1 {nested ? '' : 'font-medium'}">{category.icon ?? ''} {category.name}</span>
+		<button class="flex-1 text-left hover:underline {nested ? '' : 'font-medium'}" onclick={() => (viewing = category)}>
+			{category.icon ?? ''} {category.name}
+		</button>
 		<span class="badge">{categoryKinds[category.kind]}</span>
 		<span class="w-24 text-right text-xs text-stone-500">{category.transactionCount} movimentos</span>
 		<div class="flex flex-wrap">
@@ -194,4 +198,8 @@
 			</div>
 		</div>
 	</Modal>
+{/if}
+
+{#if viewing}
+	<TransactionsModal title={viewing.name} filter={{ categoryId: viewing.id }} onclose={() => (viewing = null)} />
 {/if}

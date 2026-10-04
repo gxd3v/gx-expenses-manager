@@ -104,6 +104,10 @@ export async function monthSummary(month: string): Promise<MonthSummary> {
 	return data.monthSummary;
 }
 
+export async function dismissAlert(key: string): Promise<void> {
+	await gql(`mutation ($key: String!) { dismissAlert(key: $key) }`, { key });
+}
+
 export async function listAlerts(): Promise<Alert[]> {
 	const data = await gql<{ alerts: Alert[] }>(`{ alerts { key kind title message date } }`);
 	return data.alerts;

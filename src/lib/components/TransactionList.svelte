@@ -72,6 +72,25 @@
 		});
 	});
 
+	let filtersOpen = $state(false);
+	const activeFilters = $derived(
+		Object.entries(filter).filter(([key, value]) => value !== null && value !== undefined && value !== '' && !(key === 'accountId' && fixedAccountId))
+			.length
+	);
+	const categoryOptions = $derived(
+		refs.categories
+			.filter((c) => !c.parentId)
+			.flatMap((parent) => [
+				{ id: parent.id, label: parent.name },
+				...refs.categories.filter((c) => c.parentId === parent.id).map((child) => ({ id: child.id, label: `${parent.name} / ${child.name}` }))
+			])
+	);
+
+	function headerFilter(key: 'categoryId' | 'accountId', value: string) {
+		filter[key] = value || null;
+		load();
+	}
+
 	function clearFilters() {
 		filter = { accountId: fixedAccountId };
 		load();
@@ -164,11 +183,16 @@
 	const allSelected = $derived(items.length > 0 && selected.length === items.length);
 </script>
 
+<form class="mb-3 flex flex-wrap items-center gap-2" onsubmit={(e) => (e.preventDefault(), load())}>
+	<input bind:value={filter.search} class="input max-w-sm" placeholder="Pesquisar descrição ou notas" aria-label="Pesquisa" />
+	<button type="button" class="btn-secondary" onclick={() => (filtersOpen = !filtersOpen)} aria-expanded={filtersOpen}>
+		{filtersOpen ? '▾' : '▸'} Filtros{activeFilters ? ` (${activeFilters})` : ''}
+	</button>
+	{#if activeFilters}<button type="button" class="btn-ghost" onclick={clearFilters}>Limpar</button>{/if}
+</form>
+
+{#if filtersOpen}
 <form class="card mb-4 grid grid-cols-2 gap-3 md:grid-cols-4" onsubmit={(e) => (e.preventDefault(), load())}>
-	<label class="label col-span-2">
-		Pesquisa
-		<input bind:value={filter.search} class="input" placeholder="Descrição ou notas" />
-	</label>
 	{#if !fixedAccountId}
 		<label class="label">
 			Conta
@@ -238,6 +262,7 @@
 		<button type="button" class="btn-secondary ml-auto" onclick={exportFiltered}>Exportar CSV</button>
 	</div>
 </form>
+{/if}
 
 <div class="mb-4 flex flex-wrap items-center gap-6 text-sm">
 	<span><span class="muted">Movimentos:</span> {totals.totalCount}</span>
@@ -270,8 +295,34 @@
 					</th>
 					<th>Data</th>
 					<th>Descrição</th>
-					<th>Categoria</th>
-					{#if !fixedAccountId}<th>Conta</th>{/if}
+					<th>
+						<select
+							class="header-filter"
+							value={filter.categoryId ?? ''}
+							onchange={(e) => headerFilter('categoryId', e.currentTarget.value)}
+							aria-label="Filtrar por categoria"
+						>
+							<option value="">Categoria</option>
+							{#each categoryOptions as option (option.id)}
+								<option value={option.id}>{option.label}</option>
+							{/each}
+						</select>
+					</th>
+					{#if !fixedAccountId}
+						<th>
+							<select
+								class="header-filter"
+								value={filter.accountId ?? ''}
+								onchange={(e) => headerFilter('accountId', e.currentTarget.value)}
+								aria-label="Filtrar por conta"
+							>
+								<option value="">Conta</option>
+								{#each refs.accounts as account (account.id)}
+									<option value={account.id}>{account.name}</option>
+								{/each}
+							</select>
+						</th>
+					{/if}
 					<th class="text-right">Valor</th>
 					<th class="text-center">Confirmado</th>
 					<th></th>
@@ -290,6 +341,7 @@
 								>
 							{/if}
 							{#if transaction.recurrenceId}<span class="badge ml-1">Recorrente</span>{/if}
+							{#if transaction.oneOff}<span class="badge ml-1">Pontual</span>{/if}
 							{#if transaction.date > today()}<span class="badge ml-1">Futuro</span>{/if}
 						</td>
 						<td class="text-stone-500">{transaction.categoryName ?? '—'}</td>

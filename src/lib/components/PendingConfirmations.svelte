@@ -41,7 +41,8 @@
 				date: transaction.date,
 				description: transaction.description,
 				notes: transaction.notes,
-				confirmed: true
+				confirmed: true,
+				oneOff: transaction.oneOff
 			});
 			editing = null;
 			notify('Valor atualizado');

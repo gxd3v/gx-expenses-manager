@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { accountKinds, getAccount } from '#lib/api/accounts.ts';
+	import { accountKinds, getAccount, interestPeriods } from '#lib/api/accounts.ts';
 	import { balanceHistory, monthlyTotals } from '#lib/api/reports.ts';
 	import BarChart from '#lib/charts/BarChart.svelte';
 	import LineChart from '#lib/charts/LineChart.svelte';
@@ -50,6 +50,22 @@
 		<StatCard label="Saldo disponível" value={formatMoney(account.availableBalance, account.currency)} hint="Depois das despesas futuras registadas" />
 		<StatCard label="Saldo projetado" value={formatMoney(account.projectedBalance, account.currency)} hint="Com todos os movimentos futuros" />
 	</div>
+
+	{#if account.interest}
+		<div class="mb-6 grid gap-4 md:grid-cols-3">
+			<StatCard plain label="Taxa atual (TANB)" value="{(account.interestRate ?? 0).toLocaleString('pt-PT')}%" />
+			<StatCard
+				label="Juros por vencimento"
+				value={formatMoney(account.estimatedInterest ?? 0, account.currency)}
+				hint="{interestPeriods[account.interest.periodMonths] ?? `A cada ${account.interest.periodMonths} meses`} · líquido, ao saldo atual"
+			/>
+			<StatCard
+				label="Juros num ano"
+				value={formatMoney(Math.round(((account.estimatedInterest ?? 0) * 12) / account.interest.periodMonths), account.currency)}
+				hint="Estimativa ao saldo atual"
+			/>
+		</div>
+	{/if}
 
 	<div class="mb-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
 		<section class="card">

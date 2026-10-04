@@ -90,6 +90,9 @@
 	<div class="col-span-2">
 		<Toggle bind:checked={form.confirmed} label="Confirmado no banco" />
 	</div>
+	<div class="col-span-2">
+		<Toggle bind:checked={form.oneOff} label="Pontual — não entra nas médias nem nas previsões" />
+	</div>
 
 	{#if error}
 		<p class="col-span-2 text-sm text-red-600" role="alert">{error}</p>

@@ -28,6 +28,7 @@ export type ForecastMonth = {
 	fixedOutcome: number;
 	variableIncome: number;
 	variableOutcome: number;
+	interest: number;
 	total: number;
 	balances: { accountId: string; balance: number }[];
 };
@@ -44,7 +45,7 @@ export type Forecast = {
 };
 
 const forecastFields = `totalIncome totalOutcome totalNet
-	months { month income outcome net fixedIncome fixedOutcome variableIncome variableOutcome total balances { accountId balance } }
+	months { month income outcome net fixedIncome fixedOutcome variableIncome variableOutcome interest total balances { accountId balance } }
 	goalsReached { id name date }
 	creditsPaid { id name date }`;
 

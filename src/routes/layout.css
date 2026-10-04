@@ -124,6 +124,13 @@
 	@apply inline-flex h-full w-11 items-center justify-center text-stone-600 transition-colors hover:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800;
 }
 
+@utility header-filter {
+	@apply cursor-pointer rounded border-none bg-transparent py-0 pr-7 pl-0 text-xs font-medium tracking-wide text-stone-500 uppercase focus:ring-2 focus:ring-indigo-500/30 dark:text-stone-400;
+	& option {
+		@apply bg-white text-sm text-stone-900 normal-case dark:bg-stone-900 dark:text-stone-100;
+	}
+}
+
 @utility input {
 	@apply w-full rounded-md border-stone-300 bg-white text-sm dark:border-stone-700 dark:bg-stone-900;
 }

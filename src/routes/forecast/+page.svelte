@@ -194,6 +194,7 @@
 					<th class="text-right">Receitas</th>
 					<th class="text-right">Despesas fixas</th>
 					<th class="text-right">Despesas variáveis</th>
+					{#if base.months.some((m) => m.interest)}<th class="text-right">Juros</th>{/if}
 					<th class="text-right">Resultado</th>
 					<th class="text-right">Saldo total</th>
 				</tr>
@@ -205,6 +206,7 @@
 						<td class="text-right tabular-nums"><Money value={month.income} /></td>
 						<td class="text-right tabular-nums"><Money value={month.fixedOutcome} /></td>
 						<td class="text-right tabular-nums"><Money value={month.variableOutcome} /></td>
+						{#if base.months.some((m) => m.interest)}<td class="text-right tabular-nums"><Money value={month.interest} /></td>{/if}
 						<td class="text-right"><Amount value={month.net} /></td>
 						<td class="text-right tabular-nums"><Money value={month.total} /></td>
 					</tr>
