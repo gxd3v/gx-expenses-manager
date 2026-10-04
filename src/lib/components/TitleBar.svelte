@@ -3,6 +3,8 @@
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import PrivacyToggle from './PrivacyToggle.svelte';
 
+	let { onlock }: { onlock?: () => void } = $props();
+
 	const appWindow = getCurrentWindow();
 
 	let maximized = $state(false);
@@ -31,6 +33,14 @@
 
 	<div class="flex h-full">
 		<PrivacyToggle compact />
+		{#if onlock}
+			<button class="titlebar-button" onclick={onlock} aria-label="Bloquear (Ctrl+L)" title="Bloquear (Ctrl+L)">
+				<svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+					<rect x="5" y="11" width="14" height="10" rx="2" />
+					<path d="M8 11V7a4 4 0 0 1 8 0v4" />
+				</svg>
+			</button>
+		{/if}
 		<button class="titlebar-button" onclick={() => appWindow.minimize()} aria-label="Minimizar" title="Minimizar">
 			<svg viewBox="0 0 10 10" class="size-2.5" aria-hidden="true"><path d="M0 5h10" stroke="currentColor" stroke-width="1" /></svg>
 		</button>

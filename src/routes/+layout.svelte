@@ -143,7 +143,7 @@
 
 <div class="flex h-screen flex-col">
 {#if isTauri}
-	<TitleBar />
+	<TitleBar onlock={ready ? handleLock : undefined} />
 {/if}
 <div class="relative min-h-0 flex-1">
 {#if session && !session.unlocked}
@@ -163,6 +163,12 @@
 			<span class="font-semibold">Expenses Manager</span>
 			<div class="flex items-center gap-1">
 				<PrivacyToggle />
+				<button class="btn-ghost" onclick={handleLock} aria-label="Bloquear" title="Bloquear">
+					<svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+						<rect x="5" y="11" width="14" height="10" rx="2" />
+						<path d="M8 11V7a4 4 0 0 1 8 0v4" />
+					</svg>
+				</button>
 				<button class="btn-primary" onclick={() => openQuickAdd()} aria-label="Adicionar">+</button>
 			</div>
 		</header>
@@ -197,8 +203,7 @@
 					{/if}
 				</a>
 			{/each}
-			<button onclick={handleLock} class="btn-secondary mt-auto" title="Atalho: Ctrl L">Bloquear</button>
-			{#if version}<p class="px-3 pt-2 text-xs text-stone-400 dark:text-stone-500">v{version}</p>{/if}
+			{#if version}<p class="mt-auto px-3 pt-2 text-xs text-stone-400 dark:text-stone-500">v{version}</p>{/if}
 		</nav>
 		<main class="flex-1 overflow-y-auto p-4 md:p-8">
 			<UpdateBanner />

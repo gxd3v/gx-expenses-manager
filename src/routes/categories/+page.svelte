@@ -10,6 +10,7 @@
 		type Category,
 		type CategoryInput
 	} from '#lib/api/categories.ts';
+	import IconPicker from '#lib/components/IconPicker.svelte';
 	import Modal from '#lib/components/Modal.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import States from '#lib/components/States.svelte';
@@ -163,10 +164,10 @@
 				Cor
 				<input type="color" value={editing.form.color ?? '#2a78d6'} oninput={(e) => editing && (editing.form.color = e.currentTarget.value)} class="h-9 w-full rounded-md" />
 			</label>
-			<label class="label">
+			<div class="label">
 				Ícone
-				<input bind:value={editing.form.icon} maxlength="2" class="input text-center" placeholder="🛒" />
-			</label>
+				<IconPicker bind:value={editing.form.icon} />
+			</div>
 			{#if formError}<p class="col-span-2 text-sm text-red-600" role="alert">{formError}</p>{/if}
 			<div class="col-span-2 flex justify-end gap-2">
 				<button type="button" class="btn-secondary" onclick={() => (editing = null)}>Cancelar</button>

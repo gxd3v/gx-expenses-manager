@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { accountKinds, interestPeriods, saveAccount, type Account } from '#lib/api/accounts.ts';
+	import IconPicker from '#lib/components/IconPicker.svelte';
 	import MoneyInput from '#lib/components/MoneyInput.svelte';
 	import Toggle from '#lib/components/Toggle.svelte';
 	import { errorMessage } from '#lib/graphql.ts';
@@ -86,10 +87,10 @@
 			Cor
 			<input type="color" bind:value={form.color} class="h-9 w-full rounded-md" />
 		</label>
-		<label class="label">
+		<div class="label">
 			Ícone
-			<input bind:value={form.icon} maxlength="2" class="input text-center" placeholder="🏦" />
-		</label>
+			<IconPicker bind:value={form.icon} />
+		</div>
 	</div>
 
 	<div class="col-span-2">
