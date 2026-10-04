@@ -22,6 +22,7 @@ Thumbs.db
 .claude
 CLAUDE.md
 *.md
+!README.md
 docs
 plans
 specs
