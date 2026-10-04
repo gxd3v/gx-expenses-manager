@@ -1,89 +1,88 @@
 # Expenses Manager
 
-A personal finance app for your desktop. It keeps track of where your money goes and shows you where it's heading. It runs entirely on your own computer.
+Aplicação de finanças pessoais para computador. Regista para onde vai o dinheiro e mostra para onde caminha o saldo. Funciona inteiramente no próprio computador.
 
-No account, no cloud, no subscription. Your data is one encrypted file, and only your password opens it.
+Sem conta, sem cloud, sem subscrição. Os dados ficam num único ficheiro encriptado, que só a password abre.
 
-## What it does
+## Funcionalidades
 
-- **Accounts and transactions.** Track checking, savings, cash and cards. Record income, expenses and transfers between accounts, and organise them with categories and subcategories.
-- **Recurring payments.** Add salary, rent, subscriptions and anything else that repeats. You can skip a single occurrence or change one, and confirmed payments turn into real transactions.
-- **Loans and credits.** Get amortization tables and see how each payment splits into principal and interest. You can also simulate early repayments.
-- **Goals.** Set savings targets and follow your progress.
-- **Forecasts.** See where your balance will be in the coming months, with fixed and variable spending kept apart. "What if" scenarios let you test changes before you make them.
-- **Monthly view and charts.** Compare what you planned with what actually happened. Charts break down spending by category, income against expenses, and net worth over time.
-- **Day-to-day tools.**
-  - Reconciliation
+- **Contas e movimentos.** Contas à ordem, poupança, cartões, cartão refeição e dinheiro físico. Receitas, despesas e transferências entre contas, organizadas por categorias e subcategorias.
+- **Recorrências.** Salário, renda, subscrições e transferências periódicas. Cada ocorrência pode ser saltada ou alterada, e os valores variáveis ficam a aguardar confirmação.
+- **Créditos.** Plano de amortização, divisão de cada prestação em capital e juros, e simulação de amortizações antecipadas.
+- **Contas com juros.** Taxa fixa ou por escalões e periodicidade do vencimento, com os juros líquidos incluídos nas previsões.
+- **Objetivos.** Metas de poupança com acompanhamento do progresso.
+- **Previsões.** Saldo previsto para os próximos meses, com gastos fixos e variáveis separados e cenários hipotéticos. Movimentos pontuais ficam fora das médias.
+- **Vista mensal e gráficos.** Comparação entre o previsto e o realizado, gastos por categoria, receitas contra despesas, evolução do património e máximos e mínimos de saldo.
+- **Ferramentas do dia a dia.**
+  - Reconciliação
   - Templates
-  - Quick add (`N`)
-  - Global search (`Ctrl+K`)
-  - Saved filters
-  - CSV export
-- **Alerts.** Get notified about upcoming payments, low balances and a negative forecast.
-- **Privacy.**
-  - Lock the app with `Ctrl+L`, or let it lock itself when idle.
-  - Hide every amount on screen with `Ctrl+H`, handy when someone is looking over your shoulder.
-- **Backups.** Automatic backups run in the background. You can also export a file and import it on another machine, with optional encryption.
-- **Light and dark themes.**
+  - Adição rápida (`N`)
+  - Pesquisa global (`Ctrl+K`)
+  - Filtros guardados
+  - Exportação CSV
+- **Avisos.** Pagamentos próximos, agendamentos a terminar, saldo baixo e previsão negativa.
+- **Privacidade.**
+  - Bloqueio com `Ctrl+L` ou automático por inatividade.
+  - Ocultação de todos os valores no ecrã com `Ctrl+H`.
+- **Backups.** Backups automáticos e exportação para outro computador, com encriptação opcional.
+- **Tema claro e escuro.**
 
-## Offline by design
+## Funcionamento offline
 
-Your data never leaves your computer.
+Os dados nunca saem do computador.
 
-- **No data goes out.** The interface talks to the backend inside the same process. The app opens no ports and runs no local web server.
-- **The page can't reach the internet.** The window's content security policy only allows that in-process channel.
-- **No telemetry.** There are no analytics and no crash reporting.
-- **Your data stays local.** Everything lives in one SQLite database on your disk, encrypted with SQLCipher (AES-256).
+- **Nenhum dado é enviado.** A interface comunica com o backend dentro do mesmo processo. A aplicação não abre portas nem corre um servidor web local.
+- **A interface não acede à internet.** A política de segurança de conteúdo da janela só permite esse canal interno.
+- **Sem telemetria.** Não há estatísticas de utilização nem relatórios de erros.
+- **Dados locais.** Tudo fica numa base de dados SQLite no disco, encriptada com SQLCipher (AES-256).
 
-There is exactly one network request: the **update check**. While the app is unlocked, it downloads a small public file (`latest.json`) from this repository's GitHub releases to see whether a newer version exists. It sends nothing about you or your finances. You can turn it off in **Definições → Atualizações**, and then the app makes no network requests at all.
+Existe um único pedido de rede: a **verificação de atualizações**. Com a aplicação desbloqueada, é descarregado um pequeno ficheiro público (`latest.json`) das releases deste repositório para saber se existe uma versão nova. Nenhuma informação pessoal ou financeira é enviada. A verificação pode ser desligada em **Definições → Atualizações**, e a partir daí a aplicação não faz qualquer pedido de rede.
 
-The installer may also download the Microsoft WebView2 runtime if your Windows doesn't have it yet. Windows 10 (recent updates) and Windows 11 already include it.
+O instalador pode ainda descarregar o Microsoft WebView2, caso não esteja instalado. O Windows 11 e o Windows 10 atualizado já o incluem.
 
-### About your password
+### Password
 
-Your password is never stored anywhere. The app turns it into the key that encrypts the database, and keeps it only in memory while the app is unlocked.
+A password não é guardada em lado nenhum. A aplicação deriva dela a chave que encripta a base de dados e mantém-na apenas em memória enquanto está desbloqueada.
 
-**If you forget your password, your data cannot be recovered.** Nobody can reset it, because there is nobody to ask. Choose a password you'll remember, and keep a backup.
+**Sem a password, os dados não podem ser recuperados.** Não existe forma de a repor. Recomenda-se guardá-la num gestor de passwords e manter backups.
 
-## Installation (Windows)
+## Instalação (Windows)
 
-1. Download the installer from the [Releases](https://github.com/gxd3v/gx-expenses-manager/releases) page:
-   - `Expenses Manager_x.y.z_x64-setup.exe` (recommended). It installs for your user only and doesn't need admin rights.
-   - `Expenses Manager_x.y.z_x64_en-US.msi` is available if you prefer an MSI.
-2. Run it. The installer isn't code-signed, so Windows SmartScreen may warn you. Click **More info → Run anyway**.
-3. Open **Expenses Manager** from the Start menu.
-4. On first launch, create your password (at least 8 characters). That's it.
+1. Descarregar o instalador da página de [Releases](https://github.com/gxd3v/gx-expenses-manager/releases): `ExpensesManager_x.y.z_x64-setup.exe`. Instala apenas para o utilizador atual e não precisa de permissões de administrador.
+2. Executar o instalador. Não tem assinatura de código, por isso o Windows SmartScreen pode mostrar um aviso: **Mais informações → Executar mesmo assim**.
+3. Abrir o **Expenses Manager** a partir do menu Iniciar.
+4. No primeiro arranque, definir a password (mínimo de 8 caracteres).
 
-### Updating
+### Atualizações
 
-When a new version is out, a bar appears at the top of the app. Click **Ver novidades** to read the release notes, then **Atualizar agora**. The app downloads the installer, checks its signature, installs it and restarts. Your data is kept, and the database is backed up automatically before any upgrade that changes its structure.
+Quando existe uma versão nova, aparece uma barra no topo da aplicação. **Ver novidades** mostra as notas da versão e **Atualizar agora** descarrega o instalador, verifica a assinatura, instala e reabre a aplicação. Os dados mantêm-se, e a base de dados é copiada automaticamente antes de qualquer atualização que altere a sua estrutura.
 
-You can also update by hand: run the newer installer over the existing installation.
+Também é possível atualizar manualmente, executando o instalador mais recente sobre a instalação existente.
 
-### Uninstalling
+### Desinstalação
 
-Use **Settings → Apps → Expenses Manager → Uninstall**. Your data is **kept** by default, so reinstalling picks up where you left off.
+Em **Definições do Windows → Aplicações → Expenses Manager → Desinstalar**. Os dados são **mantidos** por omissão, pelo que uma reinstalação retoma o estado anterior.
 
-To wipe everything, tick **"Delete the application data"** in the uninstaller.
+Para apagar tudo, basta marcar no desinstalador a opção de eliminar os dados da aplicação.
 
-### Where your data lives
+### Localização dos dados
 
-| What | Where |
+| O quê | Onde |
 |---|---|
-| Database | `%APPDATA%\com.gxd3v.expenses\expenses.db` |
-| Backups (default) | `%APPDATA%\com.gxd3v.expenses\backups\` |
-| Logs (errors only, no amounts) | `%LOCALAPPDATA%\com.gxd3v.expenses\logs\` |
+| Base de dados | `%APPDATA%\com.gxd3v.expenses\expenses.db` |
+| Backups (por omissão) | `%APPDATA%\com.gxd3v.expenses\backups\` |
+| Registos (apenas erros, sem valores) | `%LOCALAPPDATA%\com.gxd3v.expenses\logs\` |
 
-You can change the backup folder in Settings. A folder you sync yourself is fine, because the backup files are encrypted too.
+A pasta dos backups pode ser alterada nas Definições. Uma pasta sincronizada com a cloud é segura, porque os backups também estão encriptados.
 
-## Building from source
+## Compilar a partir do código
 
-You'll need:
+Requisitos:
 
 - Windows 10/11
-- [Node.js](https://nodejs.org) 22.17 or newer
-- [Rust](https://rustup.rs) (MSVC toolchain) and the Visual Studio C++ Build Tools
-- [Strawberry Perl](https://strawberryperl.com). The build compiles OpenSSL for SQLCipher, and the Perl that ships with Git doesn't work.
+- [Node.js](https://nodejs.org) 22.17 ou superior
+- [Rust](https://rustup.rs) (toolchain MSVC) e Visual Studio C++ Build Tools
+- [Strawberry Perl](https://strawberryperl.com). A compilação gera o OpenSSL usado pelo SQLCipher, e o Perl incluído no Git não serve.
 
 ```bash
 git clone https://github.com/gxd3v/gx-expenses-manager.git
@@ -92,17 +91,17 @@ npm install
 npm run tauri build
 ```
 
-The installers end up in `src-tauri/target/release/bundle/` (`nsis/` and `msi/`).
+Os instaladores ficam em `src-tauri/target/release/bundle/` (`nsis/` e `msi/`).
 
-> If the OpenSSL step fails with path-length errors, point Cargo to a shorter target directory, for example `CARGO_TARGET_DIR=C:\cx`.
+> Se a compilação do OpenSSL falhar por caminhos demasiado longos, basta apontar o Cargo para uma pasta mais curta, por exemplo `CARGO_TARGET_DIR=C:\cx`.
 
-### Development
+### Desenvolvimento
 
 ```bash
-npm run tauri dev                 # run the app with hot reload (uses a separate dev database)
-cd src-tauri && cargo test        # backend tests
+npm run tauri dev                 # aplicação com recarregamento automático (base de dados de desenvolvimento separada)
+cd src-tauri && cargo test        # testes do backend
 ```
 
-## Built with
+## Tecnologias
 
 [Tauri 2](https://tauri.app) · Rust · [Svelte 5](https://svelte.dev) · Tailwind CSS 4 · GraphQL ([async-graphql](https://github.com/async-graphql/async-graphql)) · SQLite + [SQLCipher](https://www.zetetic.net/sqlcipher/)
