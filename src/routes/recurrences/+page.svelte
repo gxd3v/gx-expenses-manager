@@ -125,7 +125,9 @@
 										>Transferência → {recurrence.toAccountName}</a
 									>
 								{:else}
-									<p class="text-xs text-stone-500">{recurrence.categoryName ?? 'Sem categoria'}</p>
+									<p class="text-xs text-stone-500">
+										{recurrence.categoryName ?? 'Sem categoria'}{recurrence.variableAmount ? ' · valor variável' : ''}
+									</p>
 								{/if}
 							</td>
 							<td>{frequencyLabel(recurrence.unit, recurrence.interval)}</td>

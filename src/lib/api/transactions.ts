@@ -89,6 +89,11 @@ export async function listTransactions(filter: TransactionFilter, limit = 50, of
 	return data.transactions;
 }
 
+export async function pendingConfirmations(): Promise<Transaction[]> {
+	const data = await gql<{ pendingConfirmations: Transaction[] }>(`{ pendingConfirmations { ${fields} } }`);
+	return data.pendingConfirmations;
+}
+
 export async function saveTransaction(id: string | null, input: TransactionInput): Promise<Transaction> {
 	if (id) {
 		const data = await gql<{ updateTransaction: Transaction }>(

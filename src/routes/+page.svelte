@@ -14,6 +14,7 @@
 	import BalanceRecords from '#lib/components/BalanceRecords.svelte';
 	import Modal from '#lib/components/Modal.svelte';
 	import Money from '#lib/components/Money.svelte';
+	import PendingConfirmations from '#lib/components/PendingConfirmations.svelte';
 	import PrivacyToggle from '#lib/components/PrivacyToggle.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
@@ -104,6 +105,8 @@
 		<button class="btn-primary" onclick={() => openQuickAdd()}>+ Adicionar movimento</button>
 	</div>
 
+	<PendingConfirmations />
+
 	{#if data.alerts.length}
 		<section class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950" aria-label="Alertas">
 			<h2 class="mb-2 text-sm font-medium text-amber-900 dark:text-amber-200">Avisos</h2>
@@ -166,7 +169,7 @@
 			{#if data.categories.length === 0}
 				<p class="muted">Sem despesas este mês.</p>
 			{:else}
-				<HBarChart items={data.categories.map((c) => ({ label: c.name, value: c.amount }))} format={(v) => formatMoney(v)} />
+				<HBarChart items={data.categories.map((c) => ({ label: c.name, value: c.amount, color: c.color }))} format={(v) => formatMoney(v)} />
 			{/if}
 		</section>
 		<BalanceRecords selectable />

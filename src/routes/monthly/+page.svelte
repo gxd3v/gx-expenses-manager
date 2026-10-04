@@ -6,6 +6,7 @@
 	import HBarChart from '#lib/charts/HBarChart.svelte';
 	import Amount from '#lib/components/Amount.svelte';
 	import Money from '#lib/components/Money.svelte';
+	import TransactionList from '#lib/components/TransactionList.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
@@ -13,6 +14,13 @@
 	import { refs } from '#lib/refs.svelte.ts';
 
 	let month = $state(monthStart(today()));
+	let selectedCategory = $state<{ id: string; name: string } | null>(null);
+	let movements = $state<HTMLElement>();
+
+	function showCategory(id: string, name: string) {
+		selectedCategory = { id, name };
+		movements?.scrollIntoView({ behavior: 'smooth' });
+	}
 
 	async function load(selected: string) {
 		const start = monthStart(selected);
@@ -58,9 +66,9 @@
 
 <PageHeader title="Vista mensal" subtitle={formatMonth(month, 'long')}>
 	{#snippet actions()}
-		<button class="btn-secondary" onclick={() => (month = addMonths(month, -1))} aria-label="Mês anterior">←</button>
+		<button class="btn-secondary" onclick={() => ((month = addMonths(month, -1)), (selectedCategory = null))} aria-label="Mês anterior">←</button>
 		<input type="month" value={month.slice(0, 7)} onchange={(e) => (month = `${e.currentTarget.value}-01`)} class="input w-40" />
-		<button class="btn-secondary" onclick={() => (month = addMonths(month, 1))} aria-label="Mês seguinte">→</button>
+		<button class="btn-secondary" onclick={() => ((month = addMonths(month, 1)), (selectedCategory = null))} aria-label="Mês seguinte">→</button>
 		<button class="btn-ghost" onclick={() => (month = monthStart(today()))}>Hoje</button>
 	{/snippet}
 </PageHeader>
@@ -122,7 +130,7 @@
 				<p class="muted">Sem despesas neste mês.</p>
 			{:else}
 				<HBarChart
-					items={summary.categories.filter((c) => c.current > 0).map((c) => ({ label: c.name, value: c.current }))}
+					items={summary.categories.filter((c) => c.current > 0).map((c) => ({ label: c.name, value: c.current, color: c.color }))}
 					format={(v) => formatMoney(v)}
 				/>
 			{/if}
@@ -163,7 +171,16 @@
 				<tbody>
 					{#each summary.categories as category (category.categoryId ?? category.name)}
 						<tr>
-							<td>{category.name}</td>
+							<td>
+								{#if category.categoryId}
+									<button class="flex items-center gap-2 hover:underline" onclick={() => showCategory(category.categoryId ?? '', category.name)}>
+										<span class="size-2.5 rounded-full" style:background-color={category.color ?? 'gray'}></span>
+										{category.name}
+									</button>
+								{:else}
+									{category.name}
+								{/if}
+							</td>
 							<td class="text-right tabular-nums"><Money value={category.current} /></td>
 							<td class="text-right tabular-nums"><Money value={category.previous} /></td>
 							<td class="text-right tabular-nums"><Money value={category.average} /></td>
@@ -173,8 +190,20 @@
 				</tbody>
 			</table>
 			</div>
-			<p class="mt-2 text-xs text-stone-500">Diferença positiva significa que gastaste menos do que a média.</p>
+			<p class="mt-2 text-xs text-stone-500">
+				Diferença positiva significa que gastaste menos do que a média. Clica numa categoria para ver os movimentos.
+			</p>
 		{/if}
+	</section>
+
+	<section class="card mt-6" bind:this={movements}>
+		<div class="mb-3 flex items-center justify-between gap-2">
+			<h2 class="font-medium">Movimentos do mês{selectedCategory ? ` · ${selectedCategory.name}` : ''}</h2>
+			{#if selectedCategory}<button class="btn-ghost" onclick={() => (selectedCategory = null)}>Ver todos</button>{/if}
+		</div>
+		{#key `${month}-${selectedCategory?.id ?? ''}`}
+			<TransactionList initialFilter={{ dateFrom: monthStart(month), dateTo: monthEnd(month), categoryId: selectedCategory?.id ?? null }} />
+		{/key}
 	</section>
 {:catch error}
 	<States state="error" {error} />

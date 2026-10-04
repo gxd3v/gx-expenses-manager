@@ -4,6 +4,7 @@
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
 	import CategorySelect from '#lib/components/CategorySelect.svelte';
 	import MoneyInput from '#lib/components/MoneyInput.svelte';
+	import Toggle from '#lib/components/Toggle.svelte';
 	import { today } from '#lib/format.ts';
 	import { errorMessage } from '#lib/graphql.ts';
 	import { refs } from '#lib/refs.svelte.ts';
@@ -22,7 +23,8 @@
 			endDate: recurrence?.endDate ?? null,
 			unit: recurrence?.unit ?? 'MONTH',
 			interval: recurrence?.interval ?? 1,
-			toAccountId: recurrence?.toAccountId ?? null
+			toAccountId: recurrence?.toAccountId ?? null,
+			variableAmount: recurrence?.variableAmount ?? false
 		}))
 	);
 	let type = $state<'OUTCOME' | 'INCOME' | 'TRANSFER'>(untrack(() => (recurrence?.toAccountId ? 'TRANSFER' : (recurrence?.kind ?? 'OUTCOME'))));
@@ -32,6 +34,7 @@
 		form.categoryId = null;
 		form.kind = type === 'INCOME' ? 'INCOME' : 'OUTCOME';
 		if (!transfer) form.toAccountId = null;
+		if (transfer) form.variableAmount = false;
 	}
 	let preset = $state(
 		untrack(() => {
@@ -135,6 +138,11 @@
 		Data final (opcional)
 		<input type="date" bind:value={form.endDate} class="input" />
 	</label>
+	{#if !transfer}
+		<div class="col-span-2">
+			<Toggle bind:checked={form.variableAmount} label="Valor variável — pedir para confirmar o valor real quando acontecer" />
+		</div>
+	{/if}
 	<p class="col-span-2 muted">
 		As ocorrências passam a movimentos reais quando chega a data (só a partir do dia em que a recorrência é criada). As futuras
 		entram nas previsões.

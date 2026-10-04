@@ -20,12 +20,13 @@ export type Recurrence = {
 	creditId: string | null;
 	toAccountId: string | null;
 	toAccountName: string | null;
+	variableAmount: boolean;
 	nextDate: string | null;
 };
 
 export type RecurrenceInput = Pick<
 	Recurrence,
-	'accountId' | 'categoryId' | 'kind' | 'amount' | 'description' | 'startDate' | 'endDate' | 'unit' | 'interval' | 'toAccountId'
+	'accountId' | 'categoryId' | 'kind' | 'amount' | 'description' | 'startDate' | 'endDate' | 'unit' | 'interval' | 'toAccountId' | 'variableAmount'
 >;
 
 export type Occurrence = {
@@ -61,7 +62,7 @@ export function frequencyLabel(unit: FrequencyUnit, interval: number): string {
 }
 
 const fields =
-	'id accountId accountName categoryId categoryName kind amount description startDate endDate unit interval pausedAt creditId toAccountId toAccountName nextDate';
+	'id accountId accountName categoryId categoryName kind amount description startDate endDate unit interval pausedAt creditId toAccountId toAccountName variableAmount nextDate';
 const occurrenceFields = 'recurrenceId occurrenceDate date amount kind accountId categoryId description creditId toAccountId modified';
 
 export async function listRecurrences(): Promise<Recurrence[]> {
