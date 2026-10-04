@@ -241,6 +241,7 @@ async fn recurrences_materialize_once_and_respect_skips() {
         end_date: None,
         frequency: monthly(),
         to_account_id: None,
+        variable_amount: false,
     };
     let rent = module.recurrences.create(input).await.unwrap();
 
@@ -327,6 +328,7 @@ async fn forecast_includes_recurrences_and_goals() {
         end_date: None,
         frequency: monthly(),
         to_account_id: None,
+        variable_amount: false,
     };
     module.recurrences.create(salary).await.unwrap();
     let goal = crate::models::GoalInput {
@@ -380,6 +382,7 @@ async fn history_does_not_double_count_recurring_flows() {
         end_date: None,
         frequency: monthly(),
         to_account_id: None,
+        variable_amount: false,
     };
     module.recurrences.create(salary).await.unwrap();
 
@@ -610,6 +613,7 @@ async fn recurring_transfers_move_money_between_accounts() {
         end_date: None,
         frequency: monthly(),
         to_account_id: Some(savings.id),
+        variable_amount: false,
     };
     let recurrence = module.recurrences.create(input.clone()).await.unwrap();
     assert_eq!(recurrence.kind, EntryKind::Outcome);
@@ -650,6 +654,54 @@ async fn recurring_transfers_move_money_between_accounts() {
     assert!(module.recurrences.create(same).await.is_err());
 }
 
+#[tokio::test]
+async fn variable_recurrences_wait_for_confirmation_and_endings_warn() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = account(&module, "Principal", 0).await;
+
+    let salary = RecurrenceInput {
+        account_id: main.id,
+        category_id: None,
+        kind: EntryKind::Income,
+        amount: 150_000,
+        description: "Salário".into(),
+        start_date: today(),
+        end_date: Some(today().checked_add_days(Days::new(2)).unwrap()),
+        frequency: monthly(),
+        to_account_id: None,
+        variable_amount: true,
+    };
+    let recurrence = module.recurrences.create(salary).await.unwrap();
+    assert!(recurrence.variable_amount);
+    module.recurrences.materialize_due(today()).await.unwrap();
+
+    let pending = module
+        .transactions
+        .pending_confirmations(today())
+        .await
+        .unwrap();
+    assert_eq!(pending.len(), 1);
+    assert_eq!(pending[0].amount, 150_000);
+
+    let alerts = module.alerts.alerts(today()).await.unwrap();
+    assert!(alerts.iter().any(|a| a.key.starts_with("ending:")));
+
+    module
+        .transactions
+        .set_confirmed(&[pending[0].id], true)
+        .await
+        .unwrap();
+    assert!(
+        module
+            .transactions
+            .pending_confirmations(today())
+            .await
+            .unwrap()
+            .is_empty()
+    );
+}
+
 async fn populated(module: &Module) -> Account {
     let main = account(module, "Principal", 100_000).await;
     let savings = account(module, "Poupança", 0).await;
@@ -676,6 +728,7 @@ async fn populated(module: &Module) -> Account {
         end_date: None,
         frequency: monthly(),
         to_account_id: None,
+        variable_amount: false,
     };
     module.recurrences.create(rent).await.unwrap();
     let goal = crate::models::GoalInput {

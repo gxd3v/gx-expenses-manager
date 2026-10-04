@@ -22,6 +22,12 @@ pub const LIST_FUTURE: &str = concat!(
     "WHERE t.date > ?1 AND a.archived_at IS NULL ORDER BY t.date"
 );
 
+pub const PENDING_CONFIRMATIONS: &str = concat!(
+    select!(),
+    "WHERE t.confirmed = 0 AND t.date <= ?1 \
+     AND t.recurrence_id IN (SELECT id FROM recurrences WHERE variable_amount = 1) ORDER BY t.date"
+);
+
 pub const TOTALS: &str = "SELECT COUNT(*) AS total_count, \
      COALESCE(SUM(CASE WHEN t.kind = 'income' THEN t.amount END), 0) AS income, \
      COALESCE(SUM(CASE WHEN t.kind = 'outcome' THEN -t.amount END), 0) AS outcome \

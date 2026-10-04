@@ -60,6 +60,17 @@ impl TransactionsRepository {
         rows.into_iter().map(Transaction::try_from).collect()
     }
 
+    pub async fn pending_confirmations(
+        &self,
+        today: NaiveDate,
+    ) -> Result<Vec<Transaction>, AppError> {
+        let rows: Vec<TransactionRow> = sqlx::query_as(queries::PENDING_CONFIRMATIONS)
+            .bind(today)
+            .fetch_all(&self.pool)
+            .await?;
+        rows.into_iter().map(Transaction::try_from).collect()
+    }
+
     pub async fn get(&self, id: Uuid) -> Result<Transaction, AppError> {
         let row: Option<TransactionRow> = sqlx::query_as(queries::GET)
             .bind(id.hyphenated())

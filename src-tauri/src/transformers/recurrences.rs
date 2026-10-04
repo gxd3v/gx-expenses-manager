@@ -23,6 +23,7 @@ impl types::Recurrence {
             credit_id: recurrence.credit_id,
             to_account_id: recurrence.to_account_id,
             to_account_name: recurrence.to_account_name,
+            variable_amount: recurrence.variable_amount,
             next_date,
         }
     }
@@ -42,6 +43,7 @@ impl TryFrom<types::RecurrenceInput> for models::RecurrenceInput {
             end_date: input.end_date,
             frequency: models::Frequency::new(input.unit.into(), input.interval)?,
             to_account_id: input.to_account_id,
+            variable_amount: input.variable_amount,
         })
     }
 }

@@ -30,6 +30,7 @@ pub struct Recurrence {
     pub credit_id: Option<Uuid>,
     pub to_account_id: Option<Uuid>,
     pub to_account_name: Option<String>,
+    pub variable_amount: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -45,6 +46,7 @@ pub struct RecurrenceInput {
     pub end_date: Option<NaiveDate>,
     pub frequency: Frequency,
     pub to_account_id: Option<Uuid>,
+    pub variable_amount: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -146,6 +148,7 @@ mod tests {
             credit_id: None,
             to_account_id: None,
             to_account_name: None,
+            variable_amount: false,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

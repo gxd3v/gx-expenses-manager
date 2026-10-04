@@ -25,6 +25,7 @@ pub struct RecurrenceRow {
     pub credit_id: Option<Hyphenated>,
     pub to_account_id: Option<Hyphenated>,
     pub to_account_name: Option<String>,
+    pub variable_amount: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -59,6 +60,7 @@ impl TryFrom<RecurrenceRow> for Recurrence {
             credit_id: to_id(row.credit_id),
             to_account_id: to_id(row.to_account_id),
             to_account_name: row.to_account_name,
+            variable_amount: row.variable_amount,
             created_at: row.created_at,
             updated_at: row.updated_at,
         })

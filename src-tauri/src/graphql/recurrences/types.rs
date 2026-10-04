@@ -32,6 +32,7 @@ pub struct Recurrence {
     pub credit_id: Option<Uuid>,
     pub to_account_id: Option<Uuid>,
     pub to_account_name: Option<String>,
+    pub variable_amount: bool,
     pub next_date: Option<NaiveDate>,
 }
 
@@ -48,6 +49,8 @@ pub struct RecurrenceInput {
     #[graphql(default = 1)]
     pub interval: i64,
     pub to_account_id: Option<Uuid>,
+    #[graphql(default)]
+    pub variable_amount: bool,
 }
 
 #[derive(SimpleObject)]

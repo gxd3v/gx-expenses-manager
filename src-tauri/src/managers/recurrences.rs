@@ -310,6 +310,7 @@ fn normalize(input: RecurrenceInput) -> Result<RecurrenceInput, AppError> {
             description,
             kind: EntryKind::Outcome,
             category_id: None,
+            variable_amount: false,
             ..input
         }),
         None => Ok(RecurrenceInput {

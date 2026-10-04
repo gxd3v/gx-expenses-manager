@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use uuid::Uuid;
 
 use super::{optional, positive};
@@ -30,6 +30,13 @@ impl TransactionsManager {
             categories,
             transfers,
         }
+    }
+
+    pub async fn pending_confirmations(
+        &self,
+        today: NaiveDate,
+    ) -> Result<Vec<Transaction>, AppError> {
+        self.repository.pending_confirmations(today).await
     }
 
     pub async fn page(

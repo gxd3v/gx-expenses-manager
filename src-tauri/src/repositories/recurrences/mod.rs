@@ -57,6 +57,7 @@ impl RecurrencesRepository {
             .bind(input.frequency.interval)
             .bind(opt_id(credit_id))
             .bind(opt_id(input.to_account_id))
+            .bind(input.variable_amount)
             .bind(now)
             .execute(&self.pool)
             .await?;
@@ -82,6 +83,7 @@ impl RecurrencesRepository {
             .bind(input.frequency.unit.as_str())
             .bind(input.frequency.interval)
             .bind(opt_id(input.to_account_id))
+            .bind(input.variable_amount)
             .bind(now)
             .execute(&self.pool)
             .await?;

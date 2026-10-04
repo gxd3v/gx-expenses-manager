@@ -61,6 +61,9 @@ impl AlertsManager {
         }
 
         let mut alerts = self.upcoming(today, &settings).await?;
+        if settings.notify_upcoming {
+            alerts.extend(self.ending(today, &settings).await?);
+        }
         if settings.notify_goals {
             alerts.extend(self.goal_alerts(today).await?);
         }
@@ -110,6 +113,28 @@ impl AlertsManager {
                     title: title.into(),
                     message: o.description,
                     date: Some(o.date),
+                })
+            })
+            .collect())
+    }
+
+    async fn ending(&self, today: NaiveDate, settings: &Settings) -> Result<Vec<Alert>, AppError> {
+        let until = today
+            .checked_add_days(Days::new(settings.notify_days_ahead.into()))
+            .unwrap_or(today);
+        let recurrences = self.recurrences.list().await?;
+
+        Ok(recurrences
+            .into_iter()
+            .filter(|r| r.is_active())
+            .filter_map(|r| {
+                let end = r.end_date.filter(|end| *end >= today && *end <= until)?;
+                Some(Alert {
+                    key: format!("ending:{}:{end}", r.id),
+                    kind: AlertKind::Upcoming,
+                    title: "Agendamento a terminar".into(),
+                    message: format!("{} termina — renova o agendamento", r.description),
+                    date: Some(end),
                 })
             })
             .collect())

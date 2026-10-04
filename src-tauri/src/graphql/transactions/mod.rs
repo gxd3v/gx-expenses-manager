@@ -31,6 +31,14 @@ impl TransactionsQuery {
             .into())
     }
 
+    async fn pending_confirmations(&self, ctx: &Context<'_>) -> Result<Vec<Transaction>> {
+        let items = module(ctx)
+            .transactions
+            .pending_confirmations(today())
+            .await?;
+        Ok(items.into_iter().map(Transaction::from).collect())
+    }
+
     async fn transaction(&self, ctx: &Context<'_>, id: Uuid) -> Result<Transaction> {
         Ok(module(ctx).transactions.get(id).await?.into())
     }
