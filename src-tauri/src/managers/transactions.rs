@@ -69,7 +69,7 @@ impl TransactionsManager {
         let existing = self.repository.get(id).await?;
         if existing.transfer_id.is_some() {
             return Err(AppError::conflict(
-                "este movimento pertence a uma transferência; edita a transferência",
+                "este movimento pertence a uma transferência; a alteração é feita na transferência",
             ));
         }
 

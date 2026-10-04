@@ -227,7 +227,7 @@ impl CreditsManager {
         let account_id = input
             .account_id
             .or(credit.account_id)
-            .ok_or_else(|| AppError::validation("indica a conta de onde sai o pagamento"))?;
+            .ok_or_else(|| AppError::validation("conta de pagamento obrigatória"))?;
 
         Ok(TransactionRecord {
             id: Uuid::now_v7(),
@@ -247,7 +247,7 @@ impl CreditsManager {
 
     async fn create_recurrence(&self, credit: &Credit, today: NaiveDate) -> Result<(), AppError> {
         let account_id = credit.account_id.ok_or_else(|| {
-            AppError::validation("associa uma conta de pagamento para criar a recorrência")
+            AppError::validation("a recorrência requer uma conta de pagamento associada")
         })?;
         let Some(start_date) = credit.summary(today).next_payment_date else {
             return Ok(());

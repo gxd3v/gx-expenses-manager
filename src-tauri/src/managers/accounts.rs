@@ -61,7 +61,7 @@ impl AccountsManager {
     pub async fn delete(&self, id: Uuid) -> Result<(), AppError> {
         if self.repository.in_use(id).await? {
             return Err(AppError::conflict(
-                "a conta tem movimentos associados; arquiva-a em vez de a eliminar",
+                "a conta tem movimentos associados; só pode ser arquivada",
             ));
         }
         self.repository.delete(id).await
@@ -88,7 +88,7 @@ fn validate_interest(interest: &Interest) -> Result<(), AppError> {
         ));
     }
     if interest.tiers.is_empty() {
-        return Err(AppError::validation("indica pelo menos uma taxa de juro"));
+        return Err(AppError::validation("é necessária pelo menos uma taxa de juro"));
     }
     if interest
         .tiers

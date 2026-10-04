@@ -239,7 +239,7 @@ impl BackupsManager {
             (true, Some(password)) => decrypt(&bytes, password)?,
             (true, None) => {
                 return Err(AppError::InvalidBackup(
-                    "o ficheiro está encriptado; indica a password".into(),
+                    "o ficheiro está encriptado; password necessária".into(),
                 ));
             }
         };

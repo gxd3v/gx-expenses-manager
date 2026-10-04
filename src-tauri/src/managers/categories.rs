@@ -47,17 +47,17 @@ impl CategoriesManager {
     pub async fn delete(&self, id: Uuid, reassign_to: Option<Uuid>) -> Result<(), AppError> {
         if self.repository.has_children(id).await? {
             return Err(AppError::conflict(
-                "a categoria tem subcategorias; elimina-as ou move-as primeiro",
+                "a categoria tem subcategorias, que têm de ser eliminadas ou movidas primeiro",
             ));
         }
         if reassign_to == Some(id) {
             return Err(AppError::validation(
-                "escolhe uma categoria diferente para reatribuir",
+                "a categoria de destino tem de ser diferente",
             ));
         }
         if reassign_to.is_none() && self.repository.in_use(id).await? {
             return Err(AppError::conflict(
-                "a categoria está em uso; escolhe outra para reatribuir os movimentos",
+                "a categoria está em uso; é necessária uma categoria de destino para os movimentos",
             ));
         }
         if let Some(target) = reassign_to {

@@ -143,7 +143,7 @@ impl AlertsManager {
                     key: format!("ending:{}:{end}", r.id),
                     kind: AlertKind::Upcoming,
                     title: "Agendamento a terminar".into(),
-                    message: format!("{} termina — renova o agendamento", r.description),
+                    message: format!("{} termina — agendamento a renovar", r.description),
                     date: Some(end),
                 })
             })
