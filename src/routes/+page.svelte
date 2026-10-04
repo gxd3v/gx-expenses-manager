@@ -47,7 +47,9 @@
 		]);
 
 		const upcoming: Upcoming[] = [
-			...occurrences.map((o) => ({
+			...occurrences
+				.filter((o) => !o.toAccountId)
+				.map((o) => ({
 				key: `${o.recurrenceId}-${o.occurrenceDate}`,
 				date: o.date,
 				description: o.description,

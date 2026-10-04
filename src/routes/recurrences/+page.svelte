@@ -120,13 +120,21 @@
 									{expanded === recurrence.id ? '▾' : '▸'} {recurrence.description}
 								</button>
 								{#if recurrence.creditId}<span class="badge ml-1">Crédito</span>{/if}
-								<p class="text-xs text-stone-500">{recurrence.categoryName ?? 'Sem categoria'}</p>
+								{#if recurrence.toAccountId}
+									<a class="text-xs text-indigo-600 hover:underline dark:text-indigo-400" href="/accounts/{recurrence.toAccountId}"
+										>Transferência → {recurrence.toAccountName}</a
+									>
+								{:else}
+									<p class="text-xs text-stone-500">{recurrence.categoryName ?? 'Sem categoria'}</p>
+								{/if}
 							</td>
 							<td>{frequencyLabel(recurrence.unit, recurrence.interval)}</td>
-							<td>{recurrence.accountName}</td>
+							<td><a class="hover:underline" href="/accounts/{recurrence.accountId}">{recurrence.accountName}</a></td>
 							<td>{formatDate(recurrence.nextDate)}</td>
 							<td><span class="badge">{statusLabel(recurrence)}</span></td>
-							<td class="text-right"><Amount value={recurrence.kind === 'INCOME' ? recurrence.amount : -recurrence.amount} /></td>
+							<td class="text-right">
+								<Amount value={recurrence.kind === 'INCOME' ? recurrence.amount : -recurrence.amount} signed={!recurrence.toAccountId} />
+							</td>
 							<td class="text-right whitespace-nowrap">
 								<button class="btn-ghost" onclick={() => (editing = recurrence)}>Editar</button>
 								{#if recurrence.pausedAt}

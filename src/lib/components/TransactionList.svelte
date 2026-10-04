@@ -284,7 +284,11 @@
 						<td class="whitespace-nowrap">{formatDate(transaction.date)}</td>
 						<td>
 							{transaction.description || '—'}
-							{#if transaction.kind === 'TRANSFER'}<span class="badge ml-1">Transferência</span>{/if}
+							{#if transaction.counterpartAccountId}
+								<a class="badge ml-1 hover:underline" href="/accounts/{transaction.counterpartAccountId}"
+									>Transferência {transaction.amount < 0 ? '→' : '←'} {transaction.counterpartAccountName}</a
+								>
+							{/if}
 							{#if transaction.recurrenceId}<span class="badge ml-1">Recorrente</span>{/if}
 							{#if transaction.date > today()}<span class="badge ml-1">Futuro</span>{/if}
 						</td>

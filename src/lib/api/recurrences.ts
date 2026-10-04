@@ -18,12 +18,14 @@ export type Recurrence = {
 	interval: number;
 	pausedAt: string | null;
 	creditId: string | null;
+	toAccountId: string | null;
+	toAccountName: string | null;
 	nextDate: string | null;
 };
 
 export type RecurrenceInput = Pick<
 	Recurrence,
-	'accountId' | 'categoryId' | 'kind' | 'amount' | 'description' | 'startDate' | 'endDate' | 'unit' | 'interval'
+	'accountId' | 'categoryId' | 'kind' | 'amount' | 'description' | 'startDate' | 'endDate' | 'unit' | 'interval' | 'toAccountId'
 >;
 
 export type Occurrence = {
@@ -36,6 +38,7 @@ export type Occurrence = {
 	categoryId: string | null;
 	description: string;
 	creditId: string | null;
+	toAccountId: string | null;
 	modified: boolean;
 };
 
@@ -58,8 +61,8 @@ export function frequencyLabel(unit: FrequencyUnit, interval: number): string {
 }
 
 const fields =
-	'id accountId accountName categoryId categoryName kind amount description startDate endDate unit interval pausedAt creditId nextDate';
-const occurrenceFields = 'recurrenceId occurrenceDate date amount kind accountId categoryId description creditId modified';
+	'id accountId accountName categoryId categoryName kind amount description startDate endDate unit interval pausedAt creditId toAccountId toAccountName nextDate';
+const occurrenceFields = 'recurrenceId occurrenceDate date amount kind accountId categoryId description creditId toAccountId modified';
 
 export async function listRecurrences(): Promise<Recurrence[]> {
 	const data = await gql<{ recurrences: Recurrence[] }>(`{ recurrences { ${fields} } }`);

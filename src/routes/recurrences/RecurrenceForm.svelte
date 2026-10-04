@@ -21,9 +21,18 @@
 			startDate: recurrence?.startDate ?? today(),
 			endDate: recurrence?.endDate ?? null,
 			unit: recurrence?.unit ?? 'MONTH',
-			interval: recurrence?.interval ?? 1
+			interval: recurrence?.interval ?? 1,
+			toAccountId: recurrence?.toAccountId ?? null
 		}))
 	);
+	let type = $state<'OUTCOME' | 'INCOME' | 'TRANSFER'>(untrack(() => (recurrence?.toAccountId ? 'TRANSFER' : (recurrence?.kind ?? 'OUTCOME'))));
+	const transfer = $derived(type === 'TRANSFER');
+
+	function chooseType() {
+		form.categoryId = null;
+		form.kind = type === 'INCOME' ? 'INCOME' : 'OUTCOME';
+		if (!transfer) form.toAccountId = null;
+	}
 	let preset = $state(
 		untrack(() => {
 			const index = frequencyPresets.findIndex((p) => p.unit === form.unit && p.interval === form.interval);
@@ -45,6 +54,10 @@
 			error = 'Indica um valor maior que zero.';
 			return;
 		}
+		if (transfer && !form.toAccountId) {
+			error = 'Escolhe a conta de destino.';
+			return;
+		}
 		try {
 			await saveRecurrence(recurrence?.id ?? null, { ...form, amount: form.amount, endDate: form.endDate || null });
 			notify('Recorrência guardada');
@@ -58,9 +71,10 @@
 <form onsubmit={submit} class="grid grid-cols-2 gap-4">
 	<label class="label">
 		Tipo
-		<select bind:value={form.kind} class="input" onchange={() => (form.categoryId = null)}>
+		<select bind:value={type} class="input" onchange={chooseType}>
 			<option value="OUTCOME">Despesa</option>
 			<option value="INCOME">Receita</option>
+			<option value="TRANSFER">Transferência</option>
 		</select>
 	</label>
 	<label class="label">
@@ -72,13 +86,20 @@
 		<input bind:value={form.description} class="input" required placeholder="Ex.: Renda" />
 	</label>
 	<label class="label">
-		Conta
+		{transfer ? 'Conta de origem' : 'Conta'}
 		<AccountSelect bind:value={form.accountId} />
 	</label>
-	<label class="label">
-		Categoria
-		<CategorySelect bind:value={form.categoryId} kind={form.kind} />
-	</label>
+	{#if transfer}
+		<label class="label">
+			Conta de destino
+			<AccountSelect bind:value={form.toAccountId} exclude={form.accountId} allowEmpty emptyLabel="Escolher…" />
+		</label>
+	{:else}
+		<label class="label">
+			Categoria
+			<CategorySelect bind:value={form.categoryId} kind={form.kind} />
+		</label>
+	{/if}
 	<label class="label">
 		Periodicidade
 		<select bind:value={preset} onchange={choosePreset} class="input">

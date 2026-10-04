@@ -18,6 +18,8 @@ export type Transaction = {
 	confirmed: boolean;
 	transferId: string | null;
 	recurrenceId: string | null;
+	counterpartAccountId: string | null;
+	counterpartAccountName: string | null;
 };
 
 export type TransactionInput = {
@@ -71,7 +73,7 @@ export const transactionKinds: Record<TransactionKind, string> = {
 };
 
 const fields =
-	'id accountId accountName currency categoryId categoryName kind amount date description notes confirmed transferId recurrenceId';
+	'id accountId accountName currency categoryId categoryName kind amount date description notes confirmed transferId recurrenceId counterpartAccountId counterpartAccountName';
 
 export function cleanFilter(filter: TransactionFilter): TransactionFilter {
 	return Object.fromEntries(Object.entries(filter).filter(([, value]) => value !== null && value !== '' && value !== undefined));
