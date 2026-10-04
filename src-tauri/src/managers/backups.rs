@@ -166,7 +166,7 @@ impl BackupsManager {
         fs::create_dir_all(&dir)?;
         let name = format!(
             "{FILE_PREFIX}{prefix}{}.db",
-            Utc::now().format("%Y%m%d-%H%M%S")
+            Utc::now().format("%Y%m%d-%H%M%S-%3f")
         );
         let path = dir.join(&name);
         self.repository.snapshot(&path).await?;

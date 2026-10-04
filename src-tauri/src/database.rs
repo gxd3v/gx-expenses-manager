@@ -11,7 +11,7 @@ const SQLITE_NOTADB: &str = "26";
 const CACHE_SIZE_KIB: &str = "-32768";
 const MAX_CONNECTIONS: u32 = 4;
 const SHARING_VIOLATION: i32 = 32;
-const FILE_RETRIES: u32 = 25;
+const FILE_RETRIES: u32 = 50;
 const RELEASE_RETRIES: u32 = 50;
 const CHECKPOINT: &str = "PRAGMA wal_checkpoint(TRUNCATE)";
 const FILE_RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(200);
@@ -84,21 +84,36 @@ pub async fn close(pool: &SqlitePool) {
 }
 
 pub fn replace(database: &Path, backup: &Path, safety_dir: &Path) -> Result<(), AppError> {
+    set_aside(database, safety_dir, "pre-restore")?;
+    retry(|| fs::copy(backup, database).map(drop))?;
+    Ok(())
+}
+
+pub fn reset(database: &Path, safety_dir: &Path) -> Result<(), AppError> {
+    set_aside(database, safety_dir, "pre-reset")?;
+    retry(|| remove(database))?;
+    Ok(())
+}
+
+fn set_aside(database: &Path, safety_dir: &Path, prefix: &str) -> std::io::Result<()> {
     wait_released(database);
     fs::create_dir_all(safety_dir)?;
     let stamp = Utc::now().format("%Y%m%d-%H%M%S");
-    let safety = safety_dir.join(format!("expenses-manager-pre-restore-{stamp}.db"));
+    let safety = safety_dir.join(format!("expenses-manager-{prefix}-{stamp}.db"));
     retry(|| fs::copy(database, &safety).map(drop))?;
 
     for suffix in ["-wal", "-shm"] {
         let path = sidecar(database, suffix);
-        retry(|| match fs::remove_file(&path) {
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            result => result,
-        })?;
+        retry(|| remove(&path))?;
     }
-    retry(|| fs::copy(backup, database).map(drop))?;
     Ok(())
+}
+
+fn remove(path: &Path) -> std::io::Result<()> {
+    match fs::remove_file(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        result => result,
+    }
 }
 
 fn wait_released(database: &Path) {
@@ -130,9 +145,12 @@ fn retry(mut operation: impl FnMut() -> std::io::Result<()>) -> std::io::Result<
 }
 
 fn options(path: &Path, password: &str) -> SqliteConnectOptions {
-    SqliteConnectOptions::new()
+    let options = SqliteConnectOptions::new()
         .filename(path)
-        .pragma("key", quote(password))
+        .pragma("key", quote(password));
+    #[cfg(test)]
+    let options = options.pragma("kdf_iter", "1000");
+    options
         .pragma("cache_size", CACHE_SIZE_KIB)
         .foreign_keys(true)
 }
