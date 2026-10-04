@@ -50,6 +50,10 @@ const VARIABLE_AVERAGES: &str = "SELECT t.account_id, \
      FROM transactions t \
      WHERE t.kind <> 'transfer' AND t.recurrence_id IS NULL \
      AND NOT EXISTS (SELECT 1 FROM credit_payments cp WHERE cp.transaction_id = t.id) \
+     AND NOT EXISTS (SELECT 1 FROM recurrences r \
+         WHERE r.paused_at IS NULL AND (r.end_date IS NULL OR r.end_date >= ?3) \
+         AND r.account_id = t.account_id AND r.kind = t.kind \
+         AND (lower(trim(r.description)) = lower(trim(t.description)) OR r.category_id = t.category_id)) \
      AND t.date >= ?1 AND t.date <= ?3 \
      GROUP BY t.account_id";
 

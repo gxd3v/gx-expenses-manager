@@ -349,6 +349,51 @@ async fn forecast_includes_recurrences_and_goals() {
 }
 
 #[tokio::test]
+async fn history_does_not_double_count_recurring_flows() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = account(&module, "Principal", 0).await;
+
+    for months_ago in 1..=3 {
+        let date = add_months(today(), -months_ago);
+        let salary = TransactionInput {
+            description: "Salário".into(),
+            ..transaction(main.id, EntryKind::Income, 200_000, date)
+        };
+        module.transactions.create(salary).await.unwrap();
+        module
+            .transactions
+            .create(transaction(main.id, EntryKind::Outcome, 30_000, date))
+            .await
+            .unwrap();
+    }
+
+    let salary = RecurrenceInput {
+        account_id: main.id,
+        category_id: None,
+        kind: EntryKind::Income,
+        amount: 200_000,
+        description: "salário".into(),
+        start_date: add_months(today(), 1),
+        end_date: None,
+        frequency: monthly(),
+    };
+    module.recurrences.create(salary).await.unwrap();
+
+    let request = ForecastRequest {
+        months: 3,
+        method: ForecastMethod::History,
+        history_months: 3,
+        adjustments: Vec::new(),
+        recurrence_changes: Vec::new(),
+    };
+    let forecast = module.forecasts.forecast(today(), &request).await.unwrap();
+    assert_eq!(forecast.months[1].income, 200_000);
+    assert_eq!(forecast.months[1].variable_income, 0);
+    assert_eq!(forecast.months[1].variable_outcome, 30_000);
+}
+
+#[tokio::test]
 async fn corrupted_files_are_rejected() {
     let db = TestDatabase::new().await;
     let corrupted = db.dir.join("corrupted.db");
