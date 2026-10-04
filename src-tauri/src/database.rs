@@ -18,6 +18,7 @@ const FILE_RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(2
 const MIGRATIONS_TABLE: &str =
     "SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE name = '_sqlx_migrations')";
 const APPLIED: &str = "SELECT version FROM _sqlx_migrations WHERE success = 1";
+const FOREIGN_KEY_CHECK: &str = "PRAGMA foreign_key_check";
 
 pub async fn open(path: &Path, password: &str, backup_dir: &Path) -> Result<SqlitePool, AppError> {
     if password.is_empty() {
@@ -34,7 +35,7 @@ pub async fn open(path: &Path, password: &str, backup_dir: &Path) -> Result<Sqli
         .await
         .map_err(wrong_password)?;
 
-    migrate(&pool, backup_dir).await?;
+    migrate(&pool, options(path, password), backup_dir).await?;
     Ok(pool)
 }
 
@@ -155,7 +156,11 @@ fn options(path: &Path, password: &str) -> SqliteConnectOptions {
         .foreign_keys(true)
 }
 
-async fn migrate(pool: &SqlitePool, backup_dir: &Path) -> Result<(), AppError> {
+async fn migrate(
+    pool: &SqlitePool,
+    options: SqliteConnectOptions,
+    backup_dir: &Path,
+) -> Result<(), AppError> {
     let migrator = sqlx::migrate!();
     let has_table: bool = sqlx::query_scalar(MIGRATIONS_TABLE)
         .fetch_one(pool)
@@ -168,7 +173,7 @@ async fn migrate(pool: &SqlitePool, backup_dir: &Path) -> Result<(), AppError> {
             fs::create_dir_all(backup_dir)?;
             let name = format!(
                 "expenses-manager-pre-migration-{}.db",
-                Utc::now().format("%Y%m%d-%H%M%S")
+                Utc::now().format("%Y%m%d-%H%M%S-%3f")
             );
             let path = backup_dir.join(name);
             sqlx::query("VACUUM INTO ?1")
@@ -178,7 +183,15 @@ async fn migrate(pool: &SqlitePool, backup_dir: &Path) -> Result<(), AppError> {
         }
     }
 
-    migrator.run(pool).await?;
+    let mut conn = options.foreign_keys(false).connect().await?;
+    migrator.run_direct(&mut conn).await?;
+    let violations = sqlx::query(FOREIGN_KEY_CHECK).fetch_all(&mut conn).await?;
+    conn.close().await?;
+    if !violations.is_empty() {
+        return Err(AppError::Corrupted(
+            "relações inválidas depois de atualizar a base de dados".into(),
+        ));
+    }
     Ok(())
 }
 
