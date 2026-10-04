@@ -5,10 +5,11 @@ use chrono::{DateTime, NaiveDate, Utc};
 use sqlx::{SqliteConnection, SqlitePool};
 use uuid::Uuid;
 
-use super::{affected, credits, opt_id, transactions};
+use super::{affected, credits, opt_id, transactions, transfers};
 use crate::errors::AppError;
 use crate::models::{
     CreditPayment, OccurrenceOverride, Recurrence, RecurrenceInput, TransactionRecord,
+    TransferInput,
 };
 use models::{OverrideRow, RecurrenceRow};
 
@@ -55,6 +56,7 @@ impl RecurrencesRepository {
             .bind(input.frequency.unit.as_str())
             .bind(input.frequency.interval)
             .bind(opt_id(credit_id))
+            .bind(opt_id(input.to_account_id))
             .bind(now)
             .execute(&self.pool)
             .await?;
@@ -79,6 +81,7 @@ impl RecurrencesRepository {
             .bind(input.end_date)
             .bind(input.frequency.unit.as_str())
             .bind(input.frequency.interval)
+            .bind(opt_id(input.to_account_id))
             .bind(now)
             .execute(&self.pool)
             .await?;
@@ -165,6 +168,24 @@ impl RecurrencesRepository {
         if let Some(payment) = payment {
             credits::insert_payment(&mut tx, payment).await?;
         }
+        tx.commit().await?;
+        Ok(())
+    }
+
+    pub async fn materialize_transfer(
+        &self,
+        id: Uuid,
+        input: &TransferInput,
+        change: &OccurrenceOverride,
+        now: DateTime<Utc>,
+    ) -> Result<(), AppError> {
+        let mut tx = self.pool.begin().await?;
+        let leg = transfers::insert(&mut tx, id, input, Some(change.recurrence_id), now).await?;
+        let done = OccurrenceOverride {
+            transaction_id: Some(leg),
+            ..change.clone()
+        };
+        upsert_override(&mut tx, &done).await?;
         tx.commit().await?;
         Ok(())
     }

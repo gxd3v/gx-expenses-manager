@@ -30,6 +30,8 @@ pub struct Recurrence {
     pub interval: u32,
     pub paused_at: Option<DateTime<Utc>>,
     pub credit_id: Option<Uuid>,
+    pub to_account_id: Option<Uuid>,
+    pub to_account_name: Option<String>,
     pub next_date: Option<NaiveDate>,
 }
 
@@ -45,6 +47,7 @@ pub struct RecurrenceInput {
     pub unit: FrequencyUnit,
     #[graphql(default = 1)]
     pub interval: i64,
+    pub to_account_id: Option<Uuid>,
 }
 
 #[derive(SimpleObject)]
@@ -58,5 +61,6 @@ pub struct Occurrence {
     pub category_id: Option<Uuid>,
     pub description: String,
     pub credit_id: Option<Uuid>,
+    pub to_account_id: Option<Uuid>,
     pub modified: bool,
 }

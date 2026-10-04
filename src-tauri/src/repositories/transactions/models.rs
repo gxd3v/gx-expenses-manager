@@ -25,6 +25,8 @@ pub struct TransactionRow {
     pub recurrence_id: Option<Hyphenated>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub counterpart_account_id: Option<Hyphenated>,
+    pub counterpart_account_name: Option<String>,
 }
 
 #[derive(Debug, FromRow)]
@@ -55,6 +57,8 @@ impl TryFrom<TransactionRow> for Transaction {
             recurrence_id: to_id(row.recurrence_id),
             created_at: row.created_at,
             updated_at: row.updated_at,
+            counterpart_account_id: to_id(row.counterpart_account_id),
+            counterpart_account_name: row.counterpart_account_name,
         })
     }
 }

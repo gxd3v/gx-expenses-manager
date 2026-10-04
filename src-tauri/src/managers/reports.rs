@@ -304,7 +304,12 @@ impl ReportsManager {
             .map(|t| t.amount);
         let occurrences = self.recurrences.occurrences(from, end, None).await?;
         let amounts: Vec<i64> = transactions
-            .chain(occurrences.iter().map(|o| o.kind.signed(o.amount)))
+            .chain(
+                occurrences
+                    .iter()
+                    .filter(|o| o.to_account_id.is_none())
+                    .map(|o| o.kind.signed(o.amount)),
+            )
             .collect();
 
         Ok((

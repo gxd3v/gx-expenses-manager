@@ -6,7 +6,7 @@ use crate::errors::AppError;
 use crate::models::dates::{add_months, month_end, month_start};
 use crate::models::{
     AccountBalance, Adjustment, ForecastEvent, ForecastInput, ForecastMethod, ForecastMonth,
-    TransactionKind, VariableAverage, project,
+    Occurrence, TransactionKind, VariableAverage, project,
 };
 use crate::repositories::accounts::AccountsRepository;
 use crate::repositories::credits::CreditsRepository;
@@ -162,13 +162,9 @@ impl ForecastsManager {
                     Some(change) => change.amount?,
                     None => occurrence.amount,
                 };
-                Some(ForecastEvent {
-                    account_id: occurrence.account_id,
-                    date: occurrence.date,
-                    amount: occurrence.kind.signed(amount),
-                    transfer: false,
-                })
+                Some(recurrence_events(&occurrence, amount))
             })
+            .flatten()
             .collect())
     }
 
@@ -237,5 +233,25 @@ impl ForecastsManager {
                 })
             })
             .collect())
+    }
+}
+
+fn recurrence_events(occurrence: &Occurrence, amount: i64) -> Vec<ForecastEvent> {
+    let event = |account_id, amount, transfer| ForecastEvent {
+        account_id,
+        date: occurrence.date,
+        amount,
+        transfer,
+    };
+    match occurrence.to_account_id {
+        Some(to_account_id) => vec![
+            event(occurrence.account_id, -amount, true),
+            event(to_account_id, amount, true),
+        ],
+        None => vec![event(
+            occurrence.account_id,
+            occurrence.kind.signed(amount),
+            false,
+        )],
     }
 }

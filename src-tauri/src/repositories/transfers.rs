@@ -73,18 +73,7 @@ impl TransfersRepository {
         now: DateTime<Utc>,
     ) -> Result<(), AppError> {
         let mut tx = self.pool.begin().await?;
-        sqlx::query(INSERT)
-            .bind(id.hyphenated())
-            .bind(input.from_account_id.hyphenated())
-            .bind(input.to_account_id.hyphenated())
-            .bind(input.amount)
-            .bind(input.date)
-            .bind(&input.description)
-            .bind(now)
-            .execute(&mut *tx)
-            .await?;
-
-        insert_legs(&mut tx, id, input, now).await?;
+        insert(&mut tx, id, input, None, now).await?;
         tx.commit().await?;
         Ok(())
     }
@@ -112,7 +101,7 @@ impl TransfersRepository {
             .bind(id.hyphenated())
             .execute(&mut *tx)
             .await?;
-        insert_legs(&mut tx, id, input, now).await?;
+        insert_legs(&mut tx, id, input, None, now).await?;
         tx.commit().await?;
         Ok(())
     }
@@ -126,19 +115,42 @@ impl TransfersRepository {
     }
 }
 
+pub async fn insert(
+    conn: &mut SqliteConnection,
+    id: Uuid,
+    input: &TransferInput,
+    recurrence_id: Option<Uuid>,
+    now: DateTime<Utc>,
+) -> Result<Uuid, AppError> {
+    sqlx::query(INSERT)
+        .bind(id.hyphenated())
+        .bind(input.from_account_id.hyphenated())
+        .bind(input.to_account_id.hyphenated())
+        .bind(input.amount)
+        .bind(input.date)
+        .bind(&input.description)
+        .bind(now)
+        .execute(&mut *conn)
+        .await?;
+
+    insert_legs(conn, id, input, recurrence_id, now).await
+}
+
 async fn insert_legs(
     conn: &mut SqliteConnection,
     id: Uuid,
     input: &TransferInput,
+    recurrence_id: Option<Uuid>,
     now: DateTime<Utc>,
-) -> Result<(), AppError> {
+) -> Result<Uuid, AppError> {
+    let source = Uuid::now_v7();
     let legs = [
-        (input.from_account_id, -input.amount),
-        (input.to_account_id, input.amount),
+        (source, input.from_account_id, -input.amount),
+        (Uuid::now_v7(), input.to_account_id, input.amount),
     ];
-    for (account_id, amount) in legs {
+    for (leg, account_id, amount) in legs {
         let record = TransactionRecord {
-            id: Uuid::now_v7(),
+            id: leg,
             account_id,
             category_id: None,
             kind: TransactionKind::Transfer,
@@ -148,9 +160,9 @@ async fn insert_legs(
             notes: None,
             confirmed: false,
             transfer_id: Some(id),
-            recurrence_id: None,
+            recurrence_id,
         };
         transactions::insert(conn, &record, now).await?;
     }
-    Ok(())
+    Ok(source)
 }

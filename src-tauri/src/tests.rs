@@ -240,6 +240,7 @@ async fn recurrences_materialize_once_and_respect_skips() {
         start_date: today(),
         end_date: None,
         frequency: monthly(),
+        to_account_id: None,
     };
     let rent = module.recurrences.create(input).await.unwrap();
 
@@ -325,6 +326,7 @@ async fn forecast_includes_recurrences_and_goals() {
         start_date: add_months(today(), 1),
         end_date: None,
         frequency: monthly(),
+        to_account_id: None,
     };
     module.recurrences.create(salary).await.unwrap();
     let goal = crate::models::GoalInput {
@@ -377,6 +379,7 @@ async fn history_does_not_double_count_recurring_flows() {
         start_date: add_months(today(), 1),
         end_date: None,
         frequency: monthly(),
+        to_account_id: None,
     };
     module.recurrences.create(salary).await.unwrap();
 
@@ -590,6 +593,63 @@ async fn balance_records_ignore_future_and_other_accounts() {
     assert_eq!(total[3].low.balance, 1_000 + other.initial_balance);
 }
 
+#[tokio::test]
+async fn recurring_transfers_move_money_between_accounts() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = account(&module, "Principal", 100_000).await;
+    let savings = account(&module, "Poupança", 0).await;
+
+    let input = RecurrenceInput {
+        account_id: main.id,
+        category_id: None,
+        kind: EntryKind::Income,
+        amount: 20_000,
+        description: "Poupar".into(),
+        start_date: today(),
+        end_date: None,
+        frequency: monthly(),
+        to_account_id: Some(savings.id),
+    };
+    let recurrence = module.recurrences.create(input.clone()).await.unwrap();
+    assert_eq!(recurrence.kind, EntryKind::Outcome);
+    assert_eq!(recurrence.to_account_name.as_deref(), Some("Poupança"));
+
+    module.recurrences.materialize_due(today()).await.unwrap();
+    let page = module
+        .transactions
+        .page(&TransactionFilter::default(), 50, 0)
+        .await
+        .unwrap();
+    assert_eq!(page.items.len(), 2);
+    assert_eq!((page.income, page.outcome), (0, 0));
+    assert!(
+        page.items
+            .iter()
+            .all(|t| t.kind == TransactionKind::Transfer && t.recurrence_id == Some(recurrence.id))
+    );
+    let leg = page.items.iter().find(|t| t.account_id == main.id).unwrap();
+    assert_eq!(leg.counterpart_account_id, Some(savings.id));
+
+    let request = ForecastRequest {
+        months: 3,
+        method: ForecastMethod::Recurring,
+        history_months: 6,
+        adjustments: Vec::new(),
+        recurrence_changes: Vec::new(),
+    };
+    let forecast = module.forecasts.forecast(today(), &request).await.unwrap();
+    let last = forecast.months.last().unwrap();
+    assert_eq!(last.total, 100_000);
+    assert_eq!((last.income, last.outcome), (0, 0));
+
+    let same = RecurrenceInput {
+        to_account_id: Some(main.id),
+        ..input
+    };
+    assert!(module.recurrences.create(same).await.is_err());
+}
+
 async fn populated(module: &Module) -> Account {
     let main = account(module, "Principal", 100_000).await;
     let savings = account(module, "Poupança", 0).await;
@@ -615,6 +675,7 @@ async fn populated(module: &Module) -> Account {
         start_date: add_months(today(), 1),
         end_date: None,
         frequency: monthly(),
+        to_account_id: None,
     };
     module.recurrences.create(rent).await.unwrap();
     let goal = crate::models::GoalInput {

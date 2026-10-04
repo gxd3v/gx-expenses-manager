@@ -21,6 +21,8 @@ impl types::Recurrence {
             interval: recurrence.frequency.interval,
             paused_at: recurrence.paused_at,
             credit_id: recurrence.credit_id,
+            to_account_id: recurrence.to_account_id,
+            to_account_name: recurrence.to_account_name,
             next_date,
         }
     }
@@ -39,6 +41,7 @@ impl TryFrom<types::RecurrenceInput> for models::RecurrenceInput {
             start_date: input.start_date,
             end_date: input.end_date,
             frequency: models::Frequency::new(input.unit.into(), input.interval)?,
+            to_account_id: input.to_account_id,
         })
     }
 }
@@ -55,6 +58,7 @@ impl From<models::Occurrence> for types::Occurrence {
             category_id: occurrence.category_id,
             description: occurrence.description,
             credit_id: occurrence.credit_id,
+            to_account_id: occurrence.to_account_id,
             modified: occurrence.modified,
         }
     }

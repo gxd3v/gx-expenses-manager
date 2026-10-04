@@ -261,6 +261,7 @@ impl CreditsManager {
             start_date,
             end_date: credit.end_date,
             frequency: credit.frequency,
+            to_account_id: None,
         };
         self.recurrences
             .insert(Uuid::now_v7(), &input, Some(credit.id), Utc::now())

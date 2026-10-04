@@ -2,9 +2,12 @@ macro_rules! select {
     () => {
         "SELECT t.id, t.account_id, a.name AS account_name, a.currency, t.category_id, \
          CASE WHEN p.name IS NULL THEN c.name ELSE p.name || ' / ' || c.name END AS category_name, \
-         t.kind, t.amount, t.date, t.description, t.notes, t.confirmed, t.transfer_id, t.recurrence_id, t.created_at, t.updated_at \
+         t.kind, t.amount, t.date, t.description, t.notes, t.confirmed, t.transfer_id, t.recurrence_id, t.created_at, t.updated_at, \
+         ca.id AS counterpart_account_id, ca.name AS counterpart_account_name \
          FROM transactions t \
          JOIN accounts a ON a.id = t.account_id \
+         LEFT JOIN transfers tr ON tr.id = t.transfer_id \
+         LEFT JOIN accounts ca ON ca.id = CASE WHEN tr.from_account_id = t.account_id THEN tr.to_account_id ELSE tr.from_account_id END \
          LEFT JOIN categories c ON c.id = t.category_id \
          LEFT JOIN categories p ON p.id = c.parent_id "
     };

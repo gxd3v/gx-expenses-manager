@@ -93,6 +93,9 @@ impl AlertsManager {
                     (Some(_), _) if settings.notify_credits => {
                         (AlertKind::Credit, "Prestação de crédito próxima")
                     }
+                    _ if o.to_account_id.is_some() && settings.notify_upcoming => {
+                        (AlertKind::Upcoming, "Transferência próxima")
+                    }
                     (None, EntryKind::Outcome) if settings.notify_upcoming => {
                         (AlertKind::Upcoming, "Despesa próxima")
                     }

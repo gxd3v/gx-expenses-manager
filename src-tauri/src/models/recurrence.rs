@@ -28,6 +28,8 @@ pub struct Recurrence {
     pub frequency: Frequency,
     pub paused_at: Option<DateTime<Utc>>,
     pub credit_id: Option<Uuid>,
+    pub to_account_id: Option<Uuid>,
+    pub to_account_name: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -42,6 +44,7 @@ pub struct RecurrenceInput {
     pub start_date: NaiveDate,
     pub end_date: Option<NaiveDate>,
     pub frequency: Frequency,
+    pub to_account_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone)]
@@ -65,6 +68,7 @@ pub struct Occurrence {
     pub category_id: Option<Uuid>,
     pub description: String,
     pub credit_id: Option<Uuid>,
+    pub to_account_id: Option<Uuid>,
     pub modified: bool,
 }
 
@@ -110,6 +114,7 @@ impl Recurrence {
             category_id: self.category_id,
             description: self.description.clone(),
             credit_id: self.credit_id,
+            to_account_id: self.to_account_id,
             modified: change.is_some(),
         })
     }
@@ -139,6 +144,8 @@ mod tests {
             frequency: Frequency::new(FrequencyUnit::Month, 1).unwrap(),
             paused_at: None,
             credit_id: None,
+            to_account_id: None,
+            to_account_name: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

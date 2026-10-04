@@ -23,6 +23,8 @@ pub struct RecurrenceRow {
     pub interval: i64,
     pub paused_at: Option<DateTime<Utc>>,
     pub credit_id: Option<Hyphenated>,
+    pub to_account_id: Option<Hyphenated>,
+    pub to_account_name: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -55,6 +57,8 @@ impl TryFrom<RecurrenceRow> for Recurrence {
             frequency: Frequency::new(row.unit.parse()?, row.interval)?,
             paused_at: row.paused_at,
             credit_id: to_id(row.credit_id),
+            to_account_id: to_id(row.to_account_id),
+            to_account_name: row.to_account_name,
             created_at: row.created_at,
             updated_at: row.updated_at,
         })

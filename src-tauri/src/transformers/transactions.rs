@@ -20,6 +20,8 @@ impl From<models::Transaction> for types::Transaction {
             transfer_id: transaction.transfer_id,
             recurrence_id: transaction.recurrence_id,
             created_at: transaction.created_at,
+            counterpart_account_id: transaction.counterpart_account_id,
+            counterpart_account_name: transaction.counterpart_account_name,
         }
     }
 }

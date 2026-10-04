@@ -46,6 +46,8 @@ pub struct Transaction {
     pub recurrence_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub counterpart_account_id: Option<Uuid>,
+    pub counterpart_account_name: Option<String>,
 }
 
 #[derive(Debug, Clone)]

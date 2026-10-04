@@ -8,8 +8,8 @@ use crate::errors::AppError;
 use crate::models::MAX_OCCURRENCE_SHIFT_DAYS;
 use crate::models::dates::add_months;
 use crate::models::{
-    Occurrence, OccurrenceOverride, OccurrenceStatus, Recurrence, RecurrenceInput,
-    TransactionRecord,
+    EntryKind, Occurrence, OccurrenceOverride, OccurrenceStatus, Recurrence, RecurrenceInput,
+    TransactionRecord, TransferInput,
 };
 use crate::repositories::recurrences::RecurrencesRepository;
 
@@ -193,6 +193,21 @@ impl RecurrencesManager {
     }
 
     async fn materialize(&self, occurrence: &Occurrence) -> Result<(), AppError> {
+        if let Some(to_account_id) = occurrence.to_account_id {
+            let input = TransferInput {
+                from_account_id: occurrence.account_id,
+                to_account_id,
+                amount: occurrence.amount,
+                date: occurrence.date,
+                description: occurrence.description.clone(),
+            };
+            let done = change(occurrence, OccurrenceStatus::Done, None, None);
+            return self
+                .repository
+                .materialize_transfer(Uuid::now_v7(), &input, &done, Utc::now())
+                .await;
+        }
+
         let record = TransactionRecord {
             id: Uuid::now_v7(),
             account_id: occurrence.account_id,
@@ -286,8 +301,20 @@ fn normalize(input: RecurrenceInput) -> Result<RecurrenceInput, AppError> {
             "a data de fim tem de ser depois da data de início",
         ));
     }
-    Ok(RecurrenceInput {
-        description: required(&input.description, "a descrição é obrigatória")?,
-        ..input
-    })
+    let description = required(&input.description, "a descrição é obrigatória")?;
+    match input.to_account_id {
+        Some(to) if to == input.account_id => Err(AppError::validation(
+            "as contas de origem e destino têm de ser diferentes",
+        )),
+        Some(_) => Ok(RecurrenceInput {
+            description,
+            kind: EntryKind::Outcome,
+            category_id: None,
+            ..input
+        }),
+        None => Ok(RecurrenceInput {
+            description,
+            ..input
+        }),
+    }
 }
