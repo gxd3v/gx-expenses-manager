@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "GX Expenses",
+  "productName": "Expenses Manager",
   "version": "0.1.0",
   "identifier": "com.gxd3v.expenses",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "GX Expenses",
+        "title": "Expenses Manager",
         "width": 1200,
         "height": 800,
         "minWidth": 900,
@@ -35,5 +35,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
-  }
+  },
+  "mainBinaryName": "expenses-manager"
 }

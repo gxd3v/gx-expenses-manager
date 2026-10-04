@@ -56,7 +56,7 @@ pub async fn unlock(
 #[tauri::command]
 pub async fn lock(session: State<'_, Session>) -> Result<(), AppError> {
     if let Some(unlocked) = session.0.write().await.take() {
-        unlocked.pool.close().await;
+        database::close(&unlocked.pool).await;
     }
     Ok(())
 }
@@ -90,7 +90,7 @@ pub async fn change_password(
         return Err(AppError::WrongPassword);
     }
 
-    unlocked.pool.close().await;
+    database::close(&unlocked.pool).await;
     let password =
         match database::rekey(&data_dir.join(DATABASE_FILE), &current, &new_password).await {
             Ok(()) => new_password,
@@ -121,7 +121,7 @@ pub async fn restore_backup(
         return Err(error);
     }
 
-    unlocked.pool.close().await;
+    database::close(&unlocked.pool).await;
     database::replace(
         &data_dir.join(DATABASE_FILE),
         &backup,

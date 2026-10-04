@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use chrono::Utc;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool, SqlitePoolOptions};
@@ -10,6 +10,11 @@ use crate::errors::AppError;
 const SQLITE_NOTADB: &str = "26";
 const CACHE_SIZE_KIB: &str = "-32768";
 const MAX_CONNECTIONS: u32 = 4;
+const SHARING_VIOLATION: i32 = 32;
+const FILE_RETRIES: u32 = 10;
+const RELEASE_RETRIES: u32 = 50;
+const CHECKPOINT: &str = "PRAGMA wal_checkpoint(TRUNCATE)";
+const FILE_RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(200);
 const MIGRATIONS_TABLE: &str =
     "SELECT EXISTS (SELECT 1 FROM sqlite_master WHERE name = '_sqlx_migrations')";
 const APPLIED: &str = "SELECT version FROM _sqlx_migrations WHERE success = 1";
@@ -71,24 +76,57 @@ pub async fn rekey(path: &Path, password: &str, new_password: &str) -> Result<()
     Ok(())
 }
 
+pub async fn close(pool: &SqlitePool) {
+    if let Err(error) = sqlx::query(CHECKPOINT).execute(pool).await {
+        log::warn!("checkpoint before close failed: {error}");
+    }
+    pool.close().await;
+}
+
 pub fn replace(database: &Path, backup: &Path, safety_dir: &Path) -> Result<(), AppError> {
+    wait_released(database);
     fs::create_dir_all(safety_dir)?;
     let stamp = Utc::now().format("%Y%m%d-%H%M%S");
-    fs::copy(
-        database,
-        safety_dir.join(format!("gx-expenses-pre-restore-{stamp}.db")),
-    )?;
+    let safety = safety_dir.join(format!("expenses-manager-pre-restore-{stamp}.db"));
+    retry(|| fs::copy(database, &safety).map(drop))?;
 
     for suffix in ["-wal", "-shm"] {
-        let mut sidecar = database.as_os_str().to_owned();
-        sidecar.push(suffix);
-        let sidecar = std::path::PathBuf::from(sidecar);
-        if sidecar.exists() {
-            fs::remove_file(sidecar)?;
+        let path = sidecar(database, suffix);
+        retry(|| match fs::remove_file(&path) {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            result => result,
+        })?;
+    }
+    retry(|| fs::copy(backup, database).map(drop))?;
+    Ok(())
+}
+
+fn wait_released(database: &Path) {
+    let wal = sidecar(database, "-wal");
+    for _ in 0..RELEASE_RETRIES {
+        if !wal.exists() {
+            return;
+        }
+        std::thread::sleep(FILE_RETRY_DELAY);
+    }
+}
+
+fn sidecar(database: &Path, suffix: &str) -> PathBuf {
+    let mut path = database.as_os_str().to_owned();
+    path.push(suffix);
+    PathBuf::from(path)
+}
+
+fn retry(mut operation: impl FnMut() -> std::io::Result<()>) -> std::io::Result<()> {
+    for _ in 1..FILE_RETRIES {
+        match operation() {
+            Err(error) if error.raw_os_error() == Some(SHARING_VIOLATION) => {
+                std::thread::sleep(FILE_RETRY_DELAY)
+            }
+            result => return result,
         }
     }
-    fs::copy(backup, database)?;
-    Ok(())
+    operation()
 }
 
 fn options(path: &Path, password: &str) -> SqliteConnectOptions {
@@ -111,7 +149,7 @@ async fn migrate(pool: &SqlitePool, backup_dir: &Path) -> Result<(), AppError> {
         if migrator.iter().any(|m| !applied.contains(&m.version)) {
             fs::create_dir_all(backup_dir)?;
             let name = format!(
-                "gx-expenses-pre-migration-{}.db",
+                "expenses-manager-pre-migration-{}.db",
                 Utc::now().format("%Y%m%d-%H%M%S")
             );
             let path = backup_dir.join(name);

@@ -498,7 +498,7 @@ async fn snapshots_are_encrypted_and_verifiable() {
 async fn rekey_changes_password() {
     let db = TestDatabase::new().await;
     let path = db.dir.join("test.db");
-    db.pool.close().await;
+    crate::database::close(&db.pool).await;
 
     crate::database::rekey(&path, PASSWORD, "new-password-123")
         .await
@@ -653,7 +653,7 @@ async fn restore_replaces_database_and_keeps_safety_copy() {
         .create(transaction(main.id, EntryKind::Outcome, 7_000, today()))
         .await
         .unwrap();
-    db.pool.close().await;
+    crate::database::close(&db.pool).await;
 
     let database = db.dir.join("test.db");
     let safety = db.dir.join("safety");
@@ -692,7 +692,7 @@ async fn interrupted_writes_leave_database_consistent() {
         .await
         .unwrap();
     drop(tx);
-    db.pool.close().await;
+    crate::database::close(&db.pool).await;
 
     let path = db.dir.join("test.db");
     crate::database::verify(&path, PASSWORD).await.unwrap();

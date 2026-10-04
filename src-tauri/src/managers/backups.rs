@@ -15,7 +15,8 @@ use crate::repositories::settings::SettingsRepository;
 const FORMAT: &str = "gx-expenses-backup";
 const FORMAT_VERSION: u64 = 1;
 const AGE_HEADER: &[u8] = b"age-encryption.org/";
-const FILE_PREFIX: &str = "gx-expenses-";
+const FILE_PREFIX: &str = "expenses-manager-";
+const LEGACY_FILE_PREFIX: &str = "gx-expenses-";
 const AUTO_PREFIX: &str = "auto-";
 
 #[derive(Debug, Clone)]
@@ -216,7 +217,7 @@ impl BackupsManager {
             .list()
             .await?
             .into_iter()
-            .filter(|b| b.name.starts_with(&format!("{FILE_PREFIX}{AUTO_PREFIX}")));
+            .filter(|b| is_automatic(&b.name));
         for backup in automatic.skip(keep) {
             fs::remove_file(backup.path)?;
         }
@@ -323,7 +324,16 @@ fn is_backup(path: &Path) -> bool {
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or_default();
-    name.starts_with(FILE_PREFIX) && name.ends_with(".db")
+    [FILE_PREFIX, LEGACY_FILE_PREFIX]
+        .iter()
+        .any(|prefix| name.starts_with(prefix))
+        && name.ends_with(".db")
+}
+
+fn is_automatic(name: &str) -> bool {
+    [FILE_PREFIX, LEGACY_FILE_PREFIX]
+        .iter()
+        .any(|prefix| name.starts_with(&format!("{prefix}{AUTO_PREFIX}")))
 }
 
 fn backup_file(path: &Path) -> Result<BackupFile, AppError> {
