@@ -49,7 +49,22 @@ export async function saveSettings(input: Settings): Promise<Settings> {
 	return data.updateSettings;
 }
 
+const THEME_KEY = 'expenses-manager-theme';
+
 export function applyTheme(theme: Theme) {
 	const dark = theme === 'DARK' || (theme === 'SYSTEM' && matchMedia('(prefers-color-scheme: dark)').matches);
 	document.documentElement.classList.toggle('dark', dark);
+	try {
+		localStorage.setItem(THEME_KEY, theme);
+	} catch {
+		return;
+	}
+}
+
+export function restoreTheme() {
+	try {
+		applyTheme((localStorage.getItem(THEME_KEY) as Theme | null) ?? 'SYSTEM');
+	} catch {
+		applyTheme('SYSTEM');
+	}
 }

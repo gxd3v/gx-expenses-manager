@@ -14,10 +14,13 @@
 	import { dataChanged, loadRefs } from '#lib/refs.svelte.ts';
 	import { lock, status, type Status } from '#lib/session.ts';
 	import { applyPrivacy, togglePrivacy } from '#lib/privacy.svelte.ts';
-	import { app, loadSettings } from '#lib/settings.svelte.ts';
+	import { app, loadSettings, restoreTheme } from '#lib/settings.svelte.ts';
 	import { openQuickAdd, ui } from '#lib/ui.svelte.ts';
 
 	let { children } = $props();
+
+	restoreTheme();
+	applyPrivacy();
 
 	const BACKGROUND_INTERVAL = 60 * 60 * 1000;
 
@@ -105,7 +108,6 @@
 	const active = (href: string) => (href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href));
 
 	onMount(() => {
-		applyPrivacy();
 		refresh();
 		backgroundTimer = setInterval(async () => {
 			if (ready) alerts = await runBackgroundTasks();
