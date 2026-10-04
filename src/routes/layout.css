@@ -46,6 +46,17 @@
 		@apply bg-stone-50 text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-100;
 	}
 
+	button:not(:disabled),
+	[role='button']:not([aria-disabled='true']),
+	[role='switch'],
+	a[href],
+	summary,
+	select:not(:disabled),
+	input[type='date'],
+	input[type='month'] {
+		cursor: pointer;
+	}
+
 	:focus-visible {
 		@apply outline-2 outline-offset-2 outline-indigo-500;
 	}

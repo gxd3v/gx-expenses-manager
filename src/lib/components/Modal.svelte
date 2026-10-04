@@ -12,6 +12,18 @@
 		if (event.key === 'Escape') onclose();
 	}
 
+	let pressedOutside = false;
+
+	function pointerdown(event: PointerEvent) {
+		const backdrop = event.currentTarget as HTMLElement;
+		pressedOutside = event.target === backdrop && event.offsetX < backdrop.clientWidth;
+	}
+
+	function click(event: MouseEvent) {
+		if (pressedOutside && event.target === event.currentTarget) onclose();
+		pressedOutside = false;
+	}
+
 	function focusFirst(node: HTMLElement) {
 		node.querySelector<HTMLElement>('input, select, textarea, button')?.focus();
 	}
@@ -19,7 +31,13 @@
 
 <svelte:window onkeydown={keydown} />
 
-<div class="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-16" role="presentation">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div
+	class="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-16"
+	role="presentation"
+	onpointerdown={pointerdown}
+	onclick={click}
+>
 	<div
 		class="card w-full shadow-xl {wide ? 'max-w-3xl' : 'max-w-lg'}"
 		role="dialog"
