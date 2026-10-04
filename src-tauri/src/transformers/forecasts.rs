@@ -1,5 +1,5 @@
 use crate::graphql::forecasts::types;
-use crate::managers::forecasts::{Forecast, Milestone};
+use crate::managers::forecasts::{Forecast, ForecastRequest, Milestone, RecurrenceChange};
 use crate::models;
 
 impl From<Forecast> for types::Forecast {
@@ -47,6 +47,37 @@ impl From<Milestone> for types::Milestone {
             id: milestone.id,
             name: milestone.name,
             date: milestone.date,
+        }
+    }
+}
+
+impl types::ForecastInput {
+    pub fn into_request(self, settings: &models::Settings) -> ForecastRequest {
+        ForecastRequest {
+            months: self.months,
+            method: self.method.map_or(settings.forecast_method, Into::into),
+            history_months: self
+                .history_months
+                .unwrap_or(settings.forecast_history_months),
+            adjustments: self
+                .adjustments
+                .into_iter()
+                .map(|a| models::Adjustment {
+                    account_id: a.account_id,
+                    to_account_id: a.to_account_id,
+                    amount: a.amount,
+                    date: a.date,
+                    repeat_months: a.repeat_months,
+                })
+                .collect(),
+            recurrence_changes: self
+                .recurrence_changes
+                .into_iter()
+                .map(|c| RecurrenceChange {
+                    recurrence_id: c.recurrence_id,
+                    amount: c.amount,
+                })
+                .collect(),
         }
     }
 }

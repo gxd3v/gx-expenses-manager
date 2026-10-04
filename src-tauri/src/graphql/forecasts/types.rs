@@ -74,3 +74,10 @@ pub struct Forecast {
     pub goals_reached: Vec<Milestone>,
     pub credits_paid: Vec<Milestone>,
 }
+
+#[derive(SimpleObject)]
+pub struct ScenarioComparison {
+    pub base: Forecast,
+    pub scenario: Forecast,
+    pub end_difference: i64,
+}

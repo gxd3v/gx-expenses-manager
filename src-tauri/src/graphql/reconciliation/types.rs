@@ -8,6 +8,7 @@ pub struct ReconciliationStatus {
     pub confirmed_balance: i64,
     pub unconfirmed_count: i64,
     pub unconfirmed_total: i64,
+    pub statement_difference: Option<i64>,
 }
 
 #[derive(SimpleObject)]

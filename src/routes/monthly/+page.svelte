@@ -69,18 +69,18 @@
 		<StatCard
 			label="Receitas realizadas"
 			value={formatMoney(summary.income)}
-			hint="Previstas: {formatMoney(summary.pendingIncome)} · Total esperado: {formatMoney(summary.income + summary.pendingIncome)}"
+			hint="Previstas: {formatMoney(summary.pendingIncome)} · Total esperado: {formatMoney(summary.expectedIncome)}"
 		/>
 		<StatCard
 			label="Despesas realizadas"
 			value={formatMoney(summary.outcome)}
-			hint="Previstas: {formatMoney(summary.pendingOutcome)} · Total esperado: {formatMoney(summary.outcome + summary.pendingOutcome)}"
+			hint="Previstas: {formatMoney(summary.pendingOutcome)} · Total esperado: {formatMoney(summary.expectedOutcome)}"
 		/>
 		<StatCard
 			label="Resultado"
 			value={formatMoney(summary.net)}
 			tone={summary.net >= 0 ? 'positive' : 'negative'}
-			hint="Com o previsto: {formatMoney(summary.net + summary.pendingIncome - summary.pendingOutcome)}"
+			hint="Com o previsto: {formatMoney(summary.expectedNet)}"
 		/>
 	</div>
 

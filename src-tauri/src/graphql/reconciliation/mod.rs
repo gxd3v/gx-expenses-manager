@@ -17,12 +17,10 @@ impl ReconciliationQuery {
         ctx: &Context<'_>,
         account_id: Uuid,
         date: NaiveDate,
+        statement_balance: Option<i64>,
     ) -> Result<ReconciliationStatus> {
-        Ok(module(ctx)
-            .reconciliation
-            .status(account_id, date)
-            .await?
-            .into())
+        let status = module(ctx).reconciliation.status(account_id, date).await?;
+        Ok(ReconciliationStatus::from_model(status, statement_balance))
     }
 
     async fn reconciliations(

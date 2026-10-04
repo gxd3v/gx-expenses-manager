@@ -5,6 +5,7 @@ export type ReconciliationStatus = {
 	confirmedBalance: number;
 	unconfirmedCount: number;
 	unconfirmedTotal: number;
+	statementDifference: number | null;
 };
 
 export type Reconciliation = {
@@ -24,12 +25,18 @@ export type ForgottenCandidate = {
 	lastDate: string;
 };
 
-export async function reconciliationStatus(accountId: string, date: string): Promise<ReconciliationStatus> {
+export async function reconciliationStatus(
+	accountId: string,
+	date: string,
+	statementBalance: number | null
+): Promise<ReconciliationStatus> {
 	const data = await gql<{ reconciliationStatus: ReconciliationStatus }>(
-		`query ($accountId: UUID!, $date: NaiveDate!) {
-			reconciliationStatus(accountId: $accountId, date: $date) { calculatedBalance confirmedBalance unconfirmedCount unconfirmedTotal }
+		`query ($accountId: UUID!, $date: NaiveDate!, $statementBalance: Int) {
+			reconciliationStatus(accountId: $accountId, date: $date, statementBalance: $statementBalance) {
+				calculatedBalance confirmedBalance unconfirmedCount unconfirmedTotal statementDifference
+			}
 		}`,
-		{ accountId, date }
+		{ accountId, date, statementBalance }
 	);
 	return data.reconciliationStatus;
 }

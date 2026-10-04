@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { balanceHistory, categoryBreakdown, monthlyTotals } from '#lib/api/reports.ts';
+	import { balanceHistory, categoryBreakdown, compareMonths, monthlyTotals, type MonthComparison } from '#lib/api/reports.ts';
 	import BarChart from '#lib/charts/BarChart.svelte';
 	import HBarChart from '#lib/charts/HBarChart.svelte';
 	import LineChart from '#lib/charts/LineChart.svelte';
@@ -13,6 +13,15 @@
 	const ranges = [6, 12, 24];
 
 	let months = $state(12);
+	let firstMonth = $state(monthStart(addMonths(today(), -1)).slice(0, 7));
+	let secondMonth = $state(monthStart(today()).slice(0, 7));
+	let comparison = $state<Promise<MonthComparison[]>>(new Promise(() => {}));
+
+	$effect(() => {
+		refs.version;
+		const [first, second] = [firstMonth, secondMonth];
+		untrack(() => (comparison = compareMonths(`${first}-01`, `${second}-01`)));
+	});
 	let accountId = $state<string | null>(null);
 
 	async function load(range: number, account: string | null) {
@@ -99,9 +108,35 @@
 			{/if}
 		</section>
 	</div>
+	<section class="card mt-4">
+		<header class="mb-3 flex flex-wrap items-end justify-between gap-3">
+			<h2 class="font-medium">Comparação entre meses (despesas por categoria)</h2>
+			<div class="flex gap-2">
+				<input type="month" bind:value={firstMonth} class="input w-40" aria-label="Primeiro mês" />
+				<input type="month" bind:value={secondMonth} class="input w-40" aria-label="Segundo mês" />
+			</div>
+		</header>
+		{#await comparison}
+			<States state="loading" />
+		{:then rows}
+			{#if rows.length === 0}
+				<p class="muted">Sem despesas nestes meses.</p>
+			{:else}
+				<BarChart
+					labels={rows.map((r) => r.name)}
+					series={[
+						{ name: formatMonth(`${firstMonth}-01`, 'long'), color: 'var(--series-1)', values: rows.map((r) => r.first) },
+						{ name: formatMonth(`${secondMonth}-01`, 'long'), color: 'var(--series-2)', values: rows.map((r) => r.second) }
+					]}
+					format={money}
+				/>
+			{/if}
+		{:catch error}
+			<States state="error" {error} />
+		{/await}
+	</section>
 	<p class="mt-4 muted">
-		Para comparar meses em detalhe usa a <a class="underline" href="/monthly">vista mensal</a>; a evolução de créditos e objetivos está nas
-		respetivas páginas.
+		A evolução de cada crédito e o progresso dos objetivos estão nas respetivas páginas.
 	</p>
 {:catch error}
 	<States state="error" {error} />

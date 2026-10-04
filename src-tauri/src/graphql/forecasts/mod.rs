@@ -3,10 +3,9 @@ pub mod types;
 use async_graphql::{Context, Object, Result};
 
 use super::module;
-use crate::managers::forecasts::{ForecastRequest, RecurrenceChange};
-use crate::models::Adjustment;
+use crate::managers::forecasts::ForecastRequest;
 use crate::models::dates::today;
-use types::{Forecast, ForecastInput};
+use types::{Forecast, ForecastInput, ScenarioComparison};
 
 #[derive(Default)]
 pub struct ForecastsQuery;
@@ -14,36 +13,40 @@ pub struct ForecastsQuery;
 #[Object]
 impl ForecastsQuery {
     async fn forecast(&self, ctx: &Context<'_>, input: ForecastInput) -> Result<Forecast> {
-        let module = module(ctx);
-        let settings = module.settings.get().await?;
+        let request = request(ctx, input).await?;
+        Ok(module(ctx)
+            .forecasts
+            .forecast(today(), &request)
+            .await?
+            .into())
+    }
 
-        let request = ForecastRequest {
-            months: input.months,
-            method: input.method.map_or(settings.forecast_method, Into::into),
-            history_months: input
-                .history_months
-                .unwrap_or(settings.forecast_history_months),
-            adjustments: input
-                .adjustments
-                .into_iter()
-                .map(|a| Adjustment {
-                    account_id: a.account_id,
-                    to_account_id: a.to_account_id,
-                    amount: a.amount,
-                    date: a.date,
-                    repeat_months: a.repeat_months,
-                })
-                .collect(),
-            recurrence_changes: input
-                .recurrence_changes
-                .into_iter()
-                .map(|c| RecurrenceChange {
-                    recurrence_id: c.recurrence_id,
-                    amount: c.amount,
-                })
-                .collect(),
+    async fn forecast_scenario(
+        &self,
+        ctx: &Context<'_>,
+        input: ForecastInput,
+    ) -> Result<ScenarioComparison> {
+        let scenario = request(ctx, input).await?;
+        let base = ForecastRequest {
+            adjustments: Vec::new(),
+            recurrence_changes: Vec::new(),
+            ..scenario.clone()
         };
 
-        Ok(module.forecasts.forecast(today(), &request).await?.into())
+        let forecasts = &module(ctx).forecasts;
+        let base: Forecast = forecasts.forecast(today(), &base).await?.into();
+        let scenario: Forecast = forecasts.forecast(today(), &scenario).await?.into();
+        let end = |forecast: &Forecast| forecast.months.last().map_or(0, |m| m.total);
+
+        Ok(ScenarioComparison {
+            end_difference: end(&scenario) - end(&base),
+            base,
+            scenario,
+        })
     }
+}
+
+async fn request(ctx: &Context<'_>, input: ForecastInput) -> Result<ForecastRequest> {
+    let settings = module(ctx).settings.get().await?;
+    Ok(input.into_request(&settings))
 }

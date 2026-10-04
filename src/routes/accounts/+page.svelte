@@ -6,16 +6,17 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import States from '#lib/components/States.svelte';
 	import { confirmAction } from '#lib/dialogs.ts';
+	import { balanceSummary, type BalanceSummary } from '#lib/api/reports.ts';
 	import { formatMoney } from '#lib/format.ts';
 	import { dataChanged, refs } from '#lib/refs.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 
 	let showArchived = $state(false);
 	let editing = $state<Account | null | undefined>(undefined);
-	let request = $state<Promise<Account[]>>(new Promise(() => {}));
+	let request = $state<Promise<{ accounts: Account[]; summary: BalanceSummary }>>(new Promise(() => {}));
 
 	function load() {
-		request = listAccounts(showArchived);
+		request = Promise.all([listAccounts(showArchived), balanceSummary()]).then(([accounts, summary]) => ({ accounts, summary }));
 	}
 
 	$effect(() => {
@@ -60,7 +61,7 @@
 
 {#await request}
 	<States state="loading" />
-{:then accounts}
+{:then { accounts, summary }}
 	{#if accounts.length === 0}
 		<States state="empty" message="Ainda não tens contas.">
 			<button class="btn-primary" onclick={() => (editing = null)}>Criar a primeira conta</button>
@@ -68,7 +69,7 @@
 	{:else}
 		<p class="mb-4 text-sm">
 			<span class="muted">Saldo total:</span>
-			<span class="font-semibold tabular-nums">{formatMoney(accounts.filter((a) => !a.archivedAt).reduce((sum, a) => sum + a.balance, 0))}</span>
+			<span class="font-semibold tabular-nums">{formatMoney(summary.total)}</span>
 		</p>
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each accounts as account (account.id)}

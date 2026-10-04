@@ -25,7 +25,7 @@
 
 	async function load(account: string, until: string, since: string) {
 		const [status, unconfirmed, history, forgotten] = await Promise.all([
-			reconciliationStatus(account, until),
+			reconciliationStatus(account, until, null),
 			listTransactions({ accountId: account, confirmed: false, dateFrom: since, dateTo: until }, 200),
 			listReconciliations(account),
 			forgottenTransactions(account, until)
@@ -34,6 +34,19 @@
 	}
 
 	let request = $state<ReturnType<typeof load> | null>(null);
+	let difference = $state<number | null>(null);
+
+	$effect(() => {
+		refs.version;
+		const [account, until, balance] = [accountId, date, statement];
+		if (!account || balance === null) {
+			difference = null;
+			return;
+		}
+		reconciliationStatus(account, until, balance)
+			.then((result) => (difference = result.statementDifference))
+			.catch(() => (difference = null));
+	});
 
 	$effect(() => {
 		refs.version;
@@ -95,8 +108,8 @@
 			<StatCard label="Saldo confirmado" value={formatMoney(status.confirmedBalance)} hint="Só movimentos confirmados" />
 			<StatCard
 				label="Diferença para o banco"
-				value={statement === null ? '—' : formatMoney(statement - status.calculatedBalance)}
-				tone={statement === null || statement === status.calculatedBalance ? 'neutral' : 'negative'}
+				value={difference === null ? '—' : formatMoney(difference)}
+				tone={!difference ? 'neutral' : 'negative'}
 			/>
 			<StatCard label="Por confirmar" value={String(status.unconfirmedCount)} hint={formatMoney(status.unconfirmedTotal)} />
 		</div>

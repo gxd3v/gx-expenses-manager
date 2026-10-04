@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import GoalProgress from './GoalProgress.svelte';
 	import { deleteGoal, listGoals, saveGoal, setGoalArchived, type Goal } from '#lib/api/goals.ts';
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
 	import Modal from '#lib/components/Modal.svelte';
@@ -16,6 +17,7 @@
 	type Form = { id: string | null; name: string; accountId: string; targetAmount: number | null; targetDate: string };
 
 	let showArchived = $state(false);
+	let expanded = $state<string | null>(null);
 	let editing = $state<Form | null>(null);
 	let formError = $state('');
 	let request = $state<Promise<Goal[]>>(new Promise(() => {}));
@@ -115,7 +117,13 @@
 						<span class="muted">Previsão de conclusão:</span>
 						{goal.remaining === 0 ? 'Atingido 🎉' : goal.projectedDate ? formatMonth(goal.projectedDate, 'long') : 'não atingido nos próximos 10 anos'}
 					</p>
-					<div class="flex gap-1">
+					{#if expanded === goal.id}
+						<GoalProgress {goal} />
+					{/if}
+					<div class="flex flex-wrap gap-1">
+						<button class="btn-ghost" onclick={() => (expanded = expanded === goal.id ? null : goal.id)} aria-expanded={expanded === goal.id}>
+							{expanded === goal.id ? 'Esconder evolução' : 'Ver evolução'}
+						</button>
 						<button class="btn-ghost" onclick={() => open(goal)}>Editar</button>
 						<button class="btn-ghost" onclick={() => toggleArchive(goal)}>{goal.archivedAt ? 'Reativar' : 'Arquivar'}</button>
 						<button class="btn-ghost text-red-600" onclick={() => remove(goal)}>Eliminar</button>

@@ -32,6 +32,7 @@ export type Credit = {
 	nextPaymentDate: string | null;
 	remainingInstallments: number;
 	projectedEndDate: string | null;
+	recurrenceId: string | null;
 	schedule: ScheduleEntry[];
 };
 
@@ -71,6 +72,8 @@ export type PaymentInput = {
 	interest: number | null;
 };
 
+export type CreditBalance = { date: string; balance: number; projected: boolean };
+
 export type AmortizationMode = 'REDUCE_TERM' | 'REDUCE_INSTALLMENT';
 
 export type ScheduleSummary = { installment: number; periods: number; totalInterest: number; endDate: string | null };
@@ -84,7 +87,7 @@ export type Simulation = {
 
 const baseFields = `id name institution principal openingBalance annualRate installment unit interval startDate endDate
 	installments accountId archivedAt paymentsCount remaining principalPaid interestPaid nextPaymentDate
-	remainingInstallments projectedEndDate`;
+	remainingInstallments projectedEndDate recurrenceId`;
 const scheduleFields = 'schedule { number date installment principal interest balance }';
 const summaryFields = 'installment periods totalInterest endDate';
 
@@ -162,4 +165,15 @@ export async function simulateCredit(
 		{ id, input: { extraPayment, mode, installment } }
 	);
 	return data.simulateCredit;
+}
+
+export async function creditHistory(id: string): Promise<CreditBalance[]> {
+	const data = await gql<{ creditHistory: CreditBalance[] }>(`query ($id: UUID!) { creditHistory(id: $id) { date balance projected } }`, {
+		id
+	});
+	return data.creditHistory;
+}
+
+export async function createCreditRecurrence(id: string): Promise<void> {
+	await gql(`mutation ($id: UUID!) { createCreditRecurrence(id: $id) }`, { id });
 }

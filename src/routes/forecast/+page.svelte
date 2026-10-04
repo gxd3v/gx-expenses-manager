@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
-	import { forecast, type Adjustment, type Forecast, type RecurrenceChange } from '#lib/api/forecasts.ts';
+	import { forecast, forecastScenario, type Adjustment, type Forecast, type RecurrenceChange } from '#lib/api/forecasts.ts';
 	import { listRecurrences, type Recurrence } from '#lib/api/recurrences.ts';
-	import { categoryBreakdown, type CategoryAmount } from '#lib/api/reports.ts';
+	import { categoryAverages, type CategoryAmount } from '#lib/api/reports.ts';
 	import HBarChart from '#lib/charts/HBarChart.svelte';
 	import LineChart from '#lib/charts/LineChart.svelte';
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
@@ -11,7 +11,7 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
-	import { addDays, addMonths, formatMoney, formatMonth, monthStart, today } from '#lib/format.ts';
+	import { addMonths, formatMoney, formatMonth, monthStart, toCents, today } from '#lib/format.ts';
 	import { refs } from '#lib/refs.svelte.ts';
 	import { app, type ForecastMethod } from '#lib/settings.svelte.ts';
 
@@ -28,7 +28,9 @@
 	let changes = $state<RecurrenceChange[]>([]);
 	let recurrences = $state<Recurrence[]>([]);
 	let draft = $state<Draft>(blankDraft());
-	let request = $state<Promise<{ base: Forecast; scenario: Forecast | null; patterns: Patterns }>>(new Promise(() => {}));
+	let request = $state<Promise<{ base: Forecast; scenario: Forecast | null; difference: number; patterns: Patterns }>>(
+		new Promise(() => {})
+	);
 
 	function blankDraft(): Draft {
 		return { kind: 'expense', accountId: refs.accounts[0]?.id ?? '', toAccountId: null, amount: null, date: addMonths(today(), 1), repeatMonths: 1 };
@@ -38,18 +40,16 @@
 
 	async function run() {
 		const input = { months, method, historyMonths };
-		const [base, scenario, patterns] = await Promise.all([
-			forecast(input),
-			hasScenario ? forecast({ ...input, adjustments: adjustments.map(({ label: _, ...a }) => a), recurrenceChanges: changes }) : null,
+		const scenarioInput = { ...input, adjustments: adjustments.map(({ label: _, ...a }) => a), recurrenceChanges: changes };
+		const [comparison, patterns] = await Promise.all([
+			hasScenario ? forecastScenario(scenarioInput) : forecast(input).then((base) => ({ base, scenario: null, endDifference: 0 })),
 			loadPatterns(historyMonths)
 		]);
-		return { base, scenario, patterns };
+		return { base: comparison.base, scenario: comparison.scenario, difference: comparison.endDifference, patterns };
 	}
 
 	async function loadPatterns(count: number): Promise<Patterns> {
-		const to = addDays(monthStart(today()), -1);
-		const from = addMonths(monthStart(today()), -count);
-		const [outcome, income] = await Promise.all([categoryBreakdown('OUTCOME', from, to), categoryBreakdown('INCOME', from, to)]);
+		const [outcome, income] = await Promise.all([categoryAverages('OUTCOME', count), categoryAverages('INCOME', count)]);
 		return { outcome, income, months: count };
 	}
 
@@ -82,9 +82,12 @@
 
 	function changeRecurrence(recurrence: Recurrence, value: string) {
 		changes = changes.filter((c) => c.recurrenceId !== recurrence.id);
-		if (value === 'keep') return;
-		const amount = value === 'remove' ? null : Math.round(Number(value.replace(',', '.')) * 100);
-		changes.push({ recurrenceId: recurrence.id, amount });
+		if (value === 'remove') {
+			changes.push({ recurrenceId: recurrence.id, amount: null });
+			return;
+		}
+		const amount = toCents(value);
+		if (amount !== null) changes.push({ recurrenceId: recurrence.id, amount });
 	}
 
 	const accountName = (id: string) => refs.accounts.find((a) => a.id === id)?.name ?? '—';
@@ -123,15 +126,13 @@
 
 {#await request}
 	<States state="loading" />
-{:then { base, scenario, patterns }}
+{:then { base, scenario, difference, patterns }}
 	{@const last = base.months[base.months.length - 1]}
-	{@const income = base.months.reduce((s, m) => s + m.income, 0)}
-	{@const outcome = base.months.reduce((s, m) => s + m.outcome, 0)}
 	<div class="mb-6 grid gap-4 md:grid-cols-4">
 		<StatCard label="Saldo total previsto" value={formatMoney(last?.total ?? 0)} hint={last ? formatMonth(last.month, 'long') : ''} />
-		<StatCard label="Receitas previstas" value={formatMoney(income)} />
-		<StatCard label="Despesas previstas" value={formatMoney(outcome)} />
-		<StatCard label="Resultado previsto" value={formatMoney(income - outcome)} tone={income >= outcome ? 'positive' : 'negative'} />
+		<StatCard label="Receitas previstas" value={formatMoney(base.totalIncome)} />
+		<StatCard label="Despesas previstas" value={formatMoney(base.totalOutcome)} />
+		<StatCard label="Resultado previsto" value={formatMoney(base.totalNet)} tone={base.totalNet >= 0 ? 'positive' : 'negative'} />
 	</div>
 
 	<section class="card mb-6">
@@ -146,7 +147,7 @@
 		/>
 		{#if scenario && last}
 			<p class="mt-2 text-sm">
-				Diferença no fim do período: <Amount value={scenario.months[scenario.months.length - 1].total - last.total} />
+				Diferença no fim do período: <Amount value={difference} />
 			</p>
 		{/if}
 	</section>
@@ -222,13 +223,13 @@
 			<div>
 				<h3 class="mb-2 text-sm font-medium">Despesas</h3>
 				{#if patterns.outcome.length === 0}<p class="muted">Sem histórico.</p>{:else}
-					<HBarChart items={patterns.outcome.map((c) => ({ label: c.name, value: Math.round(c.amount / patterns.months) }))} format={(v) => formatMoney(v)} />
+					<HBarChart items={patterns.outcome.map((c) => ({ label: c.name, value: c.amount }))} format={(v) => formatMoney(v)} />
 				{/if}
 			</div>
 			<div>
 				<h3 class="mb-2 text-sm font-medium">Receitas</h3>
 				{#if patterns.income.length === 0}<p class="muted">Sem histórico.</p>{:else}
-					<HBarChart items={patterns.income.map((c) => ({ label: c.name, value: Math.round(c.amount / patterns.months) }))} format={(v) => formatMoney(v)} />
+					<HBarChart items={patterns.income.map((c) => ({ label: c.name, value: c.amount }))} format={(v) => formatMoney(v)} />
 				{/if}
 			</div>
 		</div>

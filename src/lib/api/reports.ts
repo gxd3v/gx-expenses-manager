@@ -21,11 +21,24 @@ export type MonthSummary = {
 	net: number;
 	pendingIncome: number;
 	pendingOutcome: number;
+	expectedIncome: number;
+	expectedOutcome: number;
+	expectedNet: number;
 	previousIncome: number;
 	previousOutcome: number;
 	averageIncome: number;
 	averageOutcome: number;
 	categories: CategoryComparison[];
+};
+
+export type BalanceSummary = { total: number; available: number; projected: number; debt: number; netWorth: number };
+
+export type MonthComparison = {
+	categoryId: string | null;
+	name: string;
+	first: number;
+	second: number;
+	difference: number;
 };
 
 export type Alert = { key: string; kind: string; title: string; message: string; date: string | null };
@@ -70,7 +83,7 @@ export async function monthSummary(month: string): Promise<MonthSummary> {
 	const data = await gql<{ monthSummary: MonthSummary }>(
 		`query ($month: NaiveDate!) {
 			monthSummary(month: $month) {
-				month income outcome net pendingIncome pendingOutcome previousIncome previousOutcome averageIncome averageOutcome
+				month income outcome net pendingIncome pendingOutcome expectedIncome expectedOutcome expectedNet previousIncome previousOutcome averageIncome averageOutcome
 				categories { categoryId name color current previous average }
 			}
 		}`,
@@ -82,4 +95,25 @@ export async function monthSummary(month: string): Promise<MonthSummary> {
 export async function listAlerts(): Promise<Alert[]> {
 	const data = await gql<{ alerts: Alert[] }>(`{ alerts { key kind title message date } }`);
 	return data.alerts;
+}
+
+export async function balanceSummary(): Promise<BalanceSummary> {
+	const data = await gql<{ balanceSummary: BalanceSummary }>(`{ balanceSummary { total available projected debt netWorth } }`);
+	return data.balanceSummary;
+}
+
+export async function categoryAverages(kind: EntryKind, months: number): Promise<CategoryAmount[]> {
+	const data = await gql<{ categoryAverages: CategoryAmount[] }>(
+		`query ($kind: EntryKind!, $months: Int!) { categoryAverages(kind: $kind, months: $months) { categoryId name color amount } }`,
+		{ kind, months }
+	);
+	return data.categoryAverages;
+}
+
+export async function compareMonths(first: string, second: string): Promise<MonthComparison[]> {
+	const data = await gql<{ compareMonths: MonthComparison[] }>(
+		`query ($first: NaiveDate!, $second: NaiveDate!) { compareMonths(first: $first, second: $second) { categoryId name first second difference } }`,
+		{ first, second }
+	);
+	return data.compareMonths;
 }

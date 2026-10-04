@@ -5,7 +5,7 @@
 	import { forecast } from '#lib/api/forecasts.ts';
 	import { listGoals } from '#lib/api/goals.ts';
 	import { listOccurrences } from '#lib/api/recurrences.ts';
-	import { balanceHistory, categoryBreakdown, listAlerts, monthSummary } from '#lib/api/reports.ts';
+	import { balanceHistory, balanceSummary, categoryBreakdown, listAlerts, monthSummary } from '#lib/api/reports.ts';
 	import { listTransactions } from '#lib/api/transactions.ts';
 	import { describe } from '#lib/background.ts';
 	import HBarChart from '#lib/charts/HBarChart.svelte';
@@ -26,7 +26,7 @@
 	async function load() {
 		const now = today();
 		const until = addDays(now, UPCOMING_DAYS);
-		const [accounts, summary, categories, occurrences, future, goals, projection, history, alerts, credits, week] = await Promise.all([
+		const [accounts, summary, categories, occurrences, future, goals, projection, history, alerts, credits, balances, week] = await Promise.all([
 			listAccounts(),
 			monthSummary(now),
 			categoryBreakdown('OUTCOME', monthStart(now), now),
@@ -37,6 +37,7 @@
 			balanceHistory(12),
 			listAlerts(),
 			listCredits(),
+			balanceSummary(),
 			listTransactions({ kind: 'OUTCOME', dateFrom: weekStart(now, app.settings?.firstDayOfWeek ?? 1), dateTo: now }, 1)
 		]);
 
@@ -53,7 +54,7 @@
 				.map((t) => ({ key: t.id, date: t.date, description: t.description, amount: t.amount, credit: false }))
 		].sort((a, b) => a.date.localeCompare(b.date));
 
-		return { accounts, summary, categories, upcoming, goals, projection, history, alerts, credits, weekOutcome: week.outcome };
+		return { accounts, summary, categories, upcoming, goals, projection, history, alerts, credits, weekOutcome: week.outcome, balances };
 	}
 
 	let request = $state<ReturnType<typeof load>>(new Promise(() => {}));
@@ -82,11 +83,11 @@
 {#await request}
 	<States state="loading" />
 {:then data}
-	{@const total = data.accounts.reduce((sum, a) => sum + a.balance, 0)}
 	<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
 		<div>
 			<p class="muted">Saldo total</p>
-			<p class="text-5xl font-semibold tabular-nums">{formatMoney(total)}</p>
+			<p class="text-5xl font-semibold tabular-nums">{formatMoney(data.balances.total)}</p>
+			<p class="muted">Património líquido {formatMoney(data.balances.netWorth)} · dívida em créditos {formatMoney(data.balances.debt)}</p>
 		</div>
 		<button class="btn-primary" onclick={() => openQuickAdd()}>+ Adicionar movimento</button>
 	</div>

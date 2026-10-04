@@ -2,6 +2,8 @@
 	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import {
+		createCreditRecurrence,
+		creditHistory,
 		deletePayment,
 		getCredit,
 		listPayments,
@@ -27,13 +29,14 @@
 
 	async function load(creditId: string) {
 		const credit = await getCredit(creditId);
-		const [payments, candidates] = await Promise.all([
+		const [payments, history, candidates] = await Promise.all([
 			listPayments(creditId),
+			creditHistory(creditId),
 			credit.accountId
 				? listTransactions({ accountId: credit.accountId, kind: 'OUTCOME', dateFrom: addMonths(today(), -3) }, 30)
 				: Promise.resolve(null)
 		]);
-		return { credit, payments, candidates: candidates?.items ?? [] };
+		return { credit, payments, history, candidates: candidates?.items ?? [] };
 	}
 
 	let request = $state<ReturnType<typeof load>>(new Promise(() => {}));
@@ -74,6 +77,16 @@
 		await dataChanged();
 	}
 
+	async function linkRecurrence(creditId: string) {
+		try {
+			await createCreditRecurrence(creditId);
+			notify('Recorrência da prestação criada');
+			await dataChanged();
+		} catch (e) {
+			notifyError(e);
+		}
+	}
+
 	async function simulate(event: SubmitEvent, creditId: string) {
 		event.preventDefault();
 		try {
@@ -86,9 +99,18 @@
 
 {#await request}
 	<States state="loading" />
-{:then { credit, payments, candidates }}
-	{@const history = [...payments].reverse()}
-	<PageHeader title={credit.name} subtitle="{credit.institution ?? ''} · taxa {credit.annualRate.toLocaleString('pt-PT')} % · prestação {formatMoney(credit.installment)}" />
+{:then { credit, payments, history, candidates }}
+	<PageHeader title={credit.name} subtitle="{credit.institution ?? ''} · taxa {credit.annualRate.toLocaleString('pt-PT')} % · prestação {formatMoney(credit.installment)}">
+		{#snippet actions()}
+			{#if credit.recurrenceId}
+				<a class="btn-secondary" href="/recurrences">Prestação automática ativa</a>
+			{:else}
+				<button class="btn-secondary" onclick={() => linkRecurrence(credit.id)} disabled={!credit.accountId} title={credit.accountId ? '' : 'Associa uma conta de pagamento ao crédito'}>
+					Criar recorrência da prestação
+				</button>
+			{/if}
+		{/snippet}
+	</PageHeader>
 
 	<div class="mb-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
 		<StatCard label="Capital inicial" value={formatMoney(credit.principal)} />
@@ -102,17 +124,8 @@
 	<section class="card mb-6">
 		<h2 class="mb-3 font-medium">Evolução do capital em dívida</h2>
 		<LineChart
-			labels={[...history.map((p) => formatDate(p.date)), ...credit.schedule.map((s) => formatMonth(s.date))]}
-			series={[
-				{
-					name: 'Capital em dívida',
-					color: 'var(--series-8)',
-					values: [
-						...history.map((_, index) => credit.openingBalance - history.slice(0, index + 1).reduce((sum, p) => sum + p.principal, 0)),
-						...credit.schedule.map((s) => s.balance)
-					]
-				}
-			]}
+			labels={history.map((p) => (p.projected ? formatMonth(p.date) : formatDate(p.date)))}
+			series={[{ name: 'Capital em dívida', color: 'var(--series-8)', values: history.map((p) => p.balance) }]}
 			format={(v) => formatMoney(v)}
 		/>
 	</section>

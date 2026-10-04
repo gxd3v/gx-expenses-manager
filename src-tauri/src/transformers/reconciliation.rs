@@ -1,9 +1,14 @@
 use crate::graphql::reconciliation::types;
 use crate::models;
 
-impl From<models::ReconciliationStatus> for types::ReconciliationStatus {
-    fn from(status: models::ReconciliationStatus) -> Self {
+impl types::ReconciliationStatus {
+    pub fn from_model(
+        status: models::ReconciliationStatus,
+        statement_balance: Option<i64>,
+    ) -> Self {
         Self {
+            statement_difference: statement_balance
+                .map(|balance| balance - status.calculated_balance),
             calculated_balance: status.calculated_balance,
             confirmed_balance: status.confirmed_balance,
             unconfirmed_count: status.unconfirmed_count,
