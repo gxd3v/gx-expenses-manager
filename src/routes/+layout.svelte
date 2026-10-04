@@ -205,10 +205,12 @@
 			{/each}
 			{#if version}<p class="mt-auto px-3 pt-2 text-xs text-stone-400 dark:text-stone-500">v{version}</p>{/if}
 		</nav>
-		<main class="flex-1 overflow-y-auto p-4 md:p-8">
+		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 			<UpdateBanner />
-			{@render children()}
-		</main>
+			<main class="flex-1 overflow-y-auto p-4 md:p-8">
+				{@render children()}
+			</main>
+		</div>
 	</div>
 
 	{#if ui.quickAdd}

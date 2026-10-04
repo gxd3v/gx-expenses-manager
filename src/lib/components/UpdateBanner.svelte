@@ -20,7 +20,7 @@
 
 {#if visible && update}
 	<div
-		class="-mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 border-b md:-mx-8 md:-mt-8 md:mb-6 border-indigo-200 bg-indigo-50 px-4 py-2 text-sm dark:border-indigo-900 dark:bg-indigo-950"
+		class="flex shrink-0 items-center justify-between gap-3 border-b border-indigo-200 bg-indigo-50 px-4 py-2 text-sm dark:border-indigo-900 dark:bg-indigo-950"
 	>
 		<span>Está disponível uma nova versão ({update.version}).</span>
 		<span class="flex items-center gap-2">
