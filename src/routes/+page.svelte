@@ -119,11 +119,16 @@
 	{#if data.alerts.length}
 		<section class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950" aria-label="Alertas">
 			<h2 class="mb-2 text-sm font-medium text-amber-900 dark:text-amber-200">Avisos</h2>
-			<ul class="grid gap-1 text-sm md:grid-cols-2">
+			<ul class="divide-y divide-amber-200/60 text-sm dark:divide-amber-900/60">
 				{#each data.alerts as alert (alert.key)}
-					<li class="flex items-start justify-between gap-2">
-						<span>⚠ <strong>{alert.title}:</strong> {describe(alert)}</span>
-						<button class="btn-ghost -my-1 px-1.5 text-amber-900 dark:text-amber-200" onclick={() => dismiss(alert.key)} aria-label="Dispensar aviso" title="Dispensar">✕</button>
+					<li class="flex items-center justify-between gap-3 py-1">
+						<span class="min-w-0">⚠ <strong>{alert.title}:</strong> {describe(alert)}</span>
+						<button
+							class="shrink-0 rounded p-1 text-xs leading-none text-amber-900 hover:bg-amber-200/60 dark:text-amber-200 dark:hover:bg-amber-900"
+							onclick={() => dismiss(alert.key)}
+							aria-label="Dispensar aviso"
+							title="Dispensar">✕</button
+						>
 					</li>
 				{/each}
 			</ul>

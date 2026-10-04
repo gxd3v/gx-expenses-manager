@@ -1,8 +1,8 @@
 <script lang="ts">
 	import './layout.css';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import type { Alert } from '#lib/api/reports.ts';
+	import { listAlerts, type Alert } from '#lib/api/reports.ts';
 	import { runBackgroundTasks } from '#lib/background.ts';
 	import PrivacyToggle from '#lib/components/PrivacyToggle.svelte';
 	import QuickAdd from '#lib/components/QuickAdd.svelte';
@@ -11,7 +11,7 @@
 	import Toasts from '#lib/components/Toasts.svelte';
 	import UnlockScreen from '#lib/components/UnlockScreen.svelte';
 	import { errorMessage, isTauri } from '#lib/graphql.ts';
-	import { dataChanged, loadRefs } from '#lib/refs.svelte.ts';
+	import { dataChanged, loadRefs, refs } from '#lib/refs.svelte.ts';
 	import { lock, status, type Status } from '#lib/session.ts';
 	import { applyPrivacy, togglePrivacy } from '#lib/privacy.svelte.ts';
 	import { app, loadSettings, restoreTheme } from '#lib/settings.svelte.ts';
@@ -103,6 +103,13 @@
 	$effect(() => {
 		page.url.pathname;
 		menuOpen = false;
+	});
+
+	$effect(() => {
+		refs.version;
+		untrack(() => {
+			if (ready) listAlerts().then((list) => (alerts = list), () => undefined);
+		});
 	});
 
 	const active = (href: string) => (href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href));
