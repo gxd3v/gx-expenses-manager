@@ -1,4 +1,4 @@
-!macro NSIS_HOOK_POSTUNINSTALL
+﻿!macro NSIS_HOOK_POSTUNINSTALL
   ${If} $DeleteAppDataCheckboxState = 1
   ${AndIf} $UpdateMode <> 1
     SetShellVarContext current
@@ -14,7 +14,7 @@
           Goto expenses_retry_delete
         ${EndIf}
         IfSilent +2
-          MessageBox MB_ICONEXCLAMATION|MB_OK "Não foi possível apagar todos os dados (algum ficheiro está em uso). Apaga manualmente:$\r$\n$APPDATA\${BUNDLEID}$\r$\n$LOCALAPPDATA\${BUNDLEID}"
+          MessageBox MB_ICONEXCLAMATION|MB_OK "Não foi possível apagar todos os dados (ficheiros em uso). Pastas a remover manualmente:$\r$\n$APPDATA\${BUNDLEID}$\r$\n$LOCALAPPDATA\${BUNDLEID}"
       ${EndIf}
   ${EndIf}
 !macroend
