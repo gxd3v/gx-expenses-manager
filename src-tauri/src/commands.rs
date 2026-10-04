@@ -131,6 +131,26 @@ pub async fn restore_backup(
     Ok(())
 }
 
+#[tauri::command]
+pub async fn reset_data(
+    app: AppHandle,
+    session: State<'_, Session>,
+    password: String,
+) -> Result<(), AppError> {
+    let data_dir = data_dir(&app)?;
+    let mut guard = session.0.write().await;
+    let unlocked = guard.take().ok_or(AppError::Locked)?;
+    if unlocked.password.expose_secret() != password {
+        *guard = Some(unlocked);
+        return Err(AppError::WrongPassword);
+    }
+
+    database::close(&unlocked.pool).await;
+    database::reset(&data_dir.join(DATABASE_FILE), &data_dir.join("backups"))?;
+    *guard = Some(open_session(&data_dir, password).await?);
+    Ok(())
+}
+
 async fn open_session(data_dir: &Path, password: String) -> Result<Unlocked, AppError> {
     let pool = database::open(
         &data_dir.join(DATABASE_FILE),

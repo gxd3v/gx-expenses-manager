@@ -37,6 +37,7 @@ pub fn run() {
             commands::graphql,
             commands::change_password,
             commands::restore_backup,
+            commands::reset_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

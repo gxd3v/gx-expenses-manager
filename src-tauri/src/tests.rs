@@ -832,6 +832,34 @@ async fn restore_replaces_database_and_keeps_safety_copy() {
 }
 
 #[tokio::test]
+async fn reset_starts_clean_with_the_same_password() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    populated(&module).await;
+    let categories = module.categories.list(true).await.unwrap().len();
+    crate::database::close(&db.pool).await;
+
+    let database = db.dir.join("test.db");
+    let safety = db.dir.join("safety");
+    crate::database::reset(&database, &safety).unwrap();
+    assert_eq!(std::fs::read_dir(&safety).unwrap().count(), 1);
+
+    let pool = crate::database::open(&database, PASSWORD, &safety)
+        .await
+        .unwrap();
+    let fresh = Module::new(
+        pool,
+        AppContext {
+            data_dir: db.dir.clone(),
+            password: SecretString::from(PASSWORD.to_string()),
+        },
+    );
+    assert!(fresh.accounts.list(today(), true).await.unwrap().is_empty());
+    assert!(fresh.recurrences.list().await.unwrap().is_empty());
+    assert_eq!(fresh.categories.list(true).await.unwrap().len(), categories);
+}
+
+#[tokio::test]
 async fn interrupted_writes_leave_database_consistent() {
     let db = TestDatabase::new().await;
     let module = module(&db);
