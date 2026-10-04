@@ -40,12 +40,12 @@
 	<form onsubmit={submit} class="card w-full max-w-sm space-y-4 shadow">
 		<div>
 			<h1 class="text-lg font-semibold">Expenses Manager</h1>
-			<p class="muted">{initialized ? 'Introduz a password para desbloquear.' : 'Cria a password que protege os teus dados.'}</p>
+			<p class="muted">{initialized ? 'Password necessária para desbloquear.' : 'Definição da password que protege os dados.'}</p>
 		</div>
 
 		{#if !initialized}
 			<p class="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-				Os dados ficam encriptados com esta password. Se a perderes, não há forma de os recuperar — guarda-a num gestor de
+				Os dados ficam encriptados com esta password. Sem ela não é possível recuperá-los; recomenda-se guardá-la num gestor de
 				passwords.
 			</p>
 		{/if}

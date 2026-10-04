@@ -1,6 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import { onMount, untrack } from 'svelte';
+	import { getVersion } from '@tauri-apps/api/app';
 	import { page } from '$app/state';
 	import { listAlerts, type Alert } from '#lib/api/reports.ts';
 	import { runBackgroundTasks } from '#lib/background.ts';
@@ -48,6 +49,7 @@
 	let startupError = $state('');
 	let alerts = $state<Alert[]>([]);
 	let menuOpen = $state(false);
+	let version = $state('');
 	let idleTimer: ReturnType<typeof setTimeout>;
 	let backgroundTimer: ReturnType<typeof setInterval>;
 
@@ -126,6 +128,7 @@
 
 	onMount(() => {
 		refresh();
+		if (isTauri) getVersion().then((v) => (version = v));
 		backgroundTimer = setInterval(async () => {
 			if (ready) alerts = await runBackgroundTasks();
 		}, BACKGROUND_INTERVAL);
@@ -195,6 +198,7 @@
 				</a>
 			{/each}
 			<button onclick={handleLock} class="btn-secondary mt-auto" title="Atalho: Ctrl L">Bloquear</button>
+			{#if version}<p class="px-3 pt-2 text-xs text-stone-400 dark:text-stone-500">v{version}</p>{/if}
 		</nav>
 		<main class="flex-1 overflow-y-auto p-4 md:p-8">
 			<UpdateBanner />

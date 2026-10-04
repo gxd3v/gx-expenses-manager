@@ -56,7 +56,7 @@
 {#await request then items}
 	{#if items.length}
 		<section class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-900 dark:bg-indigo-950" aria-label="Ações pendentes">
-			<h2 class="mb-2 text-sm font-medium text-indigo-900 dark:text-indigo-200">Ações pendentes · confirma o valor real</h2>
+			<h2 class="mb-2 text-sm font-medium text-indigo-900 dark:text-indigo-200">Ações pendentes · confirmação de valor</h2>
 			<ul class="divide-y divide-indigo-100 text-sm dark:divide-indigo-900">
 				{#each items as transaction (transaction.id)}
 					<li class="flex flex-wrap items-center justify-between gap-3 py-2">

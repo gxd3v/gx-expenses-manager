@@ -95,7 +95,7 @@
 	<States state="loading" />
 {:then recurrences}
 	{#if recurrences.length === 0}
-		<States state="empty" message="Sem recorrências. Regista a renda, o salário ou subscrições.">
+		<States state="empty" message="Sem recorrências. Ex.: renda, salário, subscrições.">
 			<button class="btn-primary" onclick={() => (editing = null)}>Criar recorrência</button>
 		</States>
 	{:else}
@@ -205,7 +205,7 @@
 				Data
 				<input type="date" bind:value={changing.date} class="input" />
 			</label>
-			<p class="col-span-2 muted">Só altera esta ocorrência. Pode ser movida até 31 dias.</p>
+			<p class="col-span-2 muted">Altera apenas esta ocorrência, que pode ser movida até 31 dias.</p>
 			<div class="col-span-2 flex justify-end gap-2">
 				<button type="button" class="btn-secondary" onclick={() => (changing = null)}>Cancelar</button>
 				<button type="submit" class="btn-primary">Guardar</button>

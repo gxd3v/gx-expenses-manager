@@ -47,7 +47,7 @@
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (!editing?.targetAmount) {
-			formError = 'Indica o valor objetivo.';
+			formError = 'Valor objetivo obrigatório.';
 			return;
 		}
 		try {
@@ -114,7 +114,7 @@
 					</dl>
 					<p class="text-sm">
 						<span class="muted">Previsão de conclusão:</span>
-						{goal.remaining === 0 ? 'Atingido 🎉' : goal.projectedDate ? formatMonth(goal.projectedDate, 'long') : 'não atingido nos próximos 10 anos'}
+						{goal.remaining === 0 ? 'Atingido' : goal.projectedDate ? formatMonth(goal.projectedDate, 'long') : 'não atingido nos próximos 10 anos'}
 					</p>
 					{#if expanded === goal.id}
 						<GoalProgress {goal} />

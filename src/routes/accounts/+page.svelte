@@ -61,7 +61,7 @@
 	<States state="loading" />
 {:then { accounts, summary }}
 	{#if accounts.length === 0}
-		<States state="empty" message="Ainda não tens contas.">
+		<States state="empty" message="Sem contas.">
 			<button class="btn-primary" onclick={() => (editing = null)}>Criar a primeira conta</button>
 		</States>
 	{:else}

@@ -22,11 +22,11 @@
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (!form.amount || form.amount <= 0) {
-			error = 'Indica um valor maior que zero.';
+			error = 'O valor tem de ser maior que zero.';
 			return;
 		}
 		if (!form.accountId) {
-			error = 'Escolhe uma conta.';
+			error = 'Conta obrigatória.';
 			return;
 		}
 

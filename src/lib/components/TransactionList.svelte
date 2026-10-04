@@ -384,6 +384,6 @@
 {/if}
 
 {#if refs.accounts.length === 0}
-	<p class="mt-4 muted">Cria primeiro uma conta para registares movimentos.</p>
+	<p class="mt-4 muted">É necessária pelo menos uma conta para registar movimentos.</p>
 {/if}
 

@@ -81,7 +81,7 @@
 	async function restore(backup: BackupFile) {
 		const message = `Restaurar "${backup.name}"? Os dados atuais são substituídos (é guardada uma cópia de segurança antes).`;
 		if (!(await confirmAction(message))) return;
-		const password = window.prompt('Password do backup (deixa vazio se for a atual)') || null;
+		const password = window.prompt('Password do backup (vazio = password atual)') || null;
 		try {
 			await restoreBackup(backup.path, password);
 			notify('Backup restaurado');
@@ -158,7 +158,7 @@
 	async function resetAll(event: SubmitEvent) {
 		event.preventDefault();
 		if (reset.phrase !== RESET_PHRASE) {
-			notify(`Escreve exatamente "${RESET_PHRASE}" para confirmar`, 'error');
+			notify(`Texto de confirmação incorreto`, 'error');
 			return;
 		}
 		if (!(await confirmAction('Apagar TODOS os dados? Contas, movimentos, recorrências, créditos, objetivos e definições.'))) return;
@@ -256,7 +256,7 @@
 		<h2 class="font-medium">Atualizações</h2>
 		<Toggle bind:checked={form.checkUpdates} label="Procurar novas versões automaticamente" />
 		<p class="muted">
-			É a única ligação à internet que a app faz: descarrega um ficheiro público do GitHub para saber se existe uma versão nova. Os teus dados
+			Única ligação à internet da aplicação: descarrega um ficheiro público do GitHub para verificar se existe uma versão nova. Os dados
 			nunca saem do computador.
 		</p>
 	</section>
@@ -353,7 +353,7 @@
 			<input type="password" bind:value={passwords.confirm} minlength="8" class="input" autocomplete="new-password" required />
 		</label>
 		<div class="flex items-end"><button class="btn-secondary w-full">Alterar</button></div>
-		<p class="col-span-2 muted md:col-span-4">Não existe recuperação: se esqueceres a password, os dados ficam inacessíveis.</p>
+		<p class="col-span-2 muted md:col-span-4">Não existe recuperação: sem a password, os dados ficam inacessíveis.</p>
 	</form>
 
 	<form onsubmit={resetAll} class="card mt-6 grid grid-cols-2 gap-4 border-red-300 md:grid-cols-4 dark:border-red-900">
@@ -367,7 +367,7 @@
 			<input type="password" bind:value={reset.password} class="input" autocomplete="current-password" required />
 		</label>
 		<label class="label">
-			Escreve "{RESET_PHRASE}"
+			Confirmação: "{RESET_PHRASE}"
 			<input bind:value={reset.phrase} class="input" autocomplete="off" required />
 		</label>
 		<div class="flex items-end md:col-span-2">

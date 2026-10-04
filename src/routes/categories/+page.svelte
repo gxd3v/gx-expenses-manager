@@ -111,7 +111,7 @@
 	</li>
 {/snippet}
 
-<PageHeader title="Categorias" subtitle="Organiza receitas e despesas em categorias e subcategorias.">
+<PageHeader title="Categorias" subtitle="Receitas e despesas organizadas em categorias e subcategorias.">
 	{#snippet actions()}
 		<Toggle bind:checked={showArchived} onchange={load} label="Mostrar arquivadas" />
 		<button class="btn-primary" onclick={() => create()}>Nova categoria</button>
@@ -181,7 +181,7 @@
 		<div class="space-y-4">
 			<p class="text-sm">
 				<strong>{removing.category.name}</strong> tem {removing.category.transactionCount} movimentos. Para eliminar uma categoria em uso,
-				escolhe outra para onde mover os movimentos, recorrências e templates.
+				é necessária uma categoria de destino para os movimentos, recorrências e templates.
 			</p>
 			<label class="label">
 				Mover para

@@ -243,7 +243,7 @@
 
 <section class="card">
 	<h2 class="mb-1 font-medium">Cenário hipotético</h2>
-	<p class="mb-4 muted">Adiciona despesas, receitas ou poupança e altera recorrências para comparar com a previsão atual.</p>
+	<p class="mb-4 muted">Despesas, receitas, poupança e alterações a recorrências hipotéticas, comparadas com a previsão atual.</p>
 
 	<form onsubmit={addAdjustment} class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-6">
 		<label class="label">

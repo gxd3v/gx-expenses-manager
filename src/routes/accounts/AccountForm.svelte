@@ -121,7 +121,7 @@
 				<button type="button" class="btn-ghost" onclick={() => tiers.push({ minBalance: null, rate: '' })}>+ Escalão</button>
 			</div>
 			<p class="muted">
-				Para taxa fixa usa só um escalão a partir de 0 €. O saldo todo rende à taxa do escalão em que está. As previsões mostram os juros
+				Taxa fixa: um único escalão a partir de 0 €. O saldo inteiro rende à taxa do escalão correspondente. As previsões mostram os juros
 				líquidos (retenção de 28%).
 			</p>
 		</div>

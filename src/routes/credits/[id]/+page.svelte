@@ -106,7 +106,7 @@
 			{#if credit.recurrenceId}
 				<a class="btn-secondary" href="/recurrences">Prestação automática ativa</a>
 			{:else}
-				<button class="btn-secondary" onclick={() => linkRecurrence(credit.id)} disabled={!credit.accountId} title={credit.accountId ? '' : 'Associa uma conta de pagamento ao crédito'}>
+				<button class="btn-secondary" onclick={() => linkRecurrence(credit.id)} disabled={!credit.accountId} title={credit.accountId ? '' : 'Requer uma conta de pagamento associada ao crédito'}>
 					Criar recorrência da prestação
 				</button>
 			{/if}

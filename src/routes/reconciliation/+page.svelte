@@ -99,7 +99,7 @@
 </form>
 
 {#if !request}
-	<States state="empty" message="Escolhe uma conta." />
+	<States state="empty" message="Nenhuma conta selecionada." />
 {:else}
 	{#await request}
 		<States state="loading" />
@@ -154,7 +154,7 @@
 		<section class="card mt-6">
 			<h2 class="mb-3 font-medium">Histórico de reconciliações</h2>
 			{#if history.length === 0}
-				<p class="muted">Ainda não fizeste reconciliações nesta conta.</p>
+				<p class="muted">Sem reconciliações nesta conta.</p>
 			{:else}
 				<div class="overflow-x-auto">
 				<table class="table-base">

@@ -166,7 +166,7 @@
 		<section class="card">
 			<h2 class="mb-3 font-medium">Saldo por conta</h2>
 			{#if data.accounts.length === 0}
-				<p class="muted">Ainda não tens contas. <a class="underline" href="/accounts">Criar conta</a></p>
+				<p class="muted">Sem contas. <a class="underline" href="/accounts">Criar conta</a></p>
 			{:else}
 				<ul class="divide-y divide-stone-100 text-sm dark:divide-stone-800">
 					{#each data.accounts as account (account.id)}

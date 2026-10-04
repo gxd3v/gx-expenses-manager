@@ -47,7 +47,7 @@
 			{#if updates.installing}
 				<span class="muted mr-auto">A transferir{updates.progress !== null ? ` · ${updates.progress}%` : '…'}</span>
 			{:else}
-				<span class="muted mr-auto">A app fecha e reabre sozinha. Os teus dados ficam.</span>
+				<span class="muted mr-auto">A aplicação fecha e reabre automaticamente. Os dados mantêm-se.</span>
 			{/if}
 			<button class="btn-secondary" disabled={updates.installing} onclick={() => (open = false)}>Mais tarde</button>
 			<button class="btn-primary" disabled={updates.installing} onclick={install}>Atualizar agora</button>

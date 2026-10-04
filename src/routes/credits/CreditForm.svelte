@@ -32,7 +32,7 @@
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (!form.principal || !form.installment) {
-			error = 'Indica o capital inicial e a prestação.';
+			error = 'Capital inicial e prestação obrigatórios.';
 			return;
 		}
 		const preset = frequencyPresets[Number(form.frequency)];

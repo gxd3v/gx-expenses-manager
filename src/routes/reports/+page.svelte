@@ -47,7 +47,7 @@
 	const money = (v: number) => formatMoney(v);
 </script>
 
-<PageHeader title="Gráficos" subtitle="Evolução e distribuição das tuas finanças.">
+<PageHeader title="Gráficos" subtitle="Evolução e distribuição das finanças.">
 	{#snippet actions()}
 		<div class="w-48"><AccountSelect bind:value={accountId} allowEmpty /></div>
 		{#each ranges as range (range)}

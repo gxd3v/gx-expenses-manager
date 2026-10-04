@@ -191,7 +191,7 @@
 			</table>
 			</div>
 			<p class="mt-2 text-xs text-stone-500">
-				Diferença positiva significa que gastaste menos do que a média. Clica numa categoria para ver os movimentos.
+				Diferença positiva indica despesa abaixo da média. Cada categoria abre os respetivos movimentos.
 			</p>
 		{/if}
 	</section>

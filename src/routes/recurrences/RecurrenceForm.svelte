@@ -54,11 +54,11 @@
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (!form.amount || form.amount <= 0) {
-			error = 'Indica um valor maior que zero.';
+			error = 'O valor tem de ser maior que zero.';
 			return;
 		}
 		if (transfer && !form.toAccountId) {
-			error = 'Escolhe a conta de destino.';
+			error = 'Conta de destino obrigatória.';
 			return;
 		}
 		try {
@@ -140,7 +140,7 @@
 	</label>
 	{#if !transfer}
 		<div class="col-span-2">
-			<Toggle bind:checked={form.variableAmount} label="Valor variável — pedir para confirmar o valor real quando acontecer" />
+			<Toggle bind:checked={form.variableAmount} label="Valor variável — confirmação do valor real em cada ocorrência" />
 		</div>
 	{/if}
 	<p class="col-span-2 muted">
