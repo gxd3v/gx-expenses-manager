@@ -6,13 +6,15 @@
 	import { listGoals } from '#lib/api/goals.ts';
 	import { listOccurrences } from '#lib/api/recurrences.ts';
 	import { balanceHistory, balanceSummary, categoryBreakdown, listAlerts, monthSummary } from '#lib/api/reports.ts';
-	import { listTransactions } from '#lib/api/transactions.ts';
+	import { listTransactions, type TransactionFilter } from '#lib/api/transactions.ts';
 	import { describe } from '#lib/background.ts';
 	import HBarChart from '#lib/charts/HBarChart.svelte';
 	import LineChart from '#lib/charts/LineChart.svelte';
 	import Amount from '#lib/components/Amount.svelte';
 	import BalanceRecords from '#lib/components/BalanceRecords.svelte';
+	import Modal from '#lib/components/Modal.svelte';
 	import Money from '#lib/components/Money.svelte';
+	import PrivacyToggle from '#lib/components/PrivacyToggle.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
@@ -22,6 +24,7 @@
 	import { openQuickAdd } from '#lib/ui.svelte.ts';
 
 	const UPCOMING_DAYS = 30;
+	const DETAIL_LIMIT = 500;
 
 	type Upcoming = { key: string; date: string; description: string; amount: number; credit: boolean };
 
@@ -60,6 +63,11 @@
 	}
 
 	let request = $state<ReturnType<typeof load>>(new Promise(() => {}));
+	let detail = $state<{ title: string; filter: TransactionFilter } | null>(null);
+
+	function showDetail(title: string, kind: 'INCOME' | 'OUTCOME', dateFrom: string) {
+		detail = { title, filter: { kind, dateFrom, dateTo: today() } };
+	}
 
 	$effect(() => {
 		refs.version;
@@ -87,7 +95,7 @@
 {:then data}
 	<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
 		<div>
-			<p class="muted">Saldo total</p>
+			<p class="muted flex items-center gap-1">Saldo total <PrivacyToggle /></p>
 			<p class="text-5xl font-semibold tabular-nums"><Money value={data.balances.total} /></p>
 			<p class="muted">Património líquido <Money value={data.balances.netWorth} /> · dívida em créditos <Money value={data.balances.debt} /></p>
 		</div>
@@ -106,9 +114,25 @@
 	{/if}
 
 	<div class="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-		<StatCard label="Despesas desta semana" value={formatMoney(data.weekOutcome)} />
-		<StatCard privateHint label="Receitas do mês" value={formatMoney(data.summary.income)} hint="Previsto ainda: {formatMoney(data.summary.pendingIncome)}" />
-		<StatCard privateHint label="Despesas do mês" value={formatMoney(data.summary.outcome)} hint="Previsto ainda: {formatMoney(data.summary.pendingOutcome)}" />
+		<StatCard
+			label="Despesas desta semana"
+			value={formatMoney(data.weekOutcome)}
+			ondetail={() => showDetail('Despesas desta semana', 'OUTCOME', weekStart(today(), app.settings?.firstDayOfWeek ?? 1))}
+		/>
+		<StatCard
+			privateHint
+			label="Receitas do mês"
+			value={formatMoney(data.summary.income)}
+			hint="Previsto ainda: {formatMoney(data.summary.pendingIncome)}"
+			ondetail={() => showDetail('Receitas do mês', 'INCOME', monthStart(today()))}
+		/>
+		<StatCard
+			privateHint
+			label="Despesas do mês"
+			value={formatMoney(data.summary.outcome)}
+			hint="Previsto ainda: {formatMoney(data.summary.pendingOutcome)}"
+			ondetail={() => showDetail('Despesas do mês', 'OUTCOME', monthStart(today()))}
+		/>
 		<StatCard
 			label="Resultado do mês"
 			value={formatMoney(data.summary.net)}
@@ -216,3 +240,33 @@
 {:catch error}
 	<States state="error" {error} />
 {/await}
+
+{#if detail}
+	<Modal title={detail.title} onclose={() => (detail = null)}>
+		{#await listTransactions(detail.filter, DETAIL_LIMIT)}
+			<States state="loading" />
+		{:then page}
+			{#if page.items.length === 0}
+				<p class="muted">Sem movimentos.</p>
+			{:else}
+				<ul class="max-h-[60vh] divide-y divide-stone-100 overflow-y-auto text-sm dark:divide-stone-800">
+					{#each page.items as item (item.id)}
+						<li class="flex items-center justify-between gap-3 py-1.5">
+							<span class="min-w-0">
+								<span class="block truncate">{item.description || '—'}</span>
+								<span class="text-xs text-stone-500">{formatDate(item.date)} · {item.categoryName ?? 'Sem categoria'}</span>
+							</span>
+							<Amount value={item.amount} />
+						</li>
+					{/each}
+				</ul>
+				<p class="mt-3 flex justify-between border-t border-stone-200 pt-2 text-sm font-medium dark:border-stone-800">
+					<span>{page.totalCount} movimentos</span>
+					<Amount value={page.net} />
+				</p>
+			{/if}
+		{:catch error}
+			<States state="error" {error} />
+		{/await}
+	</Modal>
+{/if}
