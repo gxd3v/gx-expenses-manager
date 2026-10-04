@@ -1,12 +1,18 @@
+#[macro_use]
+mod macros;
+
 mod commands;
 pub mod database;
 pub mod errors;
 pub mod graphql;
 mod managers;
 mod models;
-mod module;
+pub mod module;
 mod repositories;
 mod transformers;
+
+#[cfg(test)]
+mod tests;
 
 use commands::Session;
 
@@ -14,6 +20,8 @@ use commands::Session;
 pub fn run() {
     tauri::Builder::default()
         .manage(Session::default())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -29,6 +37,8 @@ pub fn run() {
             commands::unlock,
             commands::lock,
             commands::graphql,
+            commands::change_password,
+            commands::restore_backup,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

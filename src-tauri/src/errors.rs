@@ -2,20 +2,36 @@
 pub enum AppError {
     #[error("{0}")]
     Validation(String),
-    #[error("not found")]
+    #[error("{0}")]
+    Conflict(String),
+    #[error("registo não encontrado")]
     NotFound,
-    #[error("wrong password")]
+    #[error("password incorreta")]
     WrongPassword,
-    #[error("app is locked")]
+    #[error("a aplicação está bloqueada")]
     Locked,
-    #[error("invalid stored data: {0}")]
+    #[error("dados inválidos: {0}")]
     Corrupted(String),
-    #[error("database error: {0}")]
+    #[error("backup inválido: {0}")]
+    InvalidBackup(String),
+    #[error("erro de base de dados: {0}")]
     Database(#[from] sqlx::Error),
-    #[error("migration error: {0}")]
+    #[error("erro ao migrar a base de dados: {0}")]
     Migration(#[from] sqlx::migrate::MigrateError),
+    #[error("erro de ficheiro: {0}")]
+    Io(#[from] std::io::Error),
     #[error("{0}")]
     Tauri(#[from] tauri::Error),
+}
+
+impl AppError {
+    pub fn validation(message: &str) -> Self {
+        Self::Validation(message.into())
+    }
+
+    pub fn conflict(message: &str) -> Self {
+        Self::Conflict(message.into())
+    }
 }
 
 impl serde::Serialize for AppError {

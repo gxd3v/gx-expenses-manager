@@ -22,9 +22,13 @@ pub struct Account {
     pub currency: String,
     pub initial_balance: i64,
     pub color: Option<String>,
+    pub icon: Option<String>,
     pub archived_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub balance: i64,
+    pub available_balance: i64,
+    pub projected_balance: i64,
 }
 
 #[derive(InputObject)]
@@ -35,4 +39,5 @@ pub struct AccountInput {
     #[graphql(default)]
     pub initial_balance: i64,
     pub color: Option<String>,
+    pub icon: Option<String>,
 }

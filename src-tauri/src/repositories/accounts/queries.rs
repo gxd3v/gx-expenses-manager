@@ -1,19 +1,34 @@
-pub const LIST: &str = "SELECT id, name, kind, currency, initial_balance, color, archived_at, created_at, updated_at \
-     FROM accounts \
-     WHERE ?1 OR archived_at IS NULL \
-     ORDER BY name COLLATE NOCASE";
+macro_rules! select {
+    () => {
+        "SELECT a.id, a.name, a.kind, a.currency, a.initial_balance, a.color, a.icon, a.archived_at, a.created_at, a.updated_at, \
+         a.initial_balance + COALESCE(SUM(CASE WHEN t.date <= ?1 THEN t.amount END), 0) AS balance, \
+         a.initial_balance + COALESCE(SUM(CASE WHEN t.date <= ?1 OR t.amount < 0 THEN t.amount END), 0) AS available_balance, \
+         a.initial_balance + COALESCE(SUM(t.amount), 0) AS projected_balance \
+         FROM accounts a LEFT JOIN transactions t ON t.account_id = a.id "
+    };
+}
 
-pub const GET: &str = "SELECT id, name, kind, currency, initial_balance, color, archived_at, created_at, updated_at \
-     FROM accounts \
-     WHERE id = ?1";
+pub const LIST: &str = concat!(
+    select!(),
+    "WHERE ?2 OR a.archived_at IS NULL GROUP BY a.id ORDER BY a.archived_at IS NOT NULL, a.name COLLATE NOCASE"
+);
 
-pub const INSERT: &str = "INSERT INTO accounts (id, name, kind, currency, initial_balance, color, created_at, updated_at) \
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)";
+pub const GET: &str = concat!(select!(), "WHERE a.id = ?2 GROUP BY a.id");
+
+pub const INSERT: &str = "INSERT INTO accounts (id, name, kind, currency, initial_balance, color, icon, created_at, updated_at) \
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)";
 
 pub const UPDATE: &str = "UPDATE accounts \
-     SET name = ?2, kind = ?3, currency = ?4, initial_balance = ?5, color = ?6, updated_at = ?7 \
+     SET name = ?2, kind = ?3, currency = ?4, initial_balance = ?5, color = ?6, icon = ?7, updated_at = ?8 \
      WHERE id = ?1";
 
-pub const ARCHIVE: &str = "UPDATE accounts \
-     SET archived_at = ?2, updated_at = ?2 \
-     WHERE id = ?1 AND archived_at IS NULL";
+pub const SET_ARCHIVED: &str =
+    "UPDATE accounts SET archived_at = ?2, updated_at = ?3 WHERE id = ?1";
+
+pub const IN_USE: &str = "SELECT EXISTS (SELECT 1 FROM transactions WHERE account_id = ?1) \
+     OR EXISTS (SELECT 1 FROM recurrences WHERE account_id = ?1) \
+     OR EXISTS (SELECT 1 FROM credits WHERE account_id = ?1) \
+     OR EXISTS (SELECT 1 FROM goals WHERE account_id = ?1) \
+     OR EXISTS (SELECT 1 FROM transfers WHERE from_account_id = ?1 OR to_account_id = ?1)";
+
+pub const DELETE: &str = "DELETE FROM accounts WHERE id = ?1";

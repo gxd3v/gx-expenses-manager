@@ -36,3 +36,13 @@ uuid = { version = "1", features = ["v7", "serde"] }
 thiserror = "2"
 axum = { version = "0.8", optional = true }
 async-graphql-axum = { version = "7", optional = true }
+age = "0.12.1"
+csv = "1.4.0"
+tauri-plugin-dialog = "2"
+tauri-plugin-notification = "2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[lints.rust]
+linker_messages = "allow"

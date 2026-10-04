@@ -14,9 +14,13 @@ pub struct AccountRow {
     pub currency: String,
     pub initial_balance: i64,
     pub color: Option<String>,
+    pub icon: Option<String>,
     pub archived_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub balance: i64,
+    pub available_balance: i64,
+    pub projected_balance: i64,
 }
 
 impl TryFrom<AccountRow> for Account {
@@ -30,9 +34,13 @@ impl TryFrom<AccountRow> for Account {
             currency: row.currency,
             initial_balance: row.initial_balance,
             color: row.color,
+            icon: row.icon,
             archived_at: row.archived_at,
             created_at: row.created_at,
             updated_at: row.updated_at,
+            balance: row.balance,
+            available_balance: row.available_balance,
+            projected_balance: row.projected_balance,
         })
     }
 }

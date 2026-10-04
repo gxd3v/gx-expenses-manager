@@ -1,1 +1,12 @@
 mod accounts;
+mod backups;
+mod categories;
+mod credits;
+mod forecasts;
+mod goals;
+mod reconciliation;
+mod recurrences;
+mod reports;
+mod settings;
+mod templates;
+mod transactions;
