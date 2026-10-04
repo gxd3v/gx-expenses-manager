@@ -252,6 +252,15 @@
 		</label>
 	</section>
 
+	<section class="card space-y-2">
+		<h2 class="font-medium">Atualizações</h2>
+		<Toggle bind:checked={form.checkUpdates} label="Procurar novas versões automaticamente" />
+		<p class="muted">
+			É a única ligação à internet que a app faz: descarrega um ficheiro público do GitHub para saber se existe uma versão nova. Os teus dados
+			nunca saem do computador.
+		</p>
+	</section>
+
 	<section class="card grid grid-cols-2 gap-4 md:grid-cols-4">
 		<h2 class="col-span-2 font-medium md:col-span-4">Segurança e backups automáticos</h2>
 		<label class="label">

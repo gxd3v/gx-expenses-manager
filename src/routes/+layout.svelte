@@ -8,6 +8,7 @@
 	import QuickAdd from '#lib/components/QuickAdd.svelte';
 	import SearchPalette from '#lib/components/SearchPalette.svelte';
 	import TitleBar from '#lib/components/TitleBar.svelte';
+	import UpdateBanner from '#lib/components/UpdateBanner.svelte';
 	import Toasts from '#lib/components/Toasts.svelte';
 	import UnlockScreen from '#lib/components/UnlockScreen.svelte';
 	import { errorMessage, isTauri } from '#lib/graphql.ts';
@@ -16,6 +17,7 @@
 	import { applyPrivacy, togglePrivacy } from '#lib/privacy.svelte.ts';
 	import { app, loadSettings, restoreTheme } from '#lib/settings.svelte.ts';
 	import { openQuickAdd, ui } from '#lib/ui.svelte.ts';
+	import { checkForUpdates } from '#lib/updates.svelte.ts';
 
 	let { children } = $props();
 
@@ -23,6 +25,7 @@
 	applyPrivacy();
 
 	const BACKGROUND_INTERVAL = 60 * 60 * 1000;
+	const UPDATE_INTERVAL = 30 * 1000;
 
 	const links = [
 		{ href: '/', label: 'Dashboard' },
@@ -103,6 +106,13 @@
 	$effect(() => {
 		page.url.pathname;
 		menuOpen = false;
+	});
+
+	$effect(() => {
+		if (!ready || !app.settings?.checkUpdates) return;
+		checkForUpdates();
+		const timer = setInterval(checkForUpdates, UPDATE_INTERVAL);
+		return () => clearInterval(timer);
 	});
 
 	$effect(() => {
@@ -187,6 +197,7 @@
 			<button onclick={handleLock} class="btn-secondary mt-auto" title="Atalho: Ctrl L">Bloquear</button>
 		</nav>
 		<main class="flex-1 overflow-y-auto p-4 md:p-8">
+			<UpdateBanner />
 			{@render children()}
 		</main>
 	</div>

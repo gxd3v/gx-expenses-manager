@@ -24,11 +24,12 @@ export type Settings = {
 	notifyLowBalance: boolean;
 	lowBalanceThreshold: number;
 	notifyNegativeForecast: boolean;
+	checkUpdates: boolean;
 };
 
 const fields = `currency dateFormat firstDayOfWeek theme lockTimeoutMinutes backupDir backupFrequencyDays backupKeep
 	forecastMethod forecastHistoryMonths forecastHorizonMonths notificationsEnabled notifyDaysAhead notifyUpcoming
-	notifyCredits notifyGoals notifyLowBalance lowBalanceThreshold notifyNegativeForecast`;
+	notifyCredits notifyGoals notifyLowBalance lowBalanceThreshold notifyNegativeForecast checkUpdates`;
 
 export const app = $state<{ settings: Settings | null }>({ settings: null });
 
