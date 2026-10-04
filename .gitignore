@@ -9,6 +9,12 @@ node_modules
 *.db
 *.db-shm
 *.db-wal
+/backups
+*.csv
+*.xlsx
+*.gxbackup
+*.key
+*.pem
 
 .env
 .env.*
