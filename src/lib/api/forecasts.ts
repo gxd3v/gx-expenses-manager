@@ -24,6 +24,10 @@ export type ForecastMonth = {
 	income: number;
 	outcome: number;
 	net: number;
+	fixedIncome: number;
+	fixedOutcome: number;
+	variableIncome: number;
+	variableOutcome: number;
 	total: number;
 	balances: { accountId: string; balance: number }[];
 };
@@ -40,7 +44,7 @@ export async function forecast(input: ForecastRequest): Promise<Forecast> {
 	const data = await gql<{ forecast: Forecast }>(
 		`query ($input: ForecastInput!) {
 			forecast(input: $input) {
-				months { month income outcome net total balances { accountId balance } }
+				months { month income outcome net fixedIncome fixedOutcome variableIncome variableOutcome total balances { accountId balance } }
 				goalsReached { id name date }
 				creditsPaid { id name date }
 			}

@@ -71,6 +71,11 @@ export function addDays(iso: string, days: number): string {
 	return isoDate(date);
 }
 
+export function weekStart(iso: string, firstDayOfWeek: number): string {
+	const day = new Date(`${iso.slice(0, 10)}T00:00:00`).getDay();
+	return addDays(iso, -((day - firstDayOfWeek + 7) % 7));
+}
+
 export function monthStart(iso: string): string {
 	return `${iso.slice(0, 7)}-01`;
 }

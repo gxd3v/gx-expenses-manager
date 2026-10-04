@@ -2,6 +2,8 @@
 	import { onMount, untrack } from 'svelte';
 	import { forecast, type Adjustment, type Forecast, type RecurrenceChange } from '#lib/api/forecasts.ts';
 	import { listRecurrences, type Recurrence } from '#lib/api/recurrences.ts';
+	import { categoryBreakdown, type CategoryAmount } from '#lib/api/reports.ts';
+	import HBarChart from '#lib/charts/HBarChart.svelte';
 	import LineChart from '#lib/charts/LineChart.svelte';
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
 	import Amount from '#lib/components/Amount.svelte';
@@ -9,10 +11,11 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
-	import { addMonths, formatMoney, formatMonth, monthStart, today } from '#lib/format.ts';
+	import { addDays, addMonths, formatMoney, formatMonth, monthStart, today } from '#lib/format.ts';
 	import { refs } from '#lib/refs.svelte.ts';
 	import { app, type ForecastMethod } from '#lib/settings.svelte.ts';
 
+	type Patterns = { outcome: CategoryAmount[]; income: CategoryAmount[]; months: number };
 	type AdjustmentKind = 'expense' | 'income' | 'saving';
 	type Draft = { kind: AdjustmentKind; accountId: string; toAccountId: string | null; amount: number | null; date: string; repeatMonths: number };
 
@@ -25,7 +28,7 @@
 	let changes = $state<RecurrenceChange[]>([]);
 	let recurrences = $state<Recurrence[]>([]);
 	let draft = $state<Draft>(blankDraft());
-	let request = $state<Promise<{ base: Forecast; scenario: Forecast | null }>>(new Promise(() => {}));
+	let request = $state<Promise<{ base: Forecast; scenario: Forecast | null; patterns: Patterns }>>(new Promise(() => {}));
 
 	function blankDraft(): Draft {
 		return { kind: 'expense', accountId: refs.accounts[0]?.id ?? '', toAccountId: null, amount: null, date: addMonths(today(), 1), repeatMonths: 1 };
@@ -35,11 +38,19 @@
 
 	async function run() {
 		const input = { months, method, historyMonths };
-		const [base, scenario] = await Promise.all([
+		const [base, scenario, patterns] = await Promise.all([
 			forecast(input),
-			hasScenario ? forecast({ ...input, adjustments: adjustments.map(({ label: _, ...a }) => a), recurrenceChanges: changes }) : null
+			hasScenario ? forecast({ ...input, adjustments: adjustments.map(({ label: _, ...a }) => a), recurrenceChanges: changes }) : null,
+			loadPatterns(historyMonths)
 		]);
-		return { base, scenario };
+		return { base, scenario, patterns };
+	}
+
+	async function loadPatterns(count: number): Promise<Patterns> {
+		const to = addDays(monthStart(today()), -1);
+		const from = addMonths(monthStart(today()), -count);
+		const [outcome, income] = await Promise.all([categoryBreakdown('OUTCOME', from, to), categoryBreakdown('INCOME', from, to)]);
+		return { outcome, income, months: count };
 	}
 
 	$effect(() => {
@@ -112,7 +123,7 @@
 
 {#await request}
 	<States state="loading" />
-{:then { base, scenario }}
+{:then { base, scenario, patterns }}
 	{@const last = base.months[base.months.length - 1]}
 	{@const income = base.months.reduce((s, m) => s + m.income, 0)}
 	{@const outcome = base.months.reduce((s, m) => s + m.outcome, 0)}
@@ -174,19 +185,51 @@
 	<section class="card mb-6 overflow-x-auto">
 		<h2 class="mb-3 font-medium">Mês a mês</h2>
 		<table class="table-base">
-			<thead><tr><th>Mês</th><th class="text-right">Receitas</th><th class="text-right">Despesas</th><th class="text-right">Resultado</th><th class="text-right">Saldo total</th></tr></thead>
+			<thead>
+				<tr>
+					<th>Mês</th>
+					<th class="text-right">Receitas</th>
+					<th class="text-right">Despesas fixas</th>
+					<th class="text-right">Despesas variáveis</th>
+					<th class="text-right">Resultado</th>
+					<th class="text-right">Saldo total</th>
+				</tr>
+			</thead>
 			<tbody>
 				{#each base.months as month (month.month)}
 					<tr>
 						<td>{formatMonth(month.month, 'long')}</td>
 						<td class="text-right tabular-nums">{formatMoney(month.income)}</td>
-						<td class="text-right tabular-nums">{formatMoney(month.outcome)}</td>
+						<td class="text-right tabular-nums">{formatMoney(month.fixedOutcome)}</td>
+						<td class="text-right tabular-nums">{formatMoney(month.variableOutcome)}</td>
 						<td class="text-right"><Amount value={month.net} /></td>
 						<td class="text-right tabular-nums">{formatMoney(month.total)}</td>
 					</tr>
 				{/each}
 			</tbody>
 		</table>
+		<p class="mt-2 text-xs text-stone-500">
+			Fixas: recorrências e movimentos futuros registados. Variáveis: média dos movimentos sem recorrência nos últimos {historyMonths} meses.
+		</p>
+	</section>
+
+	<section class="card mb-6">
+		<h2 class="mb-1 font-medium">Padrões identificados</h2>
+		<p class="mb-3 muted">Média mensal por categoria nos últimos {patterns.months} meses completos.</p>
+		<div class="grid gap-6 xl:grid-cols-2">
+			<div>
+				<h3 class="mb-2 text-sm font-medium">Despesas</h3>
+				{#if patterns.outcome.length === 0}<p class="muted">Sem histórico.</p>{:else}
+					<HBarChart items={patterns.outcome.map((c) => ({ label: c.name, value: Math.round(c.amount / patterns.months) }))} format={(v) => formatMoney(v)} />
+				{/if}
+			</div>
+			<div>
+				<h3 class="mb-2 text-sm font-medium">Receitas</h3>
+				{#if patterns.income.length === 0}<p class="muted">Sem histórico.</p>{:else}
+					<HBarChart items={patterns.income.map((c) => ({ label: c.name, value: Math.round(c.amount / patterns.months) }))} format={(v) => formatMoney(v)} />
+				{/if}
+			</div>
+		</div>
 	</section>
 {:catch error}
 	<States state="error" {error} />

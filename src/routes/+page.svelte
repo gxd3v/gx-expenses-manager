@@ -14,7 +14,7 @@
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
-	import { addDays, formatDate, formatMoney, formatMonth, formatPercent, monthStart, today } from '#lib/format.ts';
+	import { addDays, formatDate, formatMoney, formatMonth, formatPercent, monthStart, today, weekStart } from '#lib/format.ts';
 	import { refs } from '#lib/refs.svelte.ts';
 	import { app } from '#lib/settings.svelte.ts';
 	import { openQuickAdd } from '#lib/ui.svelte.ts';
@@ -26,7 +26,7 @@
 	async function load() {
 		const now = today();
 		const until = addDays(now, UPCOMING_DAYS);
-		const [accounts, summary, categories, occurrences, future, goals, projection, history, alerts, credits] = await Promise.all([
+		const [accounts, summary, categories, occurrences, future, goals, projection, history, alerts, credits, week] = await Promise.all([
 			listAccounts(),
 			monthSummary(now),
 			categoryBreakdown('OUTCOME', monthStart(now), now),
@@ -36,7 +36,8 @@
 			forecast({ months: app.settings?.forecastHorizonMonths ?? 6 }),
 			balanceHistory(12),
 			listAlerts(),
-			listCredits()
+			listCredits(),
+			listTransactions({ kind: 'OUTCOME', dateFrom: weekStart(now, app.settings?.firstDayOfWeek ?? 1), dateTo: now }, 1)
 		]);
 
 		const upcoming: Upcoming[] = [
@@ -52,7 +53,7 @@
 				.map((t) => ({ key: t.id, date: t.date, description: t.description, amount: t.amount, credit: false }))
 		].sort((a, b) => a.date.localeCompare(b.date));
 
-		return { accounts, summary, categories, upcoming, goals, projection, history, alerts, credits };
+		return { accounts, summary, categories, upcoming, goals, projection, history, alerts, credits, weekOutcome: week.outcome };
 	}
 
 	let request = $state<ReturnType<typeof load>>(new Promise(() => {}));
@@ -101,7 +102,8 @@
 		</section>
 	{/if}
 
-	<div class="mb-6 grid gap-4 md:grid-cols-3">
+	<div class="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+		<StatCard label="Despesas desta semana" value={formatMoney(data.weekOutcome)} />
 		<StatCard label="Receitas do mês" value={formatMoney(data.summary.income)} hint="Previsto ainda: {formatMoney(data.summary.pendingIncome)}" />
 		<StatCard label="Despesas do mês" value={formatMoney(data.summary.outcome)} hint="Previsto ainda: {formatMoney(data.summary.pendingOutcome)}" />
 		<StatCard
