@@ -26,6 +26,7 @@
 	let dataDir = $state('');
 	let passwords = $state({ current: '', next: '', confirm: '' });
 	let exportPassword = $state('');
+	let busy = $state(false);
 	let importing = $state<{ path: string; password: string; preview: ImportPreview | null } | null>(null);
 
 	async function loadBackups() {
@@ -88,12 +89,15 @@
 	async function exportAll() {
 		const path = await pickSavePath(`gx-expenses-${today()}.gxbackup`, 'gxbackup');
 		if (!path) return;
+		busy = true;
 		try {
 			await exportData(path, exportPassword || null);
 			notify(exportPassword ? 'Exportação encriptada criada' : 'Exportação criada (não encriptada)');
 			exportPassword = '';
 		} catch (e) {
 			notifyError(e);
+		} finally {
+			busy = false;
 		}
 	}
 
@@ -104,10 +108,13 @@
 
 	async function preview() {
 		if (!importing) return;
+		busy = true;
 		try {
 			importing.preview = await inspectImport(importing.path, importing.password || null);
 		} catch (e) {
 			notifyError(e);
+		} finally {
+			busy = false;
 		}
 	}
 
@@ -115,6 +122,7 @@
 		if (!importing) return;
 		const message = replace ? 'Substituir TODOS os dados atuais pelos do ficheiro?' : 'Juntar os dados do ficheiro aos atuais?';
 		if (!(await confirmAction(message))) return;
+		busy = true;
 		try {
 			const result = await importData(importing.path, importing.password || null, replace);
 			notify(`Importação concluída: ${result.inserted} registos novos, ${result.skipped} ignorados`);
@@ -122,6 +130,8 @@
 			await dataChanged();
 		} catch (e) {
 			notifyError(e);
+		} finally {
+			busy = false;
 		}
 	}
 
@@ -283,7 +293,7 @@
 			Password da exportação (recomendado)
 			<input type="password" bind:value={exportPassword} class="input" autocomplete="new-password" />
 		</label>
-		<button class="btn-secondary" onclick={exportAll}>Exportar…</button>
+		<button class="btn-secondary" onclick={exportAll} disabled={busy}>{busy ? 'A processar…' : 'Exportar…'}</button>
 	</div>
 	<div class="space-y-3">
 		<h2 class="font-medium">Importar</h2>
@@ -320,7 +330,7 @@
 				Password do ficheiro (se estiver encriptado)
 				<input type="password" bind:value={importing.password} class="input" />
 			</label>
-			<button class="btn-secondary" onclick={preview}>Validar ficheiro</button>
+			<button class="btn-secondary" onclick={preview} disabled={busy}>{busy ? 'A processar…' : 'Validar ficheiro'}</button>
 			{#if importing.preview}
 				<div class="rounded-md bg-stone-100 p-3 text-sm dark:bg-stone-800">
 					<p>Formato v{importing.preview.formatVersion} · esquema {importing.preview.schemaVersion} · {importing.preview.encrypted ? 'encriptado' : 'não encriptado'}</p>
@@ -331,8 +341,8 @@
 					<p class="mt-2">{importing.preview.conflicts} registos já existem (conflitos).</p>
 				</div>
 				<div class="flex justify-end gap-2">
-					<button class="btn-secondary" onclick={() => runImport(false)}>Juntar (ignora conflitos)</button>
-					<button class="btn-danger" onclick={() => runImport(true)}>Substituir tudo</button>
+					<button class="btn-secondary" disabled={busy} onclick={() => runImport(false)}>Juntar (ignora conflitos)</button>
+					<button class="btn-danger" disabled={busy} onclick={() => runImport(true)}>Substituir tudo</button>
 				</div>
 			{/if}
 		</div>

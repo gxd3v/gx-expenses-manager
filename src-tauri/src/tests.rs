@@ -349,6 +349,22 @@ async fn forecast_includes_recurrences_and_goals() {
 }
 
 #[tokio::test]
+async fn corrupted_files_are_rejected() {
+    let db = TestDatabase::new().await;
+    let corrupted = db.dir.join("corrupted.db");
+    std::fs::write(&corrupted, vec![7u8; 8192]).unwrap();
+
+    let opened = crate::database::open(&corrupted, PASSWORD, &db.dir).await;
+    assert!(matches!(opened, Err(AppError::WrongPassword)));
+    assert!(crate::database::verify(&corrupted, PASSWORD).await.is_err());
+    assert!(
+        crate::database::verify(&db.dir.join("missing.db"), PASSWORD)
+            .await
+            .is_err()
+    );
+}
+
+#[tokio::test]
 async fn export_and_import_roundtrip() {
     let source = TestDatabase::new().await;
     let source_module = module(&source);
