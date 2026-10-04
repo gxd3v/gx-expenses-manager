@@ -23,6 +23,7 @@ impl From<models::Settings> for types::Settings {
             notify_low_balance: settings.notify_low_balance,
             low_balance_threshold: settings.low_balance_threshold,
             notify_negative_forecast: settings.notify_negative_forecast,
+            check_updates: settings.check_updates,
         }
     }
 }
@@ -49,6 +50,7 @@ impl From<types::Settings> for models::Settings {
             notify_low_balance: settings.notify_low_balance,
             low_balance_threshold: settings.low_balance_threshold,
             notify_negative_forecast: settings.notify_negative_forecast,
+            check_updates: settings.check_updates,
         }
     }
 }

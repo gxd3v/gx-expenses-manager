@@ -41,4 +41,5 @@ pub struct Settings {
     pub notify_low_balance: bool,
     pub low_balance_threshold: i64,
     pub notify_negative_forecast: bool,
+    pub check_updates: bool,
 }

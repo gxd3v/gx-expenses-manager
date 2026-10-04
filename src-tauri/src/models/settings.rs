@@ -40,6 +40,7 @@ pub struct Settings {
     pub notify_low_balance: bool,
     pub low_balance_threshold: i64,
     pub notify_negative_forecast: bool,
+    pub check_updates: bool,
 }
 
 impl Default for Settings {
@@ -64,6 +65,7 @@ impl Default for Settings {
             notify_low_balance: true,
             low_balance_threshold: 10_000,
             notify_negative_forecast: true,
+            check_updates: true,
         }
     }
 }

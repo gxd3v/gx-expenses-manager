@@ -41,5 +41,16 @@
       }
     }
   },
-  "mainBinaryName": "expenses-manager"
+  "mainBinaryName": "expenses-manager",
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJERDJDMzNBRURFOTE3OTUKUldTVkYrbnRPc1BTdlJhRW5uV0JPUkpkeU9qWjMyekZROVlXTDZvNHEvRGN5NGZydGxWeW50aGkK",
+      "endpoints": [
+        "https://github.com/gxd3v/gx-expenses-manager/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
 }

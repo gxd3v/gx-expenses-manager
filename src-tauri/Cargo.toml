@@ -41,6 +41,10 @@ csv = "1.4.0"
 tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2"
 
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
