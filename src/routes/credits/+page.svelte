@@ -3,12 +3,13 @@
 	import CreditForm from './CreditForm.svelte';
 	import { deleteCredit, listCredits, setCreditArchived, type Credit } from '#lib/api/credits.ts';
 	import Modal from '#lib/components/Modal.svelte';
+	import Money from '#lib/components/Money.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import States from '#lib/components/States.svelte';
 	import Toggle from '#lib/components/Toggle.svelte';
 	import { confirmAction } from '#lib/dialogs.ts';
-	import { formatDate, formatMoney } from '#lib/format.ts';
+	import { formatDate } from '#lib/format.ts';
 	import { dataChanged, refs } from '#lib/refs.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 
@@ -59,11 +60,11 @@
 					<header class="flex items-start justify-between">
 						<div>
 							<a href="/credits/{credit.id}" class="font-medium hover:underline">{credit.name}</a>
-							<p class="text-xs text-stone-500">{credit.institution ?? '—'} · {credit.annualRate.toLocaleString('pt-PT')} % · prestação {formatMoney(credit.installment)}</p>
+							<p class="text-xs text-stone-500">{credit.institution ?? '—'} · {credit.annualRate.toLocaleString('pt-PT')} % · prestação <Money value={credit.installment} /></p>
 						</div>
 						<p class="text-right">
 							<span class="block text-xs text-stone-500">Em dívida</span>
-							<span class="font-semibold tabular-nums">{formatMoney(credit.remaining)}</span>
+							<span class="font-semibold tabular-nums"><Money value={credit.remaining} /></span>
 						</p>
 					</header>
 					<ProgressBar value={credit.principalPaid / credit.principal} label="Capital pago" />

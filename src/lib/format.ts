@@ -1,16 +1,19 @@
+import { privacy, scramble } from './privacy.svelte.ts';
 import { app } from './settings.svelte.ts';
 
 const locale = 'pt-PT';
 
 export function formatMoney(cents: number, currency?: string): string {
-	return new Intl.NumberFormat(locale, {
+	const text = new Intl.NumberFormat(locale, {
 		style: 'currency',
 		currency: currency ?? app.settings?.currency ?? 'EUR'
 	}).format((cents || 0) / 100);
+	return privacy.hidden ? scramble(text) : text;
 }
 
 export function formatCompact(cents: number): string {
-	return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format((cents || 0) / 100);
+	const text = new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format((cents || 0) / 100);
+	return privacy.hidden ? scramble(text) : text;
 }
 
 export function formatDate(iso: string | null | undefined): string {

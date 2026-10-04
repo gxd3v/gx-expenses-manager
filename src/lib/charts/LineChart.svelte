@@ -45,7 +45,7 @@
 	<svg {width} {height} role="img" aria-label={series.map((s) => s.name).join(', ')} onpointermove={move} onpointerleave={() => (hover = null)}>
 		{#each ticks as tick (tick)}
 			<line x1={pad.left} x2={width - pad.right} y1={y(tick)} y2={y(tick)} stroke="var(--chart-grid)" stroke-width="1" />
-			<text x={pad.left - 8} y={y(tick)} dy="0.32em" text-anchor="end" font-size="11" fill="var(--chart-text)">
+			<text class="money" x={pad.left - 8} y={y(tick)} dy="0.32em" text-anchor="end" font-size="11" fill="var(--chart-text)">
 				{formatCompact(tick)}
 			</text>
 		{/each}
@@ -76,7 +76,7 @@
 			{#each series as item (item.name)}
 				<p class="flex items-center gap-2 tabular-nums">
 					<span class="size-2 rounded-full" style:background-color={item.color}></span>
-					{item.name}: {format(item.values[hover])}
+					{item.name}: <span class="money">{format(item.values[hover])}</span>
 				</p>
 			{/each}
 		</div>

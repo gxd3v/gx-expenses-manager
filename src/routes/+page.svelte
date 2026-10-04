@@ -11,6 +11,7 @@
 	import HBarChart from '#lib/charts/HBarChart.svelte';
 	import LineChart from '#lib/charts/LineChart.svelte';
 	import Amount from '#lib/components/Amount.svelte';
+	import Money from '#lib/components/Money.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
@@ -86,8 +87,8 @@
 	<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
 		<div>
 			<p class="muted">Saldo total</p>
-			<p class="text-5xl font-semibold tabular-nums">{formatMoney(data.balances.total)}</p>
-			<p class="muted">Património líquido {formatMoney(data.balances.netWorth)} · dívida em créditos {formatMoney(data.balances.debt)}</p>
+			<p class="text-5xl font-semibold tabular-nums"><Money value={data.balances.total} /></p>
+			<p class="muted">Património líquido <Money value={data.balances.netWorth} /> · dívida em créditos <Money value={data.balances.debt} /></p>
 		</div>
 		<button class="btn-primary" onclick={() => openQuickAdd()}>+ Adicionar movimento</button>
 	</div>
@@ -105,8 +106,8 @@
 
 	<div class="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 		<StatCard label="Despesas desta semana" value={formatMoney(data.weekOutcome)} />
-		<StatCard label="Receitas do mês" value={formatMoney(data.summary.income)} hint="Previsto ainda: {formatMoney(data.summary.pendingIncome)}" />
-		<StatCard label="Despesas do mês" value={formatMoney(data.summary.outcome)} hint="Previsto ainda: {formatMoney(data.summary.pendingOutcome)}" />
+		<StatCard privateHint label="Receitas do mês" value={formatMoney(data.summary.income)} hint="Previsto ainda: {formatMoney(data.summary.pendingIncome)}" />
+		<StatCard privateHint label="Despesas do mês" value={formatMoney(data.summary.outcome)} hint="Previsto ainda: {formatMoney(data.summary.pendingOutcome)}" />
 		<StatCard
 			label="Resultado do mês"
 			value={formatMoney(data.summary.net)}
@@ -127,7 +128,7 @@
 								<span class="size-2.5 rounded-full" style:background-color={account.color ?? 'gray'}></span>
 								{account.name}
 							</a>
-							<span class="tabular-nums">{formatMoney(account.balance, account.currency)}</span>
+							<span class="tabular-nums"><Money value={account.balance} currency={account.currency} /></span>
 						</li>
 					{/each}
 				</ul>
@@ -161,7 +162,7 @@
 					{#each data.credits as credit (credit.id)}
 						<li class="flex justify-between py-1.5">
 							<a href="/credits/{credit.id}" class="hover:underline">{credit.name}</a>
-							<span class="text-stone-500">{formatDate(credit.nextPaymentDate)} · {formatMoney(credit.installment)}</span>
+							<span class="text-stone-500">{formatDate(credit.nextPaymentDate)} · <Money value={credit.installment} /></span>
 						</li>
 					{/each}
 				</ul>
@@ -180,7 +181,7 @@
 						<li class="text-sm">
 							<div class="mb-1 flex justify-between">
 								<span>{goal.name}</span>
-								<span class="tabular-nums">{formatPercent(goal.progress)} · {formatMoney(goal.currentAmount)} / {formatMoney(goal.targetAmount)}</span>
+								<span class="tabular-nums">{formatPercent(goal.progress)} · <Money value={goal.currentAmount} /> / <Money value={goal.targetAmount} /></span>
 							</div>
 							<ProgressBar value={goal.progress} label={goal.name} />
 						</li>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import Money from '#lib/components/Money.svelte';
 	import RecurrenceForm from './RecurrenceForm.svelte';
 	import {
 		endRecurrence,
@@ -19,7 +20,7 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import States from '#lib/components/States.svelte';
 	import { confirmAction } from '#lib/dialogs.ts';
-	import { addMonths, formatDate, formatMoney, today } from '#lib/format.ts';
+	import { addMonths, formatDate, today } from '#lib/format.ts';
 	import { dataChanged, refs } from '#lib/refs.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 
@@ -148,7 +149,7 @@
 										{#each occurrences as occurrence (occurrence.occurrenceDate)}
 											<li class="flex items-center gap-3">
 												<span class="w-28">{formatDate(occurrence.date)}</span>
-												<span class="w-28 tabular-nums">{formatMoney(occurrence.amount)}</span>
+												<span class="w-28 tabular-nums"><Money value={occurrence.amount} /></span>
 												{#if occurrence.modified}<span class="badge">Alterada</span>{/if}
 												<button class="btn-ghost" onclick={() => (changing = { occurrence, amount: occurrence.amount, date: occurrence.date })}>Alterar</button>
 												<button class="btn-ghost" onclick={() => run(() => skipOccurrence(occurrence.recurrenceId, occurrence.occurrenceDate), 'Ocorrência saltada')}>Saltar</button>

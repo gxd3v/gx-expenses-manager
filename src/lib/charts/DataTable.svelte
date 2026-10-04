@@ -19,7 +19,7 @@
 					<tr>
 						<td>{label}</td>
 						{#each series as item (item.name)}
-							<td class="text-right tabular-nums">{format(item.values[index] ?? 0)}</td>
+							<td class="money text-right tabular-nums">{format(item.values[index] ?? 0)}</td>
 						{/each}
 					</tr>
 				{/each}

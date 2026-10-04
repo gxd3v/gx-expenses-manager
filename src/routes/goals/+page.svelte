@@ -4,6 +4,7 @@
 	import { deleteGoal, listGoals, saveGoal, setGoalArchived, type Goal } from '#lib/api/goals.ts';
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
 	import Modal from '#lib/components/Modal.svelte';
+	import Money from '#lib/components/Money.svelte';
 	import MoneyInput from '#lib/components/MoneyInput.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
@@ -103,9 +104,9 @@
 					</header>
 					<ProgressBar value={goal.progress} label={goal.name} />
 					<dl class="grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
-						<div><dt class="text-xs text-stone-500">Atual</dt><dd class="tabular-nums">{formatMoney(goal.currentAmount)}</dd></div>
-						<div><dt class="text-xs text-stone-500">Objetivo</dt><dd class="tabular-nums">{formatMoney(goal.targetAmount)}</dd></div>
-						<div><dt class="text-xs text-stone-500">Em falta</dt><dd class="tabular-nums">{formatMoney(goal.remaining)}</dd></div>
+						<div><dt class="text-xs text-stone-500">Atual</dt><dd class="tabular-nums"><Money value={goal.currentAmount} /></dd></div>
+						<div><dt class="text-xs text-stone-500">Objetivo</dt><dd class="tabular-nums"><Money value={goal.targetAmount} /></dd></div>
+						<div><dt class="text-xs text-stone-500">Em falta</dt><dd class="tabular-nums"><Money value={goal.remaining} /></dd></div>
 						<div>
 							<dt class="text-xs text-stone-500">Por mês</dt>
 							<dd class="tabular-nums">{goal.monthlyNeeded !== null ? formatMoney(goal.monthlyNeeded) : '—'}</dd>

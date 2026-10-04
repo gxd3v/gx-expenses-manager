@@ -8,4 +8,4 @@
 	);
 </script>
 
-<span class="tabular-nums whitespace-nowrap {tone}">{signed && value > 0 ? '+' : ''}{formatMoney(value, currency)}</span>
+<span class="money tabular-nums whitespace-nowrap {tone}">{signed && value > 0 ? '+' : ''}{formatMoney(value, currency)}</span>

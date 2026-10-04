@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { search, type SearchResult } from '#lib/api/search.ts';
-	import { formatDate, formatMoney, formatPercent } from '#lib/format.ts';
+	import { formatDate, formatPercent } from '#lib/format.ts';
 	import Modal from './Modal.svelte';
+	import Money from './Money.svelte';
 
 	let { onclose }: { onclose: () => void } = $props();
 
@@ -45,7 +46,7 @@
 					<h3 class="mb-1 text-xs font-medium text-stone-500 uppercase">Contas</h3>
 					{#each result.accounts as account (account.id)}
 						<button class="flex w-full justify-between rounded px-2 py-1.5 text-left hover:bg-stone-100 dark:hover:bg-stone-800" onclick={() => open(`/accounts/${account.id}`)}>
-							<span>{account.name}</span><span class="tabular-nums">{formatMoney(account.balance, account.currency)}</span>
+							<span>{account.name}</span><span class="tabular-nums"><Money value={account.balance} currency={account.currency} /></span>
 						</button>
 					{/each}
 				</section>
@@ -59,7 +60,7 @@
 							onclick={() => open(`/transactions?search=${encodeURIComponent(transaction.description)}`)}
 						>
 							<span class="truncate">{formatDate(transaction.date)} · {transaction.description || '—'} · {transaction.accountName}</span>
-							<span class="tabular-nums">{formatMoney(transaction.amount, transaction.currency)}</span>
+							<span class="tabular-nums"><Money value={transaction.amount} currency={transaction.currency} /></span>
 						</button>
 					{/each}
 				</section>
@@ -79,7 +80,7 @@
 					<h3 class="mb-1 text-xs font-medium text-stone-500 uppercase">Créditos</h3>
 					{#each result.credits as credit (credit.id)}
 						<button class="flex w-full justify-between rounded px-2 py-1.5 text-left hover:bg-stone-100 dark:hover:bg-stone-800" onclick={() => open(`/credits/${credit.id}`)}>
-							<span>{credit.name}</span><span class="tabular-nums">{formatMoney(credit.remaining)}</span>
+							<span>{credit.name}</span><span class="tabular-nums"><Money value={credit.remaining} /></span>
 						</button>
 					{/each}
 				</section>

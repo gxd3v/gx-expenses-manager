@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import type { Alert } from '#lib/api/reports.ts';
 	import { runBackgroundTasks } from '#lib/background.ts';
+	import PrivacyToggle from '#lib/components/PrivacyToggle.svelte';
 	import QuickAdd from '#lib/components/QuickAdd.svelte';
 	import SearchPalette from '#lib/components/SearchPalette.svelte';
 	import TitleBar from '#lib/components/TitleBar.svelte';
@@ -12,6 +13,7 @@
 	import { errorMessage, isTauri } from '#lib/graphql.ts';
 	import { dataChanged, loadRefs } from '#lib/refs.svelte.ts';
 	import { lock, status, type Status } from '#lib/session.ts';
+	import { applyPrivacy, togglePrivacy } from '#lib/privacy.svelte.ts';
 	import { app, loadSettings } from '#lib/settings.svelte.ts';
 	import { openQuickAdd, ui } from '#lib/ui.svelte.ts';
 
@@ -83,6 +85,9 @@
 		if ((event.ctrlKey || event.metaKey) && key === 'k') {
 			event.preventDefault();
 			ui.search = true;
+		} else if ((event.ctrlKey || event.metaKey) && key === 'h') {
+			event.preventDefault();
+			togglePrivacy();
 		} else if ((event.ctrlKey || event.metaKey) && key === 'l') {
 			event.preventDefault();
 			handleLock();
@@ -100,6 +105,7 @@
 	const active = (href: string) => (href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href));
 
 	onMount(() => {
+		applyPrivacy();
 		refresh();
 		backgroundTimer = setInterval(async () => {
 			if (ready) alerts = await runBackgroundTasks();
@@ -133,7 +139,10 @@
 		<header class="flex items-center justify-between border-b border-stone-200 px-4 py-2 md:hidden dark:border-stone-800">
 			<button class="btn-ghost" onclick={() => (menuOpen = !menuOpen)} aria-expanded={menuOpen} aria-label="Menu">☰</button>
 			<span class="font-semibold">Expenses Manager</span>
-			<button class="btn-primary" onclick={() => openQuickAdd()} aria-label="Adicionar">+</button>
+			<div class="flex items-center gap-1">
+				<PrivacyToggle />
+				<button class="btn-primary" onclick={() => openQuickAdd()} aria-label="Adicionar">+</button>
+			</div>
 		</header>
 		{#if menuOpen}
 			<button class="fixed inset-0 z-20 bg-black/40 md:hidden" onclick={() => (menuOpen = false)} aria-label="Fechar menu"></button>
@@ -144,7 +153,10 @@
 				: '-translate-x-full'}"
 			aria-label="Navegação principal"
 		>
-			<span class="mb-3 px-3 pt-2 font-semibold">Expenses Manager</span>
+			<div class="mb-3 flex items-center justify-between px-3 pt-2">
+				<span class="font-semibold">Expenses Manager</span>
+				{#if !isTauri}<PrivacyToggle />{/if}
+			</div>
 			<button class="btn-primary mb-2" onclick={() => openQuickAdd()} title="Atalho: N">+ Adicionar</button>
 			<button class="btn-secondary mb-3 justify-between" onclick={() => (ui.search = true)}>
 				Pesquisar <kbd class="text-xs text-stone-400">Ctrl K</kbd>

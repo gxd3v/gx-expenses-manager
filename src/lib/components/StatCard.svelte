@@ -3,8 +3,17 @@
 		label,
 		value,
 		hint = '',
-		tone = 'neutral'
-	}: { label: string; value: string; hint?: string; tone?: 'neutral' | 'positive' | 'negative' } = $props();
+		tone = 'neutral',
+		plain = false,
+		privateHint = false
+	}: {
+		label: string;
+		value: string;
+		hint?: string;
+		tone?: 'neutral' | 'positive' | 'negative';
+		plain?: boolean;
+		privateHint?: boolean;
+	} = $props();
 
 	const toneClass = {
 		neutral: '',
@@ -15,8 +24,8 @@
 
 <div class="card">
 	<p class="muted">{label}</p>
-	<p class="mt-1 text-2xl font-semibold tabular-nums {toneClass[tone]}">{value}</p>
+	<p class="mt-1 text-2xl font-semibold tabular-nums {toneClass[tone]}" class:money={!plain}>{value}</p>
 	{#if hint}
-		<p class="mt-1 text-xs text-stone-500">{hint}</p>
+		<p class="mt-1 text-xs text-stone-500" class:money={privateHint}>{hint}</p>
 	{/if}
 </div>

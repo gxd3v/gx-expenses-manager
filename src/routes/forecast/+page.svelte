@@ -7,6 +7,7 @@
 	import LineChart from '#lib/charts/LineChart.svelte';
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
 	import Amount from '#lib/components/Amount.svelte';
+	import Money from '#lib/components/Money.svelte';
 	import MoneyInput from '#lib/components/MoneyInput.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
@@ -25,6 +26,7 @@
 	let method = $state<ForecastMethod>(untrack(() => app.settings?.forecastMethod ?? 'HISTORY'));
 	let historyMonths = $state(untrack(() => app.settings?.forecastHistoryMonths ?? 6));
 	let adjustments = $state<(Adjustment & { label: string })[]>([]);
+	const kindLabels: Record<AdjustmentKind, string> = { expense: 'Despesa', income: 'Receita', saving: 'Poupança' };
 	let changes = $state<RecurrenceChange[]>([]);
 	let recurrences = $state<Recurrence[]>([]);
 	let draft = $state<Draft>(blankDraft());
@@ -68,14 +70,13 @@
 		if (!draft.amount) return;
 		const saving = draft.kind === 'saving';
 		const sign = draft.kind === 'income' ? 1 : -1;
-		const labels = { expense: 'Despesa', income: 'Receita', saving: 'Poupança' };
 		adjustments.push({
 			accountId: draft.accountId,
 			toAccountId: saving ? draft.toAccountId : null,
 			amount: saving ? draft.amount : sign * draft.amount,
 			date: draft.date,
 			repeatMonths: draft.repeatMonths,
-			label: `${labels[draft.kind]} de ${formatMoney(draft.amount)} ${draft.repeatMonths > 1 ? `× ${draft.repeatMonths} meses` : ''} a partir de ${formatMonth(draft.date)}`
+			label: kindLabels[draft.kind]
 		});
 		draft = blankDraft();
 	}
@@ -157,7 +158,7 @@
 			<h2 class="mb-3 font-medium">Saldo previsto por conta</h2>
 			<ul class="divide-y divide-stone-100 text-sm dark:divide-stone-800">
 				{#each last?.balances ?? [] as balance (balance.accountId)}
-					<li class="flex justify-between py-1.5"><span>{accountName(balance.accountId)}</span><span class="tabular-nums">{formatMoney(balance.balance)}</span></li>
+					<li class="flex justify-between py-1.5"><span>{accountName(balance.accountId)}</span><span class="tabular-nums"><Money value={balance.balance} /></span></li>
 				{/each}
 			</ul>
 		</section>
@@ -201,11 +202,11 @@
 				{#each base.months as month (month.month)}
 					<tr>
 						<td>{formatMonth(month.month, 'long')}</td>
-						<td class="text-right tabular-nums">{formatMoney(month.income)}</td>
-						<td class="text-right tabular-nums">{formatMoney(month.fixedOutcome)}</td>
-						<td class="text-right tabular-nums">{formatMoney(month.variableOutcome)}</td>
+						<td class="text-right tabular-nums"><Money value={month.income} /></td>
+						<td class="text-right tabular-nums"><Money value={month.fixedOutcome} /></td>
+						<td class="text-right tabular-nums"><Money value={month.variableOutcome} /></td>
 						<td class="text-right"><Amount value={month.net} /></td>
-						<td class="text-right tabular-nums">{formatMoney(month.total)}</td>
+						<td class="text-right tabular-nums"><Money value={month.total} /></td>
 					</tr>
 				{/each}
 			</tbody>
@@ -280,7 +281,10 @@
 		<ul class="mb-4 space-y-1 text-sm">
 			{#each adjustments as adjustment, index (index)}
 				<li class="flex items-center gap-2">
-					<span class="flex-1">{adjustment.label}</span>
+					<span class="flex-1">
+						{adjustment.label} de <Money value={Math.abs(adjustment.amount)} />
+						{adjustment.repeatMonths > 1 ? `× ${adjustment.repeatMonths} meses` : ''} a partir de {formatMonth(adjustment.date)}
+					</span>
 					<button class="btn-ghost" onclick={() => adjustments.splice(index, 1)} aria-label="Remover">✕</button>
 				</li>
 			{/each}
@@ -297,7 +301,7 @@
 					{#each recurrences as recurrence (recurrence.id)}
 						<tr>
 							<td>{recurrence.description}</td>
-							<td class="text-right tabular-nums">{formatMoney(recurrence.amount)}</td>
+							<td class="text-right tabular-nums"><Money value={recurrence.amount} /></td>
 							<td>
 								<select class="input" onchange={(e) => changeRecurrence(recurrence, e.currentTarget.value === 'custom' ? (window.prompt('Novo valor', '0,00') ?? 'keep') : e.currentTarget.value)}>
 									<option value="keep">Manter</option>

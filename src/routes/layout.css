@@ -112,6 +112,20 @@
 	}
 }
 
+@layer components {
+	.money {
+		transition:
+			filter 200ms ease,
+			color 200ms ease;
+	}
+
+	:root.privacy .money {
+		filter: blur(0.3em);
+		color: inherit !important;
+		user-select: none;
+	}
+}
+
 @utility titlebar-button {
 	@apply inline-flex h-full w-11 items-center justify-center text-stone-600 transition-colors hover:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800;
 }

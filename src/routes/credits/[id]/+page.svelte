@@ -15,6 +15,7 @@
 	import { listTransactions } from '#lib/api/transactions.ts';
 	import LineChart from '#lib/charts/LineChart.svelte';
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
+	import Money from '#lib/components/Money.svelte';
 	import MoneyInput from '#lib/components/MoneyInput.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
@@ -100,7 +101,7 @@
 {#await request}
 	<States state="loading" />
 {:then { credit, payments, history, candidates }}
-	<PageHeader title={credit.name} subtitle="{credit.institution ?? ''} · taxa {credit.annualRate.toLocaleString('pt-PT')} % · prestação {formatMoney(credit.installment)}">
+	<PageHeader title={credit.name} subtitle="{credit.institution ?? ''} · taxa {credit.annualRate.toLocaleString('pt-PT')} %">
 		{#snippet actions()}
 			{#if credit.recurrenceId}
 				<a class="btn-secondary" href="/recurrences">Prestação automática ativa</a>
@@ -112,13 +113,14 @@
 		{/snippet}
 	</PageHeader>
 
-	<div class="mb-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+	<div class="mb-6 grid gap-4 md:grid-cols-4 xl:grid-cols-7">
+		<StatCard label="Prestação" value={formatMoney(credit.installment)} />
 		<StatCard label="Capital inicial" value={formatMoney(credit.principal)} />
 		<StatCard label="Capital em dívida" value={formatMoney(credit.remaining)} />
 		<StatCard label="Capital pago" value={formatMoney(credit.principalPaid)} />
 		<StatCard label="Juros pagos" value={formatMoney(credit.interestPaid)} hint="Dos pagamentos registados" />
-		<StatCard label="Prestações restantes" value={String(credit.remainingInstallments)} />
-		<StatCard label="Fim previsto" value={formatDate(credit.projectedEndDate)} />
+		<StatCard plain label="Prestações restantes" value={String(credit.remainingInstallments)} />
+		<StatCard plain label="Fim previsto" value={formatDate(credit.projectedEndDate)} />
 	</div>
 
 	<section class="card mb-6">
@@ -187,15 +189,15 @@
 				<table class="table-base mt-4">
 					<thead><tr><th></th><th class="text-right">Atual</th><th class="text-right">Cenário</th></tr></thead>
 					<tbody>
-						<tr><td>Prestação</td><td class="text-right">{formatMoney(simulationResult.baseline.installment)}</td><td class="text-right">{formatMoney(simulationResult.scenario.installment)}</td></tr>
+						<tr><td>Prestação</td><td class="text-right"><Money value={simulationResult.baseline.installment} /></td><td class="text-right"><Money value={simulationResult.scenario.installment} /></td></tr>
 						<tr><td>Prestações</td><td class="text-right">{simulationResult.baseline.periods}</td><td class="text-right">{simulationResult.scenario.periods}</td></tr>
-						<tr><td>Juros totais</td><td class="text-right">{formatMoney(simulationResult.baseline.totalInterest)}</td><td class="text-right">{formatMoney(simulationResult.scenario.totalInterest)}</td></tr>
+						<tr><td>Juros totais</td><td class="text-right"><Money value={simulationResult.baseline.totalInterest} /></td><td class="text-right"><Money value={simulationResult.scenario.totalInterest} /></td></tr>
 						<tr><td>Fim</td><td class="text-right">{formatDate(simulationResult.baseline.endDate)}</td><td class="text-right">{formatDate(simulationResult.scenario.endDate)}</td></tr>
 					</tbody>
 				</table>
 				</div>
 				<p class="mt-2 text-sm">
-					Poupança de juros: <strong>{formatMoney(simulationResult.interestSaved)}</strong> · {simulationResult.periodsSaved} prestações a menos
+					Poupança de juros: <strong><Money value={simulationResult.interestSaved} /></strong> · {simulationResult.periodsSaved} prestações a menos
 				</p>
 			{/if}
 		</section>
@@ -213,9 +215,9 @@
 					{#each payments as item (item.id)}
 						<tr>
 							<td>{formatDate(item.date)}</td>
-							<td class="text-right tabular-nums">{formatMoney(item.amount)}</td>
-							<td class="text-right tabular-nums">{formatMoney(item.principal)}</td>
-							<td class="text-right tabular-nums">{formatMoney(item.interest)}</td>
+							<td class="text-right tabular-nums"><Money value={item.amount} /></td>
+							<td class="text-right tabular-nums"><Money value={item.principal} /></td>
+							<td class="text-right tabular-nums"><Money value={item.interest} /></td>
 							<td class="text-right"><button class="btn-ghost text-red-600" onclick={() => removePayment(item.id)}>Eliminar</button></td>
 						</tr>
 					{/each}
@@ -239,10 +241,10 @@
 							<tr>
 								<td>{entry.number}</td>
 								<td>{formatDate(entry.date)}</td>
-								<td class="text-right tabular-nums">{formatMoney(entry.installment)}</td>
-								<td class="text-right tabular-nums">{formatMoney(entry.principal)}</td>
-								<td class="text-right tabular-nums">{formatMoney(entry.interest)}</td>
-								<td class="text-right tabular-nums">{formatMoney(entry.balance)}</td>
+								<td class="text-right tabular-nums"><Money value={entry.installment} /></td>
+								<td class="text-right tabular-nums"><Money value={entry.principal} /></td>
+								<td class="text-right tabular-nums"><Money value={entry.interest} /></td>
+								<td class="text-right tabular-nums"><Money value={entry.balance} /></td>
 							</tr>
 						{/each}
 					</tbody>

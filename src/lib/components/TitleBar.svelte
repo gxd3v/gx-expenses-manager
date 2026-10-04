@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
+	import PrivacyToggle from './PrivacyToggle.svelte';
 
 	const appWindow = getCurrentWindow();
 
@@ -29,6 +30,7 @@
 	</div>
 
 	<div class="flex h-full">
+		<PrivacyToggle compact />
 		<button class="titlebar-button" onclick={() => appWindow.minimize()} aria-label="Minimizar" title="Minimizar">
 			<svg viewBox="0 0 10 10" class="size-2.5" aria-hidden="true"><path d="M0 5h10" stroke="currentColor" stroke-width="1" /></svg>
 		</button>

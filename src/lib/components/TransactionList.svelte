@@ -19,7 +19,7 @@
 		type Transfer
 	} from '#lib/api/transactions.ts';
 	import { confirmAction, pickSavePath } from '#lib/dialogs.ts';
-	import { formatDate, formatMoney, today } from '#lib/format.ts';
+	import { formatDate, today } from '#lib/format.ts';
 	import { dataChanged, refs } from '#lib/refs.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 	import AccountSelect from './AccountSelect.svelte';

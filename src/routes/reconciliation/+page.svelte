@@ -10,6 +10,7 @@
 	import { listTransactions, setConfirmed } from '#lib/api/transactions.ts';
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
 	import Amount from '#lib/components/Amount.svelte';
+	import Money from '#lib/components/Money.svelte';
 	import MoneyInput from '#lib/components/MoneyInput.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
@@ -111,7 +112,7 @@
 				value={difference === null ? '—' : formatMoney(difference)}
 				tone={!difference ? 'neutral' : 'negative'}
 			/>
-			<StatCard label="Por confirmar" value={String(status.unconfirmedCount)} hint={formatMoney(status.unconfirmedTotal)} />
+			<StatCard privateHint plain label="Por confirmar" value={String(status.unconfirmedCount)} hint={formatMoney(status.unconfirmedTotal)} />
 		</div>
 
 		<div class="grid gap-4 xl:grid-cols-2">
@@ -162,8 +163,8 @@
 						{#each history as item (item.id)}
 							<tr>
 								<td>{formatDate(item.date)}</td>
-								<td class="text-right tabular-nums">{formatMoney(item.statementBalance)}</td>
-								<td class="text-right tabular-nums">{formatMoney(item.calculatedBalance)}</td>
+								<td class="text-right tabular-nums"><Money value={item.statementBalance} /></td>
+								<td class="text-right tabular-nums"><Money value={item.calculatedBalance} /></td>
 								<td class="text-right"><Amount value={item.difference} /></td>
 							</tr>
 						{/each}

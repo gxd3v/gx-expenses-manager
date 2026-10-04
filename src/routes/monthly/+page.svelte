@@ -5,6 +5,7 @@
 	import { listTransactions } from '#lib/api/transactions.ts';
 	import HBarChart from '#lib/charts/HBarChart.svelte';
 	import Amount from '#lib/components/Amount.svelte';
+	import Money from '#lib/components/Money.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
@@ -67,16 +68,19 @@
 {:then { summary, planned }}
 	<div class="mb-6 grid gap-4 md:grid-cols-3">
 		<StatCard
+			privateHint
 			label="Receitas realizadas"
 			value={formatMoney(summary.income)}
 			hint="Previstas: {formatMoney(summary.pendingIncome)} · Total esperado: {formatMoney(summary.expectedIncome)}"
 		/>
 		<StatCard
+			privateHint
 			label="Despesas realizadas"
 			value={formatMoney(summary.outcome)}
 			hint="Previstas: {formatMoney(summary.pendingOutcome)} · Total esperado: {formatMoney(summary.expectedOutcome)}"
 		/>
 		<StatCard
+			privateHint
 			label="Resultado"
 			value={formatMoney(summary.net)}
 			tone={summary.net >= 0 ? 'positive' : 'negative'}
@@ -94,15 +98,15 @@
 			<tbody>
 				<tr>
 					<td>Receitas</td>
-					<td class="text-right tabular-nums">{formatMoney(summary.income)}</td>
-					<td class="text-right tabular-nums">{formatMoney(summary.previousIncome)} <span class="text-xs text-stone-500">{delta(summary.income, summary.previousIncome)}</span></td>
-					<td class="text-right tabular-nums">{formatMoney(summary.averageIncome)} <span class="text-xs text-stone-500">{delta(summary.income, summary.averageIncome)}</span></td>
+					<td class="text-right tabular-nums"><Money value={summary.income} /></td>
+					<td class="text-right tabular-nums"><Money value={summary.previousIncome} /> <span class="text-xs text-stone-500">{delta(summary.income, summary.previousIncome)}</span></td>
+					<td class="text-right tabular-nums"><Money value={summary.averageIncome} /> <span class="text-xs text-stone-500">{delta(summary.income, summary.averageIncome)}</span></td>
 				</tr>
 				<tr>
 					<td>Despesas</td>
-					<td class="text-right tabular-nums">{formatMoney(summary.outcome)}</td>
-					<td class="text-right tabular-nums">{formatMoney(summary.previousOutcome)} <span class="text-xs text-stone-500">{delta(summary.outcome, summary.previousOutcome)}</span></td>
-					<td class="text-right tabular-nums">{formatMoney(summary.averageOutcome)} <span class="text-xs text-stone-500">{delta(summary.outcome, summary.averageOutcome)}</span></td>
+					<td class="text-right tabular-nums"><Money value={summary.outcome} /></td>
+					<td class="text-right tabular-nums"><Money value={summary.previousOutcome} /> <span class="text-xs text-stone-500">{delta(summary.outcome, summary.previousOutcome)}</span></td>
+					<td class="text-right tabular-nums"><Money value={summary.averageOutcome} /> <span class="text-xs text-stone-500">{delta(summary.outcome, summary.averageOutcome)}</span></td>
 				</tr>
 			</tbody>
 		</table>
@@ -158,9 +162,9 @@
 					{#each summary.categories as category (category.categoryId ?? category.name)}
 						<tr>
 							<td>{category.name}</td>
-							<td class="text-right tabular-nums">{formatMoney(category.current)}</td>
-							<td class="text-right tabular-nums">{formatMoney(category.previous)}</td>
-							<td class="text-right tabular-nums">{formatMoney(category.average)}</td>
+							<td class="text-right tabular-nums"><Money value={category.current} /></td>
+							<td class="text-right tabular-nums"><Money value={category.previous} /></td>
+							<td class="text-right tabular-nums"><Money value={category.average} /></td>
 							<td class="text-right"><Amount value={category.average - category.current} /></td>
 						</tr>
 					{/each}

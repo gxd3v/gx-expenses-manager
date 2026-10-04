@@ -3,12 +3,12 @@
 	import AccountForm from './AccountForm.svelte';
 	import { accountKinds, deleteAccount, listAccounts, setAccountArchived, type Account } from '#lib/api/accounts.ts';
 	import Modal from '#lib/components/Modal.svelte';
+	import Money from '#lib/components/Money.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import States from '#lib/components/States.svelte';
 	import Toggle from '#lib/components/Toggle.svelte';
 	import { confirmAction } from '#lib/dialogs.ts';
 	import { balanceSummary, type BalanceSummary } from '#lib/api/reports.ts';
-	import { formatMoney } from '#lib/format.ts';
 	import { dataChanged, refs } from '#lib/refs.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 
@@ -67,7 +67,7 @@
 	{:else}
 		<p class="mb-4 text-sm">
 			<span class="muted">Saldo total:</span>
-			<span class="font-semibold tabular-nums">{formatMoney(summary.total)}</span>
+			<span class="font-semibold tabular-nums"><Money value={summary.total} /></span>
 		</p>
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{#each accounts as account (account.id)}
@@ -84,15 +84,15 @@
 					<dl class="grid grid-cols-3 gap-2 text-sm">
 						<div>
 							<dt class="text-xs text-stone-500">Saldo atual</dt>
-							<dd class="font-semibold tabular-nums">{formatMoney(account.balance, account.currency)}</dd>
+							<dd class="font-semibold tabular-nums"><Money value={account.balance} currency={account.currency} /></dd>
 						</div>
 						<div>
 							<dt class="text-xs text-stone-500" title="Saldo atual menos despesas futuras já registadas">Disponível</dt>
-							<dd class="tabular-nums">{formatMoney(account.availableBalance, account.currency)}</dd>
+							<dd class="tabular-nums"><Money value={account.availableBalance} currency={account.currency} /></dd>
 						</div>
 						<div>
 							<dt class="text-xs text-stone-500" title="Inclui todos os movimentos futuros registados">Projetado</dt>
-							<dd class="tabular-nums">{formatMoney(account.projectedBalance, account.currency)}</dd>
+							<dd class="tabular-nums"><Money value={account.projectedBalance} currency={account.currency} /></dd>
 						</div>
 					</dl>
 					<div class="flex flex-wrap gap-1">
