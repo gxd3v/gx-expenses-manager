@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
+	import { goto } from '$app/navigation';
 	import {
 		createBackup,
 		exportData,
@@ -18,8 +19,8 @@
 	import { formatDate, today } from '#lib/format.ts';
 	import { errorMessage, isTauri } from '#lib/graphql.ts';
 	import { dataChanged } from '#lib/refs.svelte.ts';
-	import { changePassword, restoreBackup, status } from '#lib/session.ts';
-	import { app, saveSettings, type Settings } from '#lib/settings.svelte.ts';
+	import { changePassword, resetData, restoreBackup, status } from '#lib/session.ts';
+	import { app, loadSettings, saveSettings, type Settings } from '#lib/settings.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 
 	let form = $state<Settings>(untrack(() => ({ ...app.settings! })));
@@ -27,6 +28,9 @@
 	let dataDir = $state('');
 	let passwords = $state({ current: '', next: '', confirm: '' });
 	let exportPassword = $state('');
+	let reset = $state({ password: '', phrase: '' });
+
+	const RESET_PHRASE = 'APAGAR TUDO';
 	let busy = $state(false);
 	let importing = $state<{ path: string; password: string; preview: ImportPreview | null } | null>(null);
 
@@ -148,6 +152,28 @@
 			notify('Password alterada. Backups antigos continuam a usar a password antiga.');
 		} catch (e) {
 			notifyError(e);
+		}
+	}
+
+	async function resetAll(event: SubmitEvent) {
+		event.preventDefault();
+		if (reset.phrase !== RESET_PHRASE) {
+			notify(`Escreve exatamente "${RESET_PHRASE}" para confirmar`, 'error');
+			return;
+		}
+		if (!(await confirmAction('Apagar TODOS os dados? Contas, movimentos, recorrências, créditos, objetivos e definições.'))) return;
+		busy = true;
+		try {
+			await resetData(reset.password);
+			reset = { password: '', phrase: '' };
+			await loadSettings();
+			await dataChanged();
+			notify('Dados apagados. Ficou uma cópia de segurança na pasta de backups.');
+			await goto('/');
+		} catch (e) {
+			notifyError(e);
+		} finally {
+			busy = false;
 		}
 	}
 
@@ -319,6 +345,25 @@
 		</label>
 		<div class="flex items-end"><button class="btn-secondary w-full">Alterar</button></div>
 		<p class="col-span-2 muted md:col-span-4">Não existe recuperação: se esqueceres a password, os dados ficam inacessíveis.</p>
+	</form>
+
+	<form onsubmit={resetAll} class="card mt-6 grid grid-cols-2 gap-4 border-red-300 md:grid-cols-4 dark:border-red-900">
+		<h2 class="col-span-2 font-medium text-red-700 md:col-span-4 dark:text-red-400">Zona perigosa · apagar todos os dados</h2>
+		<p class="col-span-2 muted md:col-span-4">
+			Apaga contas, movimentos, recorrências, créditos, objetivos e definições, e volta às categorias de origem. A password mantém-se. Antes de apagar
+			é guardada uma cópia na pasta de backups.
+		</p>
+		<label class="label">
+			Password
+			<input type="password" bind:value={reset.password} class="input" autocomplete="current-password" required />
+		</label>
+		<label class="label">
+			Escreve "{RESET_PHRASE}"
+			<input bind:value={reset.phrase} class="input" autocomplete="off" required />
+		</label>
+		<div class="flex items-end md:col-span-2">
+			<button class="btn-danger" disabled={busy || reset.phrase !== RESET_PHRASE}>Apagar tudo</button>
+		</div>
 	</form>
 {/if}
 
