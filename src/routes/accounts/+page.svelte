@@ -5,6 +5,7 @@
 	import Modal from '#lib/components/Modal.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import States from '#lib/components/States.svelte';
+	import Toggle from '#lib/components/Toggle.svelte';
 	import { confirmAction } from '#lib/dialogs.ts';
 	import { balanceSummary, type BalanceSummary } from '#lib/api/reports.ts';
 	import { formatMoney } from '#lib/format.ts';
@@ -51,10 +52,7 @@
 
 <PageHeader title="Contas" subtitle="Contas bancárias, poupanças, cartões e dinheiro físico.">
 	{#snippet actions()}
-		<label class="flex items-center gap-2 text-sm">
-			<input type="checkbox" bind:checked={showArchived} onchange={load} class="rounded" />
-			Mostrar arquivadas
-		</label>
+		<Toggle bind:checked={showArchived} onchange={load} label="Mostrar arquivadas" />
 		<button class="btn-primary" onclick={() => (editing = null)}>Nova conta</button>
 	{/snippet}
 </PageHeader>

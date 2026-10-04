@@ -4,6 +4,7 @@
 	import { frequencyPresets } from '#lib/api/recurrences.ts';
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
 	import MoneyInput from '#lib/components/MoneyInput.svelte';
+	import Toggle from '#lib/components/Toggle.svelte';
 	import { today } from '#lib/format.ts';
 	import { errorMessage } from '#lib/graphql.ts';
 	import { notify } from '#lib/toasts.svelte.ts';
@@ -112,10 +113,13 @@
 		<AccountSelect bind:value={form.accountId} allowEmpty emptyLabel="Nenhuma" />
 	</label>
 	{#if !credit}
-		<label class="col-span-2 flex items-center gap-2 text-sm">
-			<input type="checkbox" bind:checked={createRecurrence} class="rounded" disabled={!form.accountId} />
-			Criar recorrência para a prestação (regista os pagamentos automaticamente)
-		</label>
+		<div class="col-span-2">
+			<Toggle
+				bind:checked={createRecurrence}
+				disabled={!form.accountId}
+				label="Criar recorrência para a prestação (regista os pagamentos automaticamente)"
+			/>
+		</div>
 	{/if}
 
 	{#if error}<p class="col-span-2 text-sm text-red-600" role="alert">{error}</p>{/if}

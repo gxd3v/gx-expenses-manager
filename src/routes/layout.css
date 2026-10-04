@@ -17,6 +17,8 @@
 	--series-8: #e34948;
 	--positive: #1baf7a;
 	--negative: #e34948;
+	--scrollbar-thumb: #d6d3d1;
+	--scrollbar-thumb-hover: #a8a29e;
 	color-scheme: light;
 }
 
@@ -34,6 +36,8 @@
 	--series-8: #e66767;
 	--positive: #199e70;
 	--negative: #e66767;
+	--scrollbar-thumb: #44403c;
+	--scrollbar-thumb-hover: #78716c;
 	color-scheme: dark;
 }
 
@@ -45,6 +49,71 @@
 	:focus-visible {
 		@apply outline-2 outline-offset-2 outline-indigo-500;
 	}
+
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	::-webkit-scrollbar-track,
+	::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+
+	::-webkit-scrollbar-thumb {
+		border: 3px solid transparent;
+		border-radius: 9999px;
+		background-color: var(--scrollbar-thumb);
+		background-clip: content-box;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background-color: var(--scrollbar-thumb-hover);
+	}
+
+	::-webkit-scrollbar-button {
+		display: none;
+	}
+
+	input[type='checkbox'],
+	input[type='radio'] {
+		@apply size-4 cursor-pointer border-stone-300 bg-white text-indigo-600 transition-colors duration-150 dark:border-stone-600 dark:bg-stone-800 dark:text-indigo-500;
+	}
+
+	input[type='checkbox'] {
+		@apply rounded-[5px];
+	}
+
+	input[type='checkbox']:hover:not(:checked),
+	input[type='radio']:hover:not(:checked) {
+		@apply border-indigo-400;
+	}
+
+	input[type='checkbox']:focus,
+	input[type='radio']:focus {
+		@apply ring-2 ring-indigo-500/30 ring-offset-0;
+	}
+
+	input[type='checkbox']:disabled,
+	input[type='radio']:disabled {
+		@apply cursor-not-allowed opacity-50;
+	}
+
+	input[type='color'] {
+		@apply cursor-pointer border border-stone-300 bg-white p-1 dark:border-stone-700 dark:bg-stone-900;
+	}
+
+	input[type='color']::-webkit-color-swatch-wrapper {
+		padding: 0;
+	}
+
+	input[type='color']::-webkit-color-swatch {
+		@apply rounded border-none;
+	}
+}
+
+@utility titlebar-button {
+	@apply inline-flex h-full w-11 items-center justify-center text-stone-600 transition-colors hover:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800;
 }
 
 @utility input {

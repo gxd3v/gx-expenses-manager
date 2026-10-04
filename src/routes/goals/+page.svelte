@@ -8,6 +8,7 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import States from '#lib/components/States.svelte';
+	import Toggle from '#lib/components/Toggle.svelte';
 	import { confirmAction } from '#lib/dialogs.ts';
 	import { formatDate, formatMoney, formatMonth, formatPercent } from '#lib/format.ts';
 	import { errorMessage } from '#lib/graphql.ts';
@@ -77,10 +78,7 @@
 
 <PageHeader title="Objetivos" subtitle="Metas de poupança associadas a uma conta.">
 	{#snippet actions()}
-		<label class="flex items-center gap-2 text-sm">
-			<input type="checkbox" bind:checked={showArchived} onchange={load} class="rounded" />
-			Mostrar arquivados
-		</label>
+		<Toggle bind:checked={showArchived} onchange={load} label="Mostrar arquivados" />
 		<button class="btn-primary" onclick={() => open(null)}>Novo objetivo</button>
 	{/snippet}
 </PageHeader>

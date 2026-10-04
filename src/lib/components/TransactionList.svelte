@@ -263,7 +263,6 @@
 					<th class="w-8">
 						<input
 							type="checkbox"
-							class="rounded"
 							checked={allSelected}
 							onchange={() => (selected = allSelected ? [] : items.map((i) => i.id))}
 							aria-label="Selecionar todos"
@@ -281,7 +280,7 @@
 			<tbody>
 				{#each items as transaction (transaction.id)}
 					<tr class={transaction.date > today() ? 'text-stone-400' : ''}>
-						<td><input type="checkbox" class="rounded" bind:group={selected} value={transaction.id} aria-label="Selecionar" /></td>
+						<td><input type="checkbox" bind:group={selected} value={transaction.id} aria-label="Selecionar" /></td>
 						<td class="whitespace-nowrap">{formatDate(transaction.date)}</td>
 						<td>
 							{transaction.description || '—'}
@@ -295,7 +294,6 @@
 						<td class="text-center">
 							<input
 								type="checkbox"
-								class="rounded"
 								checked={transaction.confirmed}
 								onchange={() => toggleConfirmed(transaction)}
 								aria-label="Confirmado"

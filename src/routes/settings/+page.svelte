@@ -13,6 +13,7 @@
 	import Modal from '#lib/components/Modal.svelte';
 	import MoneyInput from '#lib/components/MoneyInput.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
+	import Toggle from '#lib/components/Toggle.svelte';
 	import { confirmAction, pickDirectory, pickOpenPath, pickSavePath } from '#lib/dialogs.ts';
 	import { formatDate, today } from '#lib/format.ts';
 	import { errorMessage, isTauri } from '#lib/graphql.ts';
@@ -209,14 +210,11 @@
 
 	<section class="card grid grid-cols-2 gap-4 md:grid-cols-4">
 		<h2 class="col-span-2 font-medium md:col-span-4">Notificações</h2>
-		<label class="col-span-2 flex items-center gap-2 text-sm md:col-span-4">
-			<input type="checkbox" bind:checked={form.notificationsEnabled} class="rounded" /> Ativar avisos e notificações
-		</label>
+		<div class="col-span-2 md:col-span-4">
+			<Toggle bind:checked={form.notificationsEnabled} label="Ativar avisos e notificações" />
+		</div>
 		{#each [['notifyUpcoming', 'Despesas e rendimentos recorrentes próximos'], ['notifyCredits', 'Prestações de créditos'], ['notifyGoals', 'Objetivos'], ['notifyLowBalance', 'Saldo baixo'], ['notifyNegativeForecast', 'Previsões negativas']] as const as [key, label] (key)}
-			<label class="flex items-center gap-2 text-sm">
-				<input type="checkbox" bind:checked={form[key]} disabled={!form.notificationsEnabled} class="rounded" />
-				{label}
-			</label>
+			<Toggle bind:checked={form[key]} disabled={!form.notificationsEnabled} {label} />
 		{/each}
 		<label class="label">
 			Avisar com antecedência (dias)

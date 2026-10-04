@@ -6,6 +6,7 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import States from '#lib/components/States.svelte';
+	import Toggle from '#lib/components/Toggle.svelte';
 	import { confirmAction } from '#lib/dialogs.ts';
 	import { formatDate, formatMoney } from '#lib/format.ts';
 	import { dataChanged, refs } from '#lib/refs.svelte.ts';
@@ -39,10 +40,7 @@
 
 <PageHeader title="Créditos" subtitle="Empréstimos, capital em dívida, juros e prestações.">
 	{#snippet actions()}
-		<label class="flex items-center gap-2 text-sm">
-			<input type="checkbox" bind:checked={showArchived} onchange={load} class="rounded" />
-			Mostrar arquivados
-		</label>
+		<Toggle bind:checked={showArchived} onchange={load} label="Mostrar arquivados" />
 		<button class="btn-primary" onclick={() => (editing = null)}>Novo crédito</button>
 	{/snippet}
 </PageHeader>

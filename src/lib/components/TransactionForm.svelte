@@ -6,6 +6,7 @@
 	import AccountSelect from './AccountSelect.svelte';
 	import CategorySelect from './CategorySelect.svelte';
 	import MoneyInput from './MoneyInput.svelte';
+	import Toggle from './Toggle.svelte';
 
 	let {
 		id = null,
@@ -86,10 +87,9 @@
 		Notas
 		<textarea bind:value={form.notes} rows="2" class="input"></textarea>
 	</label>
-	<label class="col-span-2 flex items-center gap-2 text-sm">
-		<input type="checkbox" bind:checked={form.confirmed} class="rounded" />
-		Confirmado no banco
-	</label>
+	<div class="col-span-2">
+		<Toggle bind:checked={form.confirmed} label="Confirmado no banco" />
+	</div>
 
 	{#if error}
 		<p class="col-span-2 text-sm text-red-600" role="alert">{error}</p>

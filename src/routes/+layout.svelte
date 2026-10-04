@@ -6,9 +6,10 @@
 	import { runBackgroundTasks } from '#lib/background.ts';
 	import QuickAdd from '#lib/components/QuickAdd.svelte';
 	import SearchPalette from '#lib/components/SearchPalette.svelte';
+	import TitleBar from '#lib/components/TitleBar.svelte';
 	import Toasts from '#lib/components/Toasts.svelte';
 	import UnlockScreen from '#lib/components/UnlockScreen.svelte';
-	import { errorMessage } from '#lib/graphql.ts';
+	import { errorMessage, isTauri } from '#lib/graphql.ts';
 	import { dataChanged, loadRefs } from '#lib/refs.svelte.ts';
 	import { lock, status, type Status } from '#lib/session.ts';
 	import { app, loadSettings } from '#lib/settings.svelte.ts';
@@ -112,10 +113,15 @@
 
 <svelte:window onkeydown={shortcuts} onpointerdown={resetIdle} />
 
+<div class="flex h-screen flex-col">
+{#if isTauri}
+	<TitleBar />
+{/if}
+<div class="relative min-h-0 flex-1">
 {#if session && !session.unlocked}
 	<UnlockScreen initialized={session.initialized} onunlock={refresh} />
 {:else if startupError}
-	<div class="flex h-screen items-center justify-center p-8">
+	<div class="flex h-full items-center justify-center p-8">
 		<div class="card max-w-lg space-y-3">
 			<h1 class="font-semibold">Não foi possível abrir os dados</h1>
 			<p class="text-sm text-red-600">{startupError}</p>
@@ -123,7 +129,7 @@
 		</div>
 	</div>
 {:else if ready}
-	<div class="flex h-screen flex-col md:flex-row">
+	<div class="flex h-full flex-col md:flex-row">
 		<header class="flex items-center justify-between border-b border-stone-200 px-4 py-2 md:hidden dark:border-stone-800">
 			<button class="btn-ghost" onclick={() => (menuOpen = !menuOpen)} aria-expanded={menuOpen} aria-label="Menu">☰</button>
 			<span class="font-semibold">GX Expenses</span>
@@ -171,5 +177,7 @@
 		<SearchPalette onclose={() => (ui.search = false)} />
 	{/if}
 {/if}
+</div>
+</div>
 
 <Toasts />
