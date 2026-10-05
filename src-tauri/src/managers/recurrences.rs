@@ -185,8 +185,14 @@ impl RecurrencesManager {
                 overrides.get(&recurrence.id).unwrap_or(&empty),
             );
             for occurrence in due {
-                self.materialize(&occurrence).await?;
-                count += 1;
+                match self.materialize(&occurrence).await {
+                    Ok(()) => count += 1,
+                    Err(error) => log::warn!(
+                        "recurrence {} on {} not materialized: {error}",
+                        occurrence.recurrence_id,
+                        occurrence.occurrence_date
+                    ),
+                }
             }
         }
         Ok(count)

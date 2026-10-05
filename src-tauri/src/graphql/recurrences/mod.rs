@@ -51,7 +51,9 @@ impl RecurrencesMutation {
         ctx: &Context<'_>,
         input: RecurrenceInput,
     ) -> Result<Recurrence> {
-        let recurrence = module(ctx).recurrences.create(input.try_into()?).await?;
+        let manager = &module(ctx).recurrences;
+        let recurrence = manager.create(input.try_into()?).await?;
+        manager.materialize_due(today()).await?;
         Ok(Recurrence::from_model(recurrence, None))
     }
 
@@ -61,10 +63,9 @@ impl RecurrencesMutation {
         id: Uuid,
         input: RecurrenceInput,
     ) -> Result<Recurrence> {
-        let recurrence = module(ctx)
-            .recurrences
-            .update(id, input.try_into()?)
-            .await?;
+        let manager = &module(ctx).recurrences;
+        let recurrence = manager.update(id, input.try_into()?).await?;
+        manager.materialize_due(today()).await?;
         Ok(Recurrence::from_model(recurrence, None))
     }
 
@@ -76,10 +77,10 @@ impl RecurrencesMutation {
     }
 
     async fn resume_recurrence(&self, ctx: &Context<'_>, id: Uuid) -> Result<Recurrence> {
-        Ok(Recurrence::from_model(
-            module(ctx).recurrences.resume(today(), id).await?,
-            None,
-        ))
+        let manager = &module(ctx).recurrences;
+        let recurrence = manager.resume(today(), id).await?;
+        manager.materialize_due(today()).await?;
+        Ok(Recurrence::from_model(recurrence, None))
     }
 
     async fn end_recurrence(
