@@ -44,7 +44,11 @@ const CATEGORY_MONTHS: &str = "SELECT COALESCE(p.id, c.id) AS category_id, COALE
 const ACCOUNT_MONTHS: &str = "SELECT account_id, substr(date, 1, 7) AS month, SUM(amount) AS amount \
      FROM transactions WHERE date <= ?1 GROUP BY account_id, month ORDER BY month";
 
-const DAILY_CHANGES: &str = "SELECT t.date, SUM(t.amount) AS amount FROM transactions t      JOIN accounts a ON a.id = t.account_id      WHERE t.date <= ?1 AND (?2 IS NULL OR t.account_id = ?2) AND (?2 IS NOT NULL OR a.archived_at IS NULL)      GROUP BY t.date ORDER BY t.date";
+const DAILY_CHANGES: &str = "SELECT t.date, SUM(t.amount) AS amount FROM transactions t \
+     JOIN accounts a ON a.id = t.account_id \
+     WHERE t.date <= ?1 AND (?2 IS NULL OR t.account_id = ?2) \
+     AND (?2 IS NOT NULL OR (a.archived_at IS NULL AND a.kind <> 'credit_card')) \
+     GROUP BY t.date ORDER BY t.date";
 
 const VARIABLE_AVERAGES: &str = "SELECT t.account_id, \
      COALESCE(SUM(CASE WHEN t.kind = 'income' AND t.date < ?2 THEN t.amount END), 0) AS income, \

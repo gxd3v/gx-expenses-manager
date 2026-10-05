@@ -4,6 +4,7 @@ mod categories;
 mod credits;
 mod forecasts;
 mod goals;
+mod purchases;
 mod reconciliation;
 mod recurrences;
 mod reports;

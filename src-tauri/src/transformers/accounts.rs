@@ -45,6 +45,7 @@ impl From<models::Account> for types::Account {
                 .as_ref()
                 .map(|i| i.net_per_period(account.balance)),
             interest: account.interest.map(Into::into),
+            overdraft_limit: account.overdraft_limit,
             id: account.id,
             name: account.name,
             kind: account.kind.into(),
@@ -72,6 +73,7 @@ impl From<types::AccountInput> for models::AccountInput {
             color: input.color,
             icon: input.icon,
             interest: input.interest.map(Into::into),
+            overdraft_limit: input.overdraft_limit,
         }
     }
 }

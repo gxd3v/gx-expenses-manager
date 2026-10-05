@@ -182,7 +182,8 @@ impl AlertsManager {
         let accounts = self.accounts.list(today, false).await?;
         Ok(accounts
             .into_iter()
-            .filter(|a| a.kind != AccountKind::Card && a.balance < threshold)
+            .filter(|a| !matches!(a.kind, AccountKind::Card | AccountKind::CreditCard))
+            .filter(|a| a.balance < threshold)
             .map(|a| Alert {
                 key: format!("low-balance:{}:{today}", a.id),
                 kind: AlertKind::LowBalance,
@@ -210,17 +211,22 @@ impl AlertsManager {
 
         Ok(accounts
             .into_iter()
-            .filter(|account| account.kind != AccountKind::Card)
+            .filter(|account| !matches!(account.kind, AccountKind::Card | AccountKind::CreditCard))
             .filter_map(|account| {
-                let month = forecast.months.iter().find(|m| {
-                    m.balances
-                        .iter()
-                        .any(|b| b.account_id == account.id && b.balance < 0)
+                let (month, balance) = forecast.months.iter().find_map(|m| {
+                    let balance = m.balances.iter().find(|b| b.account_id == account.id)?;
+                    (balance.balance < 0).then_some((m, balance.balance))
                 })?;
+                let title = match balance < -account.overdraft_limit {
+                    true if account.overdraft_limit > 0 => {
+                        "Previsão acima do descoberto autorizado"
+                    }
+                    _ => "Previsão de saldo negativo",
+                };
                 Some(Alert {
                     key: format!("negative:{}:{}", account.id, month.month),
                     kind: AlertKind::NegativeForecast,
-                    title: "Previsão de saldo negativo".into(),
+                    title: title.into(),
                     message: account.name,
                     date: Some(month.month),
                 })

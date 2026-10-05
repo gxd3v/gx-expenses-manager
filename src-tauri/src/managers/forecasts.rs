@@ -5,8 +5,8 @@ use super::recurrences::RecurrencesManager;
 use crate::errors::AppError;
 use crate::models::dates::{add_months, month_end, month_start};
 use crate::models::{
-    AccountBalance, Adjustment, ForecastEvent, ForecastInput, ForecastMethod, ForecastMonth,
-    Occurrence, TransactionKind, VariableAverage, project,
+    Account, AccountBalance, Adjustment, ForecastEvent, ForecastInput, ForecastMethod,
+    ForecastMonth, Occurrence, TransactionKind, VariableAverage, project,
 };
 use crate::repositories::accounts::AccountsRepository;
 use crate::repositories::credits::CreditsRepository;
@@ -91,6 +91,11 @@ impl ForecastsManager {
             .iter()
             .filter_map(|a| Some((a.id, a.interest.clone()?)))
             .collect();
+        let excluded = accounts
+            .iter()
+            .filter(|a| !a.counts_in_total())
+            .map(|a| a.id)
+            .collect();
         let balances = accounts
             .into_iter()
             .map(|a| AccountBalance {
@@ -118,12 +123,32 @@ impl ForecastsManager {
             events,
             averages,
             interest,
+            excluded,
         });
         Ok(Forecast {
             goals_reached: self.goals_reached(today, &months).await?,
             credits_paid: self.credits_paid(today, end).await?,
             months,
         })
+    }
+
+    pub async fn account_timeline(
+        &self,
+        today: NaiveDate,
+        account_id: Uuid,
+        end: NaiveDate,
+    ) -> Result<(Account, Vec<(NaiveDate, i64)>), AppError> {
+        let account = self.accounts.get(today, account_id).await?;
+        let mut events = self.transaction_events(today, end).await?;
+        events.extend(self.recurrence_events(today, end, &[]).await?);
+        Ok((
+            account,
+            events
+                .into_iter()
+                .filter(|e| e.account_id == account_id)
+                .map(|e| (e.date, e.amount))
+                .collect(),
+        ))
     }
 
     async fn transaction_events(

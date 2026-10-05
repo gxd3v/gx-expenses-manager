@@ -7,6 +7,7 @@ string_enum!(AccountKind {
     Bank => "bank",
     Savings => "savings",
     Card => "card",
+    CreditCard => "credit_card",
     Cash => "cash",
     Meal => "meal",
     Other => "other",
@@ -28,6 +29,13 @@ pub struct Account {
     pub available_balance: i64,
     pub projected_balance: i64,
     pub interest: Option<Interest>,
+    pub overdraft_limit: i64,
+}
+
+impl Account {
+    pub fn counts_in_total(&self) -> bool {
+        self.kind != AccountKind::CreditCard
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -39,4 +47,5 @@ pub struct AccountInput {
     pub color: Option<String>,
     pub icon: Option<String>,
     pub interest: Option<Interest>,
+    pub overdraft_limit: i64,
 }

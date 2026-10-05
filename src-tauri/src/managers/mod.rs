@@ -5,6 +5,7 @@ pub mod categories;
 pub mod credits;
 pub mod forecasts;
 pub mod goals;
+pub mod purchases;
 pub mod reconciliation;
 pub mod recurrences;
 pub mod reports;

@@ -7,7 +7,7 @@ use super::recurrences::RecurrencesManager;
 use crate::errors::AppError;
 use crate::models::dates::{add_months, month_end, month_start, months_between};
 use crate::models::{
-    BalancePoint, BalanceRecord, BalanceSummary, CategoryAmount, CategoryComparison,
+    Account, BalancePoint, BalanceRecord, BalanceSummary, CategoryAmount, CategoryComparison,
     CategoryGrouping, Credit, CreditPayment, EntryKind, MonthComparison, MonthSummary,
     MonthlyTotal, RecordPeriod, TransactionKind, balance_record, week_start,
 };
@@ -85,13 +85,19 @@ impl ReportsManager {
     }
 
     pub async fn balance_summary(&self, today: NaiveDate) -> Result<BalanceSummary, AppError> {
-        let accounts = self.accounts.list(today, false).await?;
+        let (accounts, cards): (Vec<_>, Vec<_>) = self
+            .accounts
+            .list(today, false)
+            .await?
+            .into_iter()
+            .partition(Account::counts_in_total);
         let credits = self.credits.list(false).await?;
+        let card_debt: i64 = cards.iter().map(|c| (-c.balance).max(0)).sum();
         Ok(BalanceSummary {
             total: accounts.iter().map(|a| a.balance).sum(),
             available: accounts.iter().map(|a| a.available_balance).sum(),
             projected: accounts.iter().map(|a| a.projected_balance).sum(),
-            debt: credits.iter().map(Credit::remaining).sum(),
+            debt: credits.iter().map(Credit::remaining).sum::<i64>() + card_debt,
         })
     }
 
@@ -192,7 +198,7 @@ impl ReportsManager {
             .list(today, true)
             .await?
             .into_iter()
-            .filter(|a| account_id.is_none_or(|id| id == a.id))
+            .filter(|a| account_id.map_or(a.counts_in_total(), |id| id == a.id))
             .collect();
 
         let mut by_month: BTreeMap<NaiveDate, i64> = BTreeMap::new();
@@ -237,7 +243,7 @@ impl ReportsManager {
             .list(today, account_id.is_some())
             .await?
             .iter()
-            .filter(|a| account_id.is_none_or(|id| id == a.id))
+            .filter(|a| account_id.map_or(a.counts_in_total(), |id| id == a.id))
             .map(|a| a.initial_balance)
             .sum();
         let changes = self.repository.daily_changes(today, account_id).await?;

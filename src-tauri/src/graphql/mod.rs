@@ -4,6 +4,7 @@ pub mod categories;
 pub mod credits;
 pub mod forecasts;
 pub mod goals;
+pub mod purchases;
 pub mod reconciliation;
 pub mod recurrences;
 pub mod reports;
@@ -29,6 +30,7 @@ pub struct Query(
     recurrences::RecurrencesQuery,
     credits::CreditsQuery,
     goals::GoalsQuery,
+    purchases::PurchasesQuery,
     forecasts::ForecastsQuery,
     reports::ReportsQuery,
     reconciliation::ReconciliationQuery,
@@ -45,6 +47,7 @@ pub struct Mutation(
     recurrences::RecurrencesMutation,
     credits::CreditsMutation,
     goals::GoalsMutation,
+    purchases::PurchasesMutation,
     reconciliation::ReconciliationMutation,
     templates::TemplatesMutation,
     reports::ReportsMutation,

@@ -12,6 +12,7 @@ pub mod settings;
 pub mod templates;
 pub mod transactions;
 pub mod transfers;
+pub mod wishlist;
 
 use uuid::Uuid;
 use uuid::fmt::Hyphenated;

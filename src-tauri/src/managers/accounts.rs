@@ -72,6 +72,11 @@ fn normalize(input: AccountInput) -> Result<AccountInput, AppError> {
     if let Some(interest) = &input.interest {
         validate_interest(interest)?;
     }
+    if input.overdraft_limit < 0 {
+        return Err(AppError::validation(
+            "o limite de descoberto não pode ser negativo",
+        ));
+    }
     Ok(AccountInput {
         name: required(&input.name, "o nome é obrigatório")?,
         currency: currency(&input.currency)?,
@@ -126,6 +131,7 @@ mod tests {
             color: Some("  ".into()),
             icon: None,
             interest: None,
+            overdraft_limit: 0,
         }
     }
 

@@ -19,6 +19,7 @@ pub struct AccountRow {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub interest_period_months: Option<u32>,
+    pub overdraft_limit: i64,
     pub balance: i64,
     pub available_balance: i64,
     pub projected_balance: i64,
@@ -46,6 +47,7 @@ impl TryFrom<AccountRow> for Account {
                 period_months,
                 tiers: Vec::new(),
             }),
+            overdraft_limit: row.overdraft_limit,
         })
     }
 }

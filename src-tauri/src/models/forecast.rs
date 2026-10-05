@@ -54,6 +54,7 @@ pub struct ForecastInput {
     pub events: Vec<ForecastEvent>,
     pub averages: Vec<VariableAverage>,
     pub interest: Vec<(Uuid, Interest)>,
+    pub excluded: Vec<Uuid>,
 }
 
 #[derive(Debug, Clone)]
@@ -167,7 +168,11 @@ pub fn project(input: &ForecastInput) -> Vec<ForecastMonth> {
                 variable_income,
                 variable_outcome,
                 interest,
-                total: balances.iter().map(|b| b.balance).sum(),
+                total: balances
+                    .iter()
+                    .filter(|b| !input.excluded.contains(&b.account_id))
+                    .map(|b| b.balance)
+                    .sum(),
                 balances: balances.clone(),
             }
         })
@@ -251,6 +256,7 @@ mod tests {
                 current_outcome: 20_000,
             }],
             interest: Vec::new(),
+            excluded: Vec::new(),
         };
 
         let months = project(&input);
@@ -287,6 +293,7 @@ mod tests {
                     }],
                 },
             )],
+            excluded: Vec::new(),
         };
 
         let months = project(&input);

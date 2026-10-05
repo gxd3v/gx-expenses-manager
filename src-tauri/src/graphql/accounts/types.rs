@@ -10,6 +10,7 @@ pub enum AccountKind {
     Bank,
     Savings,
     Card,
+    CreditCard,
     Cash,
     Meal,
     Other,
@@ -33,6 +34,7 @@ pub struct Account {
     pub interest: Option<Interest>,
     pub interest_rate: Option<f64>,
     pub estimated_interest: Option<i64>,
+    pub overdraft_limit: i64,
 }
 
 #[derive(SimpleObject, InputObject)]
@@ -59,4 +61,6 @@ pub struct AccountInput {
     pub color: Option<String>,
     pub icon: Option<String>,
     pub interest: Option<Interest>,
+    #[graphql(default)]
+    pub overdraft_limit: i64,
 }

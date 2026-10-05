@@ -5,11 +5,12 @@ use uuid::Uuid;
 use crate::database::testing::TestDatabase;
 use crate::errors::AppError;
 use crate::managers::forecasts::ForecastRequest;
+use crate::managers::purchases::PurchaseRequest;
 use crate::models::dates::{add_months, today};
 use crate::models::{
     Account, AccountInput, AccountKind, CreditInput, EntryKind, ForecastMethod, Frequency,
     FrequencyUnit, Interest, InterestTier, RecurrenceInput, TransactionFilter, TransactionInput,
-    TransactionKind, TransferInput,
+    TransactionKind, TransferInput, WishlistInput,
 };
 use crate::module::{AppContext, Module};
 
@@ -32,6 +33,7 @@ async fn account(module: &Module, name: &str, initial_balance: i64) -> Account {
         color: None,
         icon: None,
         interest: None,
+        overdraft_limit: 0,
     };
     module.accounts.create(today(), input).await.unwrap()
 }
@@ -765,6 +767,7 @@ async fn interest_accounts_round_trip_and_feed_forecasts() {
                 },
             ],
         }),
+        overdraft_limit: 0,
     };
     let fund = module.accounts.create(today(), input).await.unwrap();
     let interest = fund.interest.clone().unwrap();
@@ -774,16 +777,12 @@ async fn interest_accounts_round_trip_and_feed_forecasts() {
     let meal = AccountInput {
         name: "Cartão refeição".into(),
         kind: AccountKind::Meal,
+        currency: "EUR".into(),
+        initial_balance: 0,
+        color: None,
+        icon: None,
         interest: None,
-        ..AccountInput {
-            name: String::new(),
-            kind: AccountKind::Meal,
-            currency: "EUR".into(),
-            initial_balance: 0,
-            color: None,
-            icon: None,
-            interest: None,
-        }
+        overdraft_limit: 0,
     };
     let meal = module.accounts.create(today(), meal).await.unwrap();
     assert_eq!(meal.kind, AccountKind::Meal);
@@ -849,6 +848,125 @@ async fn saved_forecast_method_migrates_to_recurring() {
     let settings = module.settings.get().await.unwrap();
     assert_eq!(settings.forecast_method, ForecastMethod::Recurring);
     assert_eq!(settings.currency, "EUR");
+}
+
+#[tokio::test]
+async fn credit_cards_stay_out_of_the_total_balance() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    account(&module, "Principal", 100_000).await;
+    let card = AccountInput {
+        name: "Cartão de crédito".into(),
+        kind: AccountKind::CreditCard,
+        currency: "EUR".into(),
+        initial_balance: -30_000,
+        color: None,
+        icon: None,
+        interest: None,
+        overdraft_limit: 150_000,
+    };
+    let card = module.accounts.create(today(), card).await.unwrap();
+    assert_eq!(card.overdraft_limit, 150_000);
+
+    let summary = module.reports.balance_summary(today()).await.unwrap();
+    assert_eq!(summary.total, 100_000);
+    assert_eq!(summary.debt, 30_000);
+
+    let records = module
+        .reports
+        .balance_records(today(), 1, None)
+        .await
+        .unwrap();
+    assert_eq!(records[0].high.balance, 100_000);
+
+    let request = ForecastRequest {
+        months: 1,
+        method: ForecastMethod::Recurring,
+        history_months: 6,
+        adjustments: Vec::new(),
+        recurrence_changes: Vec::new(),
+    };
+    let forecast = module.forecasts.forecast(today(), &request).await.unwrap();
+    assert_eq!(forecast.months[0].total, 100_000);
+}
+
+#[tokio::test]
+async fn purchases_wait_until_future_payments_stay_covered() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = AccountInput {
+        name: "Principal".into(),
+        kind: AccountKind::Bank,
+        currency: "EUR".into(),
+        initial_balance: 50_000,
+        color: None,
+        icon: None,
+        interest: None,
+        overdraft_limit: 60_000,
+    };
+    let main = module.accounts.create(today(), main).await.unwrap();
+    let tomorrow = today().checked_add_days(Days::new(1)).unwrap();
+    let in_ten_days = today().checked_add_days(Days::new(10)).unwrap();
+    for (kind, amount, description, start_date) in [
+        (EntryKind::Outcome, 40_000, "Renda", tomorrow),
+        (EntryKind::Income, 100_000, "Salário", in_ten_days),
+    ] {
+        let recurrence = RecurrenceInput {
+            account_id: main.id,
+            category_id: None,
+            kind,
+            amount,
+            description: description.into(),
+            start_date,
+            end_date: None,
+            frequency: monthly(),
+            to_account_id: None,
+            variable_amount: false,
+        };
+        module.recurrences.create(recurrence).await.unwrap();
+    }
+
+    let request = PurchaseRequest {
+        account_id: main.id,
+        amount: 30_000,
+        margin: 0,
+        allow_overdraft: false,
+        months: 3,
+    };
+    let plan = module.purchases.plan(today(), &request).await.unwrap();
+    assert_eq!(plan.balance, 50_000);
+    assert_eq!(plan.lowest_if_today, 10_000 - 30_000);
+    assert_eq!(plan.earliest, Some(in_ten_days));
+
+    let overdraft = PurchaseRequest {
+        allow_overdraft: true,
+        ..request
+    };
+    let plan = module.purchases.plan(today(), &overdraft).await.unwrap();
+    assert_eq!(plan.floor, -60_000);
+    assert_eq!(plan.earliest, Some(today()));
+
+    for (name, amount) in [("Telemóvel", 30_000), ("Portátil", 80_000)] {
+        let item = WishlistInput {
+            name: name.into(),
+            amount,
+            account_id: main.id,
+            priority: 2,
+            notes: None,
+        };
+        module.purchases.create(item).await.unwrap();
+    }
+    let planned = module.purchases.wishlist(today(), 0, false).await.unwrap();
+    assert_eq!(planned[0].1, Some(in_ten_days));
+    let second = planned[1].1.unwrap();
+    assert!(second > in_ten_days);
+
+    let bought = module
+        .purchases
+        .set_purchased(planned[0].0.id, true)
+        .await
+        .unwrap();
+    assert!(bought.purchased_at.is_some());
 }
 
 async fn populated(module: &Module) -> Account {

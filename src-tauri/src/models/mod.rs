@@ -6,6 +6,7 @@ mod forecast;
 mod frequency;
 mod goal;
 mod interest;
+mod planner;
 mod reconciliation;
 mod recurrence;
 mod report;
@@ -13,6 +14,7 @@ mod settings;
 mod template;
 mod transaction;
 mod transfer;
+mod wishlist;
 
 pub use account::{Account, AccountInput, AccountKind};
 pub use category::{Category, CategoryInput, CategoryKind};
@@ -27,6 +29,7 @@ pub use forecast::{
 pub use frequency::{Frequency, FrequencyUnit};
 pub use goal::{Goal, GoalInput};
 pub use interest::{Interest, InterestTier, net as net_interest};
+pub use planner::{PlanDay, earliest_purchase, plan_days};
 pub use reconciliation::{ForgottenCandidate, Reconciliation, ReconciliationStatus};
 pub use recurrence::{
     MAX_OCCURRENCE_SHIFT_DAYS, Occurrence, OccurrenceOverride, OccurrenceStatus, Recurrence,
@@ -44,3 +47,4 @@ pub use transaction::{
     TransactionRecord,
 };
 pub use transfer::{Transfer, TransferInput};
+pub use wishlist::{PlanMonth, PurchasePlan, WishlistInput, WishlistItem};

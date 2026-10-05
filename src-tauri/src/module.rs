@@ -10,6 +10,7 @@ use crate::managers::categories::CategoriesManager;
 use crate::managers::credits::CreditsManager;
 use crate::managers::forecasts::ForecastsManager;
 use crate::managers::goals::GoalsManager;
+use crate::managers::purchases::PurchasesManager;
 use crate::managers::reconciliation::ReconciliationManager;
 use crate::managers::recurrences::RecurrencesManager;
 use crate::managers::reports::ReportsManager;
@@ -32,6 +33,7 @@ use crate::repositories::settings::SettingsRepository;
 use crate::repositories::templates::TemplatesRepository;
 use crate::repositories::transactions::TransactionsRepository;
 use crate::repositories::transfers::TransfersRepository;
+use crate::repositories::wishlist::WishlistRepository;
 
 pub struct AppContext {
     pub data_dir: PathBuf,
@@ -47,6 +49,7 @@ pub struct Module {
     pub credits: CreditsManager,
     pub goals: GoalsManager,
     pub forecasts: ForecastsManager,
+    pub purchases: PurchasesManager,
     pub reports: ReportsManager,
     pub reconciliation: ReconciliationManager,
     pub templates: TemplatesManager,
@@ -91,6 +94,10 @@ impl Module {
             categories: CategoriesManager::new(categories.clone()),
             transfers: TransfersManager::new(transfers, accounts.clone()),
             goals: GoalsManager::new(goals.clone(), forecasts.clone()),
+            purchases: PurchasesManager::new(
+                WishlistRepository::new(pool.clone()),
+                forecasts.clone(),
+            ),
             reports: ReportsManager::new(
                 reports,
                 accounts.clone(),

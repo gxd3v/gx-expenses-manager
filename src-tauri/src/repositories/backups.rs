@@ -7,9 +7,10 @@ use sqlx::{Column, Row, Sqlite, SqliteConnection, SqlitePool, TypeInfo, ValueRef
 
 use crate::errors::AppError;
 
-pub const TABLES: [&str; 15] = [
+pub const TABLES: [&str; 16] = [
     "accounts",
     "interest_tiers",
+    "wishlist_items",
     "categories",
     "transfers",
     "credits",

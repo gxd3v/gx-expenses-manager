@@ -66,6 +66,7 @@ impl AccountsRepository {
             .bind(&input.color)
             .bind(&input.icon)
             .bind(input.interest.as_ref().map(|i| i.period_months))
+            .bind(input.overdraft_limit)
             .bind(now)
             .execute(&mut *tx)
             .await?;
@@ -91,6 +92,7 @@ impl AccountsRepository {
             .bind(&input.color)
             .bind(&input.icon)
             .bind(input.interest.as_ref().map(|i| i.period_months))
+            .bind(input.overdraft_limit)
             .bind(now)
             .execute(&mut *tx)
             .await?;
