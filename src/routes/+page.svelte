@@ -108,7 +108,11 @@
 		<div>
 			<p class="muted flex items-center gap-1">Saldo total <PrivacyToggle /></p>
 			<p class="text-5xl font-semibold tabular-nums"><Money value={data.balances.total} /></p>
-			<p class="muted">Património líquido <Money value={data.balances.netWorth} /> · dívida em créditos <Money value={data.balances.debt} /></p>
+			<p class="muted">
+				Património líquido <Money value={data.balances.netWorth} /> = saldo total <Money value={data.balances.total} /> − créditos
+				<a class="underline" href="/credits"><Money value={data.balances.creditDebt} /></a>{#if data.balances.cardDebt}
+					− cartões de crédito <Money value={data.balances.cardDebt} />{/if}
+			</p>
 		</div>
 		<div class="flex flex-wrap gap-2">
 			{#if isTauri}

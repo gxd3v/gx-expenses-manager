@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import AccountForm from './AccountForm.svelte';
-	import { accountKinds, deleteAccount, listAccounts, setAccountArchived, type Account } from '#lib/api/accounts.ts';
+	import { accountKinds, deleteAccount, listAccounts, reorderAccounts, setAccountArchived, type Account } from '#lib/api/accounts.ts';
 	import Modal from '#lib/components/Modal.svelte';
 	import Money from '#lib/components/Money.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
@@ -28,6 +28,20 @@
 	async function saved() {
 		editing = undefined;
 		await dataChanged();
+	}
+
+	async function move(accounts: Account[], account: Account, step: -1 | 1) {
+		const order = accounts.filter((a) => !a.archivedAt);
+		const from = order.findIndex((a) => a.id === account.id);
+		const to = from + step;
+		if (from < 0 || to < 0 || to >= order.length) return;
+		[order[from], order[to]] = [order[to], order[from]];
+		try {
+			await reorderAccounts(order.map((a) => a.id));
+			await dataChanged();
+		} catch (e) {
+			notifyError(e);
+		}
 	}
 
 	async function toggleArchive(account: Account) {
@@ -105,6 +119,10 @@
 					<div class="flex flex-wrap gap-1">
 						<a class="btn-ghost" href="/accounts/{account.id}">Histórico</a>
 						<button class="btn-ghost" onclick={() => (editing = account)}>Editar</button>
+						{#if !account.archivedAt}
+							<button class="btn-ghost" onclick={() => move(accounts, account, -1)} aria-label="Mover para cima" title="Mover para cima">↑</button>
+							<button class="btn-ghost" onclick={() => move(accounts, account, 1)} aria-label="Mover para baixo" title="Mover para baixo">↓</button>
+						{/if}
 						<button class="btn-ghost" onclick={() => toggleArchive(account)}>{account.archivedAt ? 'Reativar' : 'Arquivar'}</button>
 						<button class="btn-ghost text-red-600" onclick={() => remove(account)}>Eliminar</button>
 					</div>

@@ -35,7 +35,15 @@ export type RecordPeriod = 'ALL_TIME' | 'YEAR' | 'MONTH' | 'WEEK';
 export type BalanceMark = { date: string; balance: number };
 export type BalanceRecord = { period: RecordPeriod; high: BalanceMark; low: BalanceMark };
 
-export type BalanceSummary = { total: number; available: number; projected: number; debt: number; netWorth: number };
+export type BalanceSummary = {
+	total: number;
+	available: number;
+	projected: number;
+	debt: number;
+	creditDebt: number;
+	cardDebt: number;
+	netWorth: number;
+};
 
 export type MonthComparison = {
 	categoryId: string | null;
@@ -114,7 +122,7 @@ export async function listAlerts(): Promise<Alert[]> {
 }
 
 export async function balanceSummary(): Promise<BalanceSummary> {
-	const data = await gql<{ balanceSummary: BalanceSummary }>(`{ balanceSummary { total available projected debt netWorth } }`);
+	const data = await gql<{ balanceSummary: BalanceSummary }>(`{ balanceSummary { total available projected debt creditDebt cardDebt netWorth } }`);
 	return data.balanceSummary;
 }
 

@@ -77,3 +77,7 @@ export async function setAccountArchived(id: string, archived: boolean): Promise
 export async function deleteAccount(id: string): Promise<void> {
 	await gql(`mutation ($id: UUID!) { deleteAccount(id: $id) }`, { id });
 }
+
+export async function reorderAccounts(ids: string[]): Promise<void> {
+	await gql(`mutation ($ids: [UUID!]!) { reorderAccounts(ids: $ids) }`, { ids });
+}
