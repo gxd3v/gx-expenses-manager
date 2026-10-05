@@ -18,6 +18,9 @@
 
 !macro NSIS_HOOK_POSTINSTALL
   SetShellVarContext current
+  ${If} ${FileExists} "$LOCALAPPDATA\Expenses Manager\${MAINBINARYNAME}.exe"
+    !insertmacro CheckIfAppIsRunning "$LOCALAPPDATA\Expenses Manager\${MAINBINARYNAME}.exe" "Expenses Manager"
+  ${EndIf}
   !insertmacro EXPENSES_REMOVE_OLD_INSTALL "Expenses Manager"
   !insertmacro EXPENSES_REMOVE_OLD_INSTALL "GX Expenses"
 !macroend
