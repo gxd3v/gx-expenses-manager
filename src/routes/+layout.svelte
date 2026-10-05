@@ -18,6 +18,7 @@
 	import { applyPrivacy, togglePrivacy } from '#lib/privacy.svelte.ts';
 	import { app, loadSettings, restoreTheme } from '#lib/settings.svelte.ts';
 	import { openQuickAdd, ui } from '#lib/ui.svelte.ts';
+	import { today } from '#lib/format.ts';
 	import { checkForUpdates, updates } from '#lib/updates.svelte.ts';
 
 	let { children } = $props();
@@ -26,6 +27,7 @@
 	applyPrivacy();
 
 	const BACKGROUND_INTERVAL = 60 * 60 * 1000;
+	const CHECK_INTERVAL = 60 * 1000;
 	const UPDATE_INTERVAL = 30 * 1000;
 
 	const links = [
@@ -53,6 +55,14 @@
 	let version = $state('');
 	let idleTimer: ReturnType<typeof setTimeout>;
 	let backgroundTimer: ReturnType<typeof setInterval>;
+	let lastRun = { at: 0, day: '' };
+
+	async function background() {
+		lastRun = { at: Date.now(), day: today() };
+		const result = await runBackgroundTasks();
+		alerts = result.alerts;
+		return result.materialized;
+	}
 
 	async function refresh() {
 		session = await status();
@@ -63,7 +73,7 @@
 			await loadSettings();
 			await loadRefs();
 			ready = true;
-			alerts = await runBackgroundTasks();
+			await background();
 			await dataChanged();
 			resetIdle();
 		} catch (e) {
@@ -131,8 +141,9 @@
 		refresh();
 		if (isTauri) getVersion().then((v) => (version = v));
 		backgroundTimer = setInterval(async () => {
-			if (ready) alerts = await runBackgroundTasks();
-		}, BACKGROUND_INTERVAL);
+			if (!ready || (Date.now() - lastRun.at < BACKGROUND_INTERVAL && today() === lastRun.day)) return;
+			if ((await background()) > 0) await dataChanged();
+		}, CHECK_INTERVAL);
 		return () => {
 			clearInterval(backgroundTimer);
 			clearTimeout(idleTimer);

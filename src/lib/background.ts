@@ -8,12 +8,12 @@ import { isTauri } from './graphql.ts';
 const NOTIFIED_KEY = 'gx-notified-alerts';
 const MAX_REMEMBERED = 500;
 
-export async function runBackgroundTasks(): Promise<Alert[]> {
-	await materializeDue().catch(() => 0);
+export async function runBackgroundTasks(): Promise<{ alerts: Alert[]; materialized: number }> {
+	const materialized = await materializeDue().catch(() => 0);
 	await autoBackup().catch(() => undefined);
 	const alerts = await listAlerts().catch(() => []);
 	await notifyNew(alerts);
-	return alerts;
+	return { alerts, materialized };
 }
 
 async function notifyNew(alerts: Alert[]) {
