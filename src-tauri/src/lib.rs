@@ -54,6 +54,8 @@ pub fn run() {
             commands::change_password,
             commands::restore_backup,
             commands::reset_data,
+            commands::start_simulation,
+            commands::stop_simulation,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

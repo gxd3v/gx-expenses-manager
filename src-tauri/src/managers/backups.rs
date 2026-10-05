@@ -52,6 +52,7 @@ pub struct BackupsManager {
     transactions: TransactionsManager,
     data_dir: PathBuf,
     password: SecretString,
+    simulation: bool,
 }
 
 impl BackupsManager {
@@ -61,6 +62,7 @@ impl BackupsManager {
         transactions: TransactionsManager,
         data_dir: PathBuf,
         password: SecretString,
+        simulation: bool,
     ) -> Self {
         Self {
             repository,
@@ -68,10 +70,19 @@ impl BackupsManager {
             transactions,
             data_dir,
             password,
+            simulation,
+        }
+    }
+
+    fn writable(&self) -> Result<(), AppError> {
+        match self.simulation {
+            true => Err(AppError::validation("indisponível em modo de simulação")),
+            false => Ok(()),
         }
     }
 
     pub async fn export(&self, path: &Path, password: Option<String>) -> Result<(), AppError> {
+        self.writable()?;
         let document = json!({
             "format": FORMAT,
             "version": FORMAT_VERSION,
@@ -156,12 +167,14 @@ impl BackupsManager {
         password: Option<String>,
         replace: bool,
     ) -> Result<LoadResult, AppError> {
+        self.writable()?;
         let document = self.read(path, password).await?;
         self.create_backup("pre-import-").await?;
         self.repository.load(&document.tables, replace).await
     }
 
     pub async fn create_backup(&self, prefix: &str) -> Result<BackupFile, AppError> {
+        self.writable()?;
         let dir = self.backup_dir().await?;
         fs::create_dir_all(&dir)?;
         let name = format!(
@@ -190,7 +203,7 @@ impl BackupsManager {
 
     pub async fn auto_backup(&self) -> Result<Option<BackupFile>, AppError> {
         let settings = self.settings.get().await?;
-        if settings.backup_frequency_days == 0 {
+        if self.simulation || settings.backup_frequency_days == 0 {
             return Ok(None);
         }
 

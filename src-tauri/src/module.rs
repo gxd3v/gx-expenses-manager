@@ -38,6 +38,7 @@ use crate::repositories::wishlist::WishlistRepository;
 pub struct AppContext {
     pub data_dir: PathBuf,
     pub password: SecretString,
+    pub simulation: bool,
 }
 
 pub struct Module {
@@ -132,6 +133,7 @@ impl Module {
                 transactions_manager.clone(),
                 context.data_dir,
                 context.password,
+                context.simulation,
             ),
             transactions: transactions_manager,
             recurrences: recurrences_manager,

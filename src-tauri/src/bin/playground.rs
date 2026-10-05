@@ -21,6 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let context = AppContext {
         data_dir,
         password: SecretString::from(password),
+        simulation: false,
     };
     let schema = graphql::schema(pool, context);
 

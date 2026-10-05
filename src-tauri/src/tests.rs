@@ -20,6 +20,7 @@ fn module(db: &TestDatabase) -> Module {
     let context = AppContext {
         data_dir: db.dir.clone(),
         password: SecretString::from(PASSWORD.to_string()),
+        simulation: false,
     };
     Module::new(db.pool.clone(), context)
 }
@@ -1030,6 +1031,55 @@ async fn meal_cards_stay_out_of_totals_and_estimates() {
     assert_eq!(month.pending_income, 0);
 }
 
+#[tokio::test]
+async fn simulations_work_on_a_disposable_copy() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let main = populated(&module).await;
+
+    let copy = db.dir.join("simulation.db");
+    crate::database::snapshot(&db.pool, &copy).await.unwrap();
+    let pool = crate::database::open(&copy, PASSWORD, &db.dir.join("backups"))
+        .await
+        .unwrap();
+    let simulated = Module::new(
+        pool.clone(),
+        AppContext {
+            data_dir: db.dir.clone(),
+            password: SecretString::from(PASSWORD.to_string()),
+            simulation: true,
+        },
+    );
+    simulated
+        .transactions
+        .create(transaction(main.id, EntryKind::Outcome, 50_000, today()))
+        .await
+        .unwrap();
+    let real = module.accounts.get(today(), main.id).await.unwrap();
+    let virtual_account = simulated.accounts.get(today(), main.id).await.unwrap();
+    assert_eq!(virtual_account.balance, real.balance - 50_000);
+
+    assert!(simulated.backups.create_backup("").await.is_err());
+    assert!(simulated.backups.auto_backup().await.unwrap().is_none());
+    assert!(
+        simulated
+            .backups
+            .export(&db.dir.join("out.gxbackup"), None)
+            .await
+            .is_err()
+    );
+    assert!(
+        crate::database::verify(&copy, "wrong-password")
+            .await
+            .is_err()
+    );
+
+    crate::database::close(&pool).await;
+    crate::database::discard(&copy).unwrap();
+    assert!(!copy.exists());
+    assert!(!db.dir.join("simulation.db-wal").exists());
+}
+
 async fn populated(module: &Module) -> Account {
     let main = account(module, "Principal", 100_000).await;
     let savings = account(module, "Poupança", 0).await;
@@ -1148,6 +1198,7 @@ async fn restore_replaces_database_and_keeps_safety_copy() {
         AppContext {
             data_dir: db.dir.clone(),
             password: SecretString::from(PASSWORD.to_string()),
+            simulation: false,
         },
     );
     let balance = restored
@@ -1180,6 +1231,7 @@ async fn reset_starts_clean_with_the_same_password() {
         AppContext {
             data_dir: db.dir.clone(),
             password: SecretString::from(PASSWORD.to_string()),
+            simulation: false,
         },
     );
     assert!(fresh.accounts.list(today(), true).await.unwrap().is_empty());
@@ -1221,6 +1273,7 @@ async fn introspection_fits_query_limits() {
     let context = AppContext {
         data_dir: db.dir.clone(),
         password: SecretString::from(PASSWORD.to_string()),
+        simulation: false,
     };
     let schema = crate::graphql::schema(db.pool.clone(), context);
     let query = "query { __schema { types { name fields { name args { name type { ...Ref } } type { ...Ref } } } } } \

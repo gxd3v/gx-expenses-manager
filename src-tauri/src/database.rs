@@ -84,6 +84,25 @@ pub async fn close(pool: &SqlitePool) {
     pool.close().await;
 }
 
+pub async fn snapshot(pool: &SqlitePool, path: &Path) -> Result<(), AppError> {
+    sqlx::query("VACUUM INTO ?1")
+        .bind(path.to_string_lossy())
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
+pub fn discard(database: &Path) -> Result<(), AppError> {
+    for path in [
+        database.to_path_buf(),
+        sidecar(database, "-wal"),
+        sidecar(database, "-shm"),
+    ] {
+        retry(|| remove(&path))?;
+    }
+    Ok(())
+}
+
 pub fn replace(database: &Path, backup: &Path, safety_dir: &Path) -> Result<(), AppError> {
     set_aside(database, safety_dir, "pre-restore")?;
     retry(|| fs::copy(backup, database).map(drop))?;
