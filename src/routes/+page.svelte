@@ -24,6 +24,8 @@
 	import { dataChanged, refs } from '#lib/refs.svelte.ts';
 	import { app } from '#lib/settings.svelte.ts';
 	import { notifyError } from '#lib/toasts.svelte.ts';
+	import { isTauri } from '#lib/graphql.ts';
+	import { simulation, toggleSimulation } from '#lib/simulation.svelte.ts';
 	import { openQuickAdd } from '#lib/ui.svelte.ts';
 
 	const UPCOMING_DAYS = 30;
@@ -108,7 +110,14 @@
 			<p class="text-5xl font-semibold tabular-nums"><Money value={data.balances.total} /></p>
 			<p class="muted">Património líquido <Money value={data.balances.netWorth} /> · dívida em créditos <Money value={data.balances.debt} /></p>
 		</div>
-		<button class="btn-primary" onclick={() => openQuickAdd()}>+ Adicionar movimento</button>
+		<div class="flex flex-wrap gap-2">
+			{#if isTauri}
+				<button class="btn-secondary" disabled={simulation.busy} onclick={toggleSimulation}>
+					{simulation.active ? 'Terminar simulação' : 'Simular'}
+				</button>
+			{/if}
+			<button class="btn-primary" onclick={() => openQuickAdd()}>+ Adicionar movimento</button>
+		</div>
 	</div>
 
 	<PendingConfirmations />

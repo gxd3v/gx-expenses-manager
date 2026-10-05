@@ -19,6 +19,7 @@
 	import { app, loadSettings, restoreTheme } from '#lib/settings.svelte.ts';
 	import { openQuickAdd, ui } from '#lib/ui.svelte.ts';
 	import { today } from '#lib/format.ts';
+	import { simulation, toggleSimulation } from '#lib/simulation.svelte.ts';
 	import { checkForUpdates, updates } from '#lib/updates.svelte.ts';
 
 	let { children } = $props();
@@ -66,6 +67,7 @@
 
 	async function refresh() {
 		session = await status();
+		simulation.active = session.simulation;
 		ready = false;
 		if (!session.unlocked) return;
 
@@ -235,6 +237,15 @@
 			{/if}
 		</nav>
 		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
+			{#if simulation.active}
+				<div
+					class="flex shrink-0 items-center justify-between gap-3 border-b border-amber-300 bg-amber-100 px-4 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+					role="status"
+				>
+					<span><strong>Modo simulação</strong> · as alterações não são guardadas e são descartadas ao terminar.</span>
+					<button class="btn-secondary" disabled={simulation.busy} onclick={toggleSimulation}>Terminar simulação</button>
+				</div>
+			{/if}
 			<UpdateBanner />
 			<main class="flex-1 overflow-y-auto p-4 md:p-8">
 				{@render children()}

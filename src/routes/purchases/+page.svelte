@@ -122,16 +122,28 @@
 	{/snippet}
 </PageHeader>
 
-<section class="card mb-6 flex flex-wrap items-end gap-6">
-	<div class="label w-48">
-		Margem de segurança
-		<MoneyInput bind:value={margin} />
+<section class="card mb-6">
+	<h2 class="mb-3 font-medium">Regras de cálculo</h2>
+	<div class="grid gap-6 md:grid-cols-[18rem_1fr]">
+		<div class="space-y-4">
+			<div class="label">
+				Margem de segurança (por conta)
+				<MoneyInput bind:value={margin} />
+			</div>
+			<Toggle bind:checked={allowOverdraft} label="Permitir usar o descoberto autorizado" />
+		</div>
+		<ul class="list-disc space-y-1.5 pl-5 text-sm text-stone-600 dark:text-stone-400">
+			<li>
+				A margem é o saldo mínimo a manter <strong>na conta que paga a compra</strong>: a conta escolhida na simulação ou a conta de cada
+				artigo da lista. O saldo das outras contas não entra no cálculo.
+			</li>
+			<li>
+				Uma data é possível quando, comprando nesse dia, o saldo dessa conta não desce abaixo da margem em nenhum dia seguinte, tendo em
+				conta as recorrências e os movimentos agendados.
+			</li>
+			<li>Com o descoberto autorizado ativo, o limite de descoberto da conta é usado além do saldo.</li>
+		</ul>
 	</div>
-	<Toggle bind:checked={allowOverdraft} label="Permitir usar o descoberto autorizado" />
-	<p class="muted max-w-xl">
-		Uma compra só é considerada possível numa data se o saldo da conta não ficar abaixo da margem em nenhum dia seguinte, tendo em conta
-		todas as recorrências e movimentos agendados.
-	</p>
 </section>
 
 <section class="card mb-6">
