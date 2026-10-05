@@ -1,4 +1,4 @@
-# Expenses Manager
+# Gestor de Despesas
 
 Aplicação de finanças pessoais para computador. Regista para onde vai o dinheiro e mostra para onde caminha o saldo. Funciona inteiramente no próprio computador.
 
@@ -48,9 +48,9 @@ A password não é guardada em lado nenhum. A aplicação deriva dela a chave qu
 
 ## Instalação (Windows)
 
-1. Descarregar o instalador da página de [Releases](https://github.com/gxd3v/gx-expenses-manager/releases): `ExpensesManager_x.y.z_x64-setup.exe`. Instala apenas para o utilizador atual e não precisa de permissões de administrador.
+1. Descarregar o instalador da página de [Releases](https://github.com/gxd3v/gx-expenses-manager/releases): `GestordeDespesas_x.y.z_x64-setup.exe`. Instala apenas para o utilizador atual e não precisa de permissões de administrador.
 2. Executar o instalador. Não tem assinatura de código, por isso o Windows SmartScreen pode mostrar um aviso: **Mais informações → Executar mesmo assim**.
-3. Abrir o **Expenses Manager** a partir do menu Iniciar.
+3. Abrir o **Gestor de Despesas** a partir do menu Iniciar.
 4. No primeiro arranque, definir a password (mínimo de 8 caracteres).
 
 ### Atualizações
@@ -61,7 +61,7 @@ Também é possível atualizar manualmente, executando o instalador mais recente
 
 ### Desinstalação
 
-Em **Definições do Windows → Aplicações → Expenses Manager → Desinstalar**. Os dados são **mantidos** por omissão, pelo que uma reinstalação retoma o estado anterior.
+Em **Definições do Windows → Aplicações → Gestor de Despesas → Desinstalar**. Os dados são **mantidos** por omissão, pelo que uma reinstalação retoma o estado anterior.
 
 Para apagar tudo, basta marcar no desinstalador a opção de eliminar os dados da aplicação.
 

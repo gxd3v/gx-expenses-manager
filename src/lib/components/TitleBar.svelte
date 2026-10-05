@@ -28,7 +28,7 @@
 >
 	<div data-tauri-drag-region class="flex items-center gap-2 pl-3 text-xs font-medium text-stone-500 dark:text-stone-400">
 		<img src="/favicon.png" alt="" class="pointer-events-none size-4" />
-		Expenses Manager
+		Gestor de Despesas
 	</div>
 
 	<div class="flex h-full">

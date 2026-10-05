@@ -18,7 +18,7 @@
 	import { applyPrivacy, togglePrivacy } from '#lib/privacy.svelte.ts';
 	import { app, loadSettings, restoreTheme } from '#lib/settings.svelte.ts';
 	import { openQuickAdd, ui } from '#lib/ui.svelte.ts';
-	import { checkForUpdates } from '#lib/updates.svelte.ts';
+	import { checkForUpdates, updates } from '#lib/updates.svelte.ts';
 
 	let { children } = $props();
 
@@ -161,7 +161,7 @@
 	<div class="flex h-full flex-col md:flex-row">
 		<header class="flex items-center justify-between border-b border-stone-200 px-4 py-2 md:hidden dark:border-stone-800">
 			<button class="btn-ghost" onclick={() => (menuOpen = !menuOpen)} aria-expanded={menuOpen} aria-label="Menu">☰</button>
-			<span class="font-semibold">Expenses Manager</span>
+			<span class="font-semibold">Gestor de Despesas</span>
 			<div class="flex items-center gap-1">
 				<PrivacyToggle />
 				<button class="btn-ghost" onclick={handleLock} aria-label="Bloquear" title="Bloquear">
@@ -183,7 +183,7 @@
 			aria-label="Navegação principal"
 		>
 			<div class="mb-3 flex items-center justify-between px-3 pt-2">
-				<span class="font-semibold">Expenses Manager</span>
+				<span class="font-semibold">Gestor de Despesas</span>
 				{#if !isTauri}<PrivacyToggle />{/if}
 			</div>
 			<button class="btn-primary mb-2" onclick={() => openQuickAdd()} title="Atalho: N">+ Adicionar</button>
@@ -204,7 +204,24 @@
 					{/if}
 				</a>
 			{/each}
-			{#if version}<p class="mt-auto px-3 pt-2 text-xs text-stone-400 dark:text-stone-500">v{version}</p>{/if}
+			{#if version}
+				<div class="mt-auto flex items-center gap-2 px-3 pt-2 text-xs text-stone-400 dark:text-stone-500">
+					<span>v{version}</span>
+					{#if updates.available}
+						<button
+							class="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950"
+							onclick={() => (updates.notesOpen = true)}
+							title="Nova versão {updates.available.version} disponível"
+							aria-label="Ver novidades da versão {updates.available.version}"
+						>
+							<svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+								<path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+							</svg>
+							{updates.available.version}
+						</button>
+					{/if}
+				</div>
+			{/if}
 		</nav>
 		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 			<UpdateBanner />

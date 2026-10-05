@@ -39,7 +39,7 @@
 <div class="flex h-full items-center justify-center bg-stone-100 p-4 dark:bg-stone-950">
 	<form onsubmit={submit} class="card w-full max-w-sm space-y-4 shadow">
 		<div>
-			<h1 class="text-lg font-semibold">Expenses Manager</h1>
+			<h1 class="text-lg font-semibold">Gestor de Despesas</h1>
 			<p class="muted">{initialized ? 'Password necessária para desbloquear.' : 'Definição da password que protege os dados.'}</p>
 		</div>
 

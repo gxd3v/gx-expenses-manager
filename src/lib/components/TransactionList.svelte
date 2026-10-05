@@ -49,10 +49,11 @@
 	let editingTransfer = $state<Transfer | null>(null);
 	let savedFilters = $state<SavedFilter[]>([]);
 
-	async function load(append = false) {
-		if (!append) status = 'loading';
+	async function load(append = false, keep = false) {
+		if (!append && !keep) status = 'loading';
+		const limit = keep ? Math.max(PAGE_SIZE, items.length) : PAGE_SIZE;
 		try {
-			const page = await listTransactions(filter, PAGE_SIZE, append ? items.length : 0);
+			const page = await listTransactions(filter, limit, append ? items.length : 0);
 			items = append ? [...items, ...page.items] : page.items;
 			totals = page;
 			selected = [];
@@ -70,7 +71,7 @@
 	$effect(() => {
 		refs.version;
 		untrack(() => {
-			load();
+			load(false, true);
 			loadSavedFilters();
 		});
 	});
@@ -188,7 +189,7 @@
 	async function confirmSelected() {
 		await setConfirmed(selected, true).catch(notifyError);
 		notify(`${selected.length} movimentos confirmados`);
-		await load();
+		await load(false, true);
 	}
 
 	async function exportFiltered() {
