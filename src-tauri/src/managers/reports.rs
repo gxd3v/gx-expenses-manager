@@ -101,7 +101,8 @@ impl ReportsManager {
             total: accounts.iter().map(|a| a.balance).sum(),
             available: accounts.iter().map(|a| a.available_balance).sum(),
             projected: accounts.iter().map(|a| a.projected_balance).sum(),
-            debt: credits.iter().map(Credit::remaining).sum::<i64>() + card_debt,
+            credit_debt: credits.iter().map(Credit::remaining).sum(),
+            card_debt,
         })
     }
 

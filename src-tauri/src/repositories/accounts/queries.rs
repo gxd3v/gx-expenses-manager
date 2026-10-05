@@ -10,7 +10,7 @@ macro_rules! select {
 
 pub const LIST: &str = concat!(
     select!(),
-    "WHERE ?2 OR a.archived_at IS NULL GROUP BY a.id ORDER BY a.archived_at IS NOT NULL, a.name COLLATE NOCASE"
+    "WHERE ?2 OR a.archived_at IS NULL GROUP BY a.id ORDER BY a.archived_at IS NOT NULL, a.position, a.name COLLATE NOCASE"
 );
 
 pub const GET: &str = concat!(select!(), "WHERE a.id = ?2 GROUP BY a.id");
@@ -40,3 +40,5 @@ pub const DELETE_TIERS: &str = "DELETE FROM interest_tiers WHERE account_id = ?1
 
 pub const INSERT_TIER: &str =
     "INSERT INTO interest_tiers (account_id, min_balance, rate) VALUES (?1, ?2, ?3)";
+
+pub const SET_POSITION: &str = "UPDATE accounts SET position = ?2 WHERE id = ?1";

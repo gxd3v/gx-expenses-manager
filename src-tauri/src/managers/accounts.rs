@@ -46,6 +46,10 @@ impl AccountsManager {
         self.repository.get(today, id).await
     }
 
+    pub async fn reorder(&self, ids: &[Uuid]) -> Result<(), AppError> {
+        self.repository.reorder(ids).await
+    }
+
     pub async fn set_archived(
         &self,
         today: NaiveDate,

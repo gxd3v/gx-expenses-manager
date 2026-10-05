@@ -871,7 +871,7 @@ async fn credit_cards_stay_out_of_the_total_balance() {
 
     let summary = module.reports.balance_summary(today()).await.unwrap();
     assert_eq!(summary.total, 100_000);
-    assert_eq!(summary.debt, 30_000);
+    assert_eq!(summary.card_debt, 30_000);
 
     let records = module
         .reports
@@ -1010,7 +1010,7 @@ async fn meal_cards_stay_out_of_totals_and_estimates() {
 
     let summary = module.reports.balance_summary(today()).await.unwrap();
     assert_eq!(summary.total, 100_000);
-    assert_eq!(summary.debt, 0);
+    assert_eq!(summary.card_debt, 0);
 
     let request = ForecastRequest {
         months: 3,
@@ -1078,6 +1078,30 @@ async fn simulations_work_on_a_disposable_copy() {
     crate::database::discard(&copy).unwrap();
     assert!(!copy.exists());
     assert!(!db.dir.join("simulation.db-wal").exists());
+}
+
+#[tokio::test]
+async fn accounts_follow_the_chosen_order() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let card = account(&module, "Cartão de crédito", 0).await;
+    let main = account(&module, "Principal", 0).await;
+    let savings = account(&module, "Poupança", 0).await;
+
+    module
+        .accounts
+        .reorder(&[main.id, savings.id, card.id])
+        .await
+        .unwrap();
+    let names: Vec<String> = module
+        .accounts
+        .list(today(), false)
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|a| a.name)
+        .collect();
+    assert_eq!(names, ["Principal", "Poupança", "Cartão de crédito"]);
 }
 
 async fn populated(module: &Module) -> Account {

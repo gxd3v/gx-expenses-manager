@@ -91,6 +91,8 @@ pub struct BalanceSummary {
     pub available: i64,
     pub projected: i64,
     pub debt: i64,
+    pub credit_debt: i64,
+    pub card_debt: i64,
     pub net_worth: i64,
 }
 

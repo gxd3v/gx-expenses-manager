@@ -119,6 +119,19 @@ impl AccountsRepository {
         affected(result.rows_affected())
     }
 
+    pub async fn reorder(&self, ids: &[Uuid]) -> Result<(), AppError> {
+        let mut tx = self.pool.begin().await?;
+        for (position, id) in ids.iter().enumerate() {
+            sqlx::query(queries::SET_POSITION)
+                .bind(id.hyphenated())
+                .bind(position as i64)
+                .execute(&mut *tx)
+                .await?;
+        }
+        tx.commit().await?;
+        Ok(())
+    }
+
     pub async fn in_use(&self, id: Uuid) -> Result<bool, AppError> {
         Ok(sqlx::query_scalar(queries::IN_USE)
             .bind(id.hyphenated())

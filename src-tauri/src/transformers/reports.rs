@@ -96,8 +96,10 @@ impl From<models::BalanceSummary> for types::BalanceSummary {
             total: summary.total,
             available: summary.available,
             projected: summary.projected,
-            debt: summary.debt,
-            net_worth: summary.total - summary.debt,
+            debt: summary.credit_debt + summary.card_debt,
+            credit_debt: summary.credit_debt,
+            card_debt: summary.card_debt,
+            net_worth: summary.total - summary.credit_debt - summary.card_debt,
         }
     }
 }

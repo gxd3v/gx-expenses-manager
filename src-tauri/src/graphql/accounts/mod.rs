@@ -65,6 +65,11 @@ impl AccountsMutation {
             .into())
     }
 
+    async fn reorder_accounts(&self, ctx: &Context<'_>, ids: Vec<Uuid>) -> Result<bool> {
+        module(ctx).accounts.reorder(&ids).await?;
+        Ok(true)
+    }
+
     async fn delete_account(&self, ctx: &Context<'_>, id: Uuid) -> Result<bool> {
         module(ctx).accounts.delete(id).await?;
         Ok(true)
