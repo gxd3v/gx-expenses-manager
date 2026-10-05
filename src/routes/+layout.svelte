@@ -37,6 +37,7 @@
 		{ href: '/recurrences', label: 'Recorrências' },
 		{ href: '/credits', label: 'Créditos' },
 		{ href: '/goals', label: 'Objetivos' },
+		{ href: '/purchases', label: 'Compras planeadas' },
 		{ href: '/forecast', label: 'Previsões' },
 		{ href: '/reports', label: 'Gráficos' },
 		{ href: '/reconciliation', label: 'Reconciliação' },

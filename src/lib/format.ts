@@ -86,3 +86,8 @@ export function monthStart(iso: string): string {
 export function monthEnd(iso: string): string {
 	return addDays(addMonths(monthStart(iso), 1), -1);
 }
+
+export function clampInt(value: unknown, min: number, max: number): number {
+	const number = Math.trunc(Number(value));
+	return Number.isFinite(number) && number >= min ? Math.min(number, max) : min;
+}

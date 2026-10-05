@@ -12,7 +12,7 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
-	import { addMonths, formatMoney, formatMonth, monthStart, toCents, today } from '#lib/format.ts';
+	import { addMonths, clampInt, formatMoney, formatMonth, monthStart, toCents, today } from '#lib/format.ts';
 	import { refs } from '#lib/refs.svelte.ts';
 	import { app, type ForecastMethod } from '#lib/settings.svelte.ts';
 
@@ -39,13 +39,15 @@
 	}
 
 	const hasScenario = $derived(adjustments.length > 0 || changes.length > 0);
+	const horizon = $derived(clampInt(months, 1, 120));
+	const history = $derived(clampInt(historyMonths, 1, 24));
 
 	async function run() {
-		const input = { months, method, historyMonths };
+		const input = { months: horizon, method, historyMonths: history };
 		const scenarioInput = { ...input, adjustments: adjustments.map(({ label: _, ...a }) => a), recurrenceChanges: changes };
 		const [comparison, patterns] = await Promise.all([
 			hasScenario ? forecastScenario(scenarioInput) : forecast(input).then((base) => ({ base, scenario: null, endDifference: 0 })),
-			loadPatterns(historyMonths)
+			loadPatterns(history)
 		]);
 		return { base: comparison.base, scenario: comparison.scenario, difference: comparison.endDifference, patterns };
 	}
@@ -57,7 +59,7 @@
 
 	$effect(() => {
 		refs.version;
-		void [months, method, historyMonths, adjustments.length, changes.length];
+		void [horizon, method, history, adjustments.length, changes.length];
 		untrack(() => (request = run()));
 	});
 
@@ -75,7 +77,7 @@
 			toAccountId: saving ? draft.toAccountId : null,
 			amount: saving ? draft.amount : sign * draft.amount,
 			date: draft.date,
-			repeatMonths: draft.repeatMonths,
+			repeatMonths: clampInt(draft.repeatMonths, 1, 120),
 			label: kindLabels[draft.kind]
 		});
 		draft = blankDraft();
@@ -101,7 +103,7 @@
 		{/each}
 		<label class="flex items-center gap-1 text-sm">
 			Custom
-			<input type="number" min="1" max="120" bind:value={months} class="input w-20" />
+			<input type="number" min="1" max="120" bind:value={months} onblur={() => (months = horizon)} class="input w-20" />
 		</label>
 	{/snippet}
 </PageHeader>
@@ -117,7 +119,7 @@
 	{#if method === 'HISTORY'}
 		<label class="label">
 			Meses de histórico
-			<input type="number" min="1" max="24" bind:value={historyMonths} class="input w-24" />
+			<input type="number" min="1" max="24" bind:value={historyMonths} onblur={() => (historyMonths = history)} class="input w-24" />
 		</label>
 	{/if}
 	<p class="muted max-w-md">
@@ -215,7 +217,7 @@
 		</table>
 		</div>
 		<p class="mt-2 text-xs text-stone-500">
-			Fixas: recorrências e movimentos futuros registados. Variáveis: média dos movimentos sem recorrência nos últimos {historyMonths} meses.
+			Fixas: recorrências e movimentos futuros registados. Variáveis: média dos movimentos sem recorrência nos últimos {history} meses.
 		</p>
 	</section>
 

@@ -174,6 +174,7 @@
 							<a href="/accounts/{account.id}" class="flex items-center gap-2 hover:underline">
 								<span class="size-2.5 rounded-full" style:background-color={account.color ?? 'gray'}></span>
 								{account.name}
+								{#if account.kind === 'CREDIT_CARD'}<span class="badge">fora do total</span>{/if}
 							</a>
 							<span class="tabular-nums"><Money value={account.balance} currency={account.currency} /></span>
 						</li>
