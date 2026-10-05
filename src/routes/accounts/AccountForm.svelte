@@ -90,6 +90,8 @@
 	</label>
 	{#if form.kind === 'CREDIT_CARD'}
 		<p class="col-span-2 muted">O saldo dos cartões de crédito não conta para o saldo total; o valor em dívida entra no património líquido.</p>
+	{:else if form.kind === 'MEAL'}
+		<p class="col-span-2 muted">O saldo do cartão refeição não conta para o saldo total, e os seus movimentos ficam fora das previsões e das estimativas.</p>
 	{/if}
 	<div class="grid grid-cols-2 gap-2">
 		<label class="label">

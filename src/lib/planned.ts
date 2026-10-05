@@ -1,6 +1,6 @@
 import { listOccurrences, resetOccurrence, skipOccurrence, type Occurrence } from './api/recurrences.ts';
 import { deleteTransaction, listTransactions, saveTransaction, toInput, type Transaction } from './api/transactions.ts';
-import { dataChanged } from './refs.svelte.ts';
+import { dataChanged, refs } from './refs.svelte.ts';
 import { notify, notifyError } from './toasts.svelte.ts';
 
 const MAX_SCHEDULED = 500;
@@ -21,9 +21,10 @@ export async function listPlanned(from: string, to: string): Promise<Planned[]> 
 		listOccurrences(from, to),
 		listTransactions({ dateFrom: from, dateTo: to }, MAX_SCHEDULED)
 	]);
+	const ignored = new Set(refs.accounts.filter((a) => a.kind === 'MEAL').map((a) => a.id));
 	return [
 		...occurrences
-			.filter((o) => !o.toAccountId)
+			.filter((o) => !o.toAccountId && !ignored.has(o.accountId))
 			.map((o) => ({
 				key: `${o.recurrenceId}-${o.occurrenceDate}`,
 				date: o.date,
@@ -34,7 +35,7 @@ export async function listPlanned(from: string, to: string): Promise<Planned[]> 
 				transaction: null
 			})),
 		...scheduled.items
-			.filter((t) => t.kind !== 'TRANSFER')
+			.filter((t) => t.kind !== 'TRANSFER' && !ignored.has(t.accountId))
 			.map((t) => ({
 				key: t.id,
 				date: t.date,

@@ -79,7 +79,7 @@
 						<div class="flex-1">
 							<h2 class="font-medium">{account.name}</h2>
 							<p class="text-xs text-stone-500">
-								{accountKinds[account.kind]} · {account.currency}{account.kind === 'CREDIT_CARD' ? ' · fora do saldo total' : ''}
+								{accountKinds[account.kind]} · {account.currency}{account.kind === 'CREDIT_CARD' || account.kind === 'MEAL' ? ' · fora do saldo total' : ''}
 							</p>
 							{#if account.overdraftLimit}
 								<p class="text-xs text-stone-500">
