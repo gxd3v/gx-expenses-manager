@@ -54,7 +54,7 @@ impl Default for Settings {
             backup_dir: None,
             backup_frequency_days: 7,
             backup_keep: 10,
-            forecast_method: ForecastMethod::History,
+            forecast_method: ForecastMethod::Recurring,
             forecast_history_months: 6,
             forecast_horizon_months: 6,
             notifications_enabled: true,

@@ -832,6 +832,25 @@ async fn dismissed_alerts_stay_hidden() {
     assert!(alerts.iter().all(|a| a.key != key));
 }
 
+#[tokio::test]
+async fn saved_forecast_method_migrates_to_recurring() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    let settings = crate::models::Settings {
+        forecast_method: ForecastMethod::History,
+        ..crate::models::Settings::default()
+    };
+    module.settings.update(settings).await.unwrap();
+
+    sqlx::raw_sql(include_str!("../migrations/0007_recurring_forecasts.sql"))
+        .execute(&db.pool)
+        .await
+        .unwrap();
+    let settings = module.settings.get().await.unwrap();
+    assert_eq!(settings.forecast_method, ForecastMethod::Recurring);
+    assert_eq!(settings.currency, "EUR");
+}
+
 async fn populated(module: &Module) -> Account {
     let main = account(module, "Principal", 100_000).await;
     let savings = account(module, "Poupança", 0).await;

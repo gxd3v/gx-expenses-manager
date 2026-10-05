@@ -88,7 +88,9 @@ fn validate_interest(interest: &Interest) -> Result<(), AppError> {
         ));
     }
     if interest.tiers.is_empty() {
-        return Err(AppError::validation("é necessária pelo menos uma taxa de juro"));
+        return Err(AppError::validation(
+            "é necessária pelo menos uma taxa de juro",
+        ));
     }
     if interest
         .tiers

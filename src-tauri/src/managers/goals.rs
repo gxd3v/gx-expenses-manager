@@ -39,7 +39,7 @@ impl GoalsManager {
     ) -> Result<HashMap<Uuid, NaiveDate>, AppError> {
         let request = ForecastRequest {
             months: PROJECTION_MONTHS,
-            method: ForecastMethod::History,
+            method: ForecastMethod::Recurring,
             history_months: 6,
             adjustments: Vec::new(),
             recurrence_changes: Vec::new(),
