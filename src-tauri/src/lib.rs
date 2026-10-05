@@ -15,6 +15,8 @@ mod transformers;
 mod tests;
 
 use commands::Session;
+#[cfg(desktop)]
+use tauri::Manager;
 
 const MAX_LOG_BYTES: u128 = 1_000_000;
 
@@ -34,7 +36,14 @@ pub fn run() {
     #[cfg(desktop)]
     let builder = builder
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init());
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
+        .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                bring_to_front(&window);
+            }
+            Ok(())
+        });
 
     builder
         .invoke_handler(tauri::generate_handler![
@@ -56,4 +65,12 @@ fn log_level() -> log::LevelFilter {
     } else {
         log::LevelFilter::Warn
     }
+}
+
+#[cfg(desktop)]
+fn bring_to_front(window: &tauri::WebviewWindow) {
+    let _ = window.unminimize();
+    let _ = window.set_always_on_top(true);
+    let _ = window.set_focus();
+    let _ = window.set_always_on_top(false);
 }
