@@ -1,14 +1,13 @@
 <script lang="ts">
 	import Filterable from '#lib/components/Filterable.svelte';
 	import { untrack } from 'svelte';
-	import { listOccurrences } from '#lib/api/recurrences.ts';
 	import { monthSummary } from '#lib/api/reports.ts';
-	import { listTransactions } from '#lib/api/transactions.ts';
 	import HBarChart from '#lib/charts/HBarChart.svelte';
 	import Amount from '#lib/components/Amount.svelte';
 	import Money from '#lib/components/Money.svelte';
 	import TransactionList from '#lib/components/TransactionList.svelte';
-	import MonthDetail, { type Totals } from './MonthDetail.svelte';
+	import MonthDetail, { type Totals } from '#lib/components/MonthDetail.svelte';
+	import { listPlanned } from '#lib/planned.ts';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
@@ -29,25 +28,7 @@
 		const start = monthStart(selected);
 		const end = monthEnd(selected);
 		const pendingFrom = start > today() ? start : addDays(today(), 1);
-		const [summary, occurrences, future] = await Promise.all([
-			monthSummary(start),
-			pendingFrom <= end ? listOccurrences(pendingFrom, end) : Promise.resolve([]),
-			pendingFrom <= end ? listTransactions({ dateFrom: pendingFrom, dateTo: end }, 200) : Promise.resolve(null)
-		]);
-
-		const planned = [
-			...occurrences
-				.filter((o) => !o.toAccountId)
-				.map((o) => ({
-				key: `${o.recurrenceId}-${o.occurrenceDate}`,
-				date: o.date,
-				description: o.description,
-				amount: o.kind === 'INCOME' ? o.amount : -o.amount
-			})),
-			...(future?.items ?? [])
-				.filter((t) => t.kind !== 'TRANSFER')
-				.map((t) => ({ key: t.id, date: t.date, description: t.description, amount: t.amount }))
-		].sort((a, b) => a.date.localeCompare(b.date));
+		const [summary, planned] = await Promise.all([monthSummary(start), listPlanned(pendingFrom, end)]);
 
 		return { summary, planned };
 	}

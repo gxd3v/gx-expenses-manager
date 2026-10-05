@@ -13,7 +13,9 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
-	import { addMonths, clampInt, formatMoney, formatMonth, monthStart, toCents, today } from '#lib/format.ts';
+	import { addDays, addMonths, clampInt, formatDate, formatMoney, formatMonth, monthEnd, monthStart, toCents, today } from '#lib/format.ts';
+	import { dismissPlanned, listPlanned, type Planned } from '#lib/planned.ts';
+	import { openQuickAdd } from '#lib/ui.svelte.ts';
 	import { refs } from '#lib/refs.svelte.ts';
 	import { app, type ForecastMethod } from '#lib/settings.svelte.ts';
 
@@ -31,7 +33,7 @@
 	let changes = $state<RecurrenceChange[]>([]);
 	let recurrences = $state<Recurrence[]>([]);
 	let draft = $state<Draft>(blankDraft());
-	let request = $state<Promise<{ base: Forecast; scenario: Forecast | null; difference: number; patterns: Patterns }>>(
+	let request = $state<Promise<{ base: Forecast; scenario: Forecast | null; difference: number; patterns: Patterns; planned: Planned[] }>>(
 		new Promise(() => {})
 	);
 
@@ -46,11 +48,13 @@
 	async function run() {
 		const input = { months: horizon, method, historyMonths: history };
 		const scenarioInput = { ...input, adjustments: adjustments.map(({ label: _, ...a }) => a), recurrenceChanges: changes };
-		const [comparison, patterns] = await Promise.all([
+		const until = monthEnd(addMonths(monthStart(today()), horizon - 1));
+		const [comparison, patterns, planned] = await Promise.all([
 			hasScenario ? forecastScenario(scenarioInput) : forecast(input).then((base) => ({ base, scenario: null, endDifference: 0 })),
-			loadPatterns(history)
+			loadPatterns(history),
+			listPlanned(addDays(today(), 1), until)
 		]);
-		return { base: comparison.base, scenario: comparison.scenario, difference: comparison.endDifference, patterns };
+		return { base: comparison.base, scenario: comparison.scenario, difference: comparison.endDifference, patterns, planned };
 	}
 
 	async function loadPatterns(count: number): Promise<Patterns> {
@@ -130,7 +134,7 @@
 
 {#await request}
 	<States state="loading" />
-{:then { base, scenario, difference, patterns }}
+{:then { base, scenario, difference, patterns, planned }}
 	{@const last = base.months[base.months.length - 1]}
 	<div class="mb-6 grid gap-4 md:grid-cols-4">
 		<StatCard label="Saldo total previsto" value={formatMoney(last?.total ?? 0)} hint={last ? formatMonth(last.month, 'long') : ''} />
@@ -222,6 +226,51 @@
 		<p class="mt-2 text-xs text-stone-500">
 			Fixas: recorrências e movimentos futuros registados. Variáveis: média dos movimentos sem recorrência nos últimos {history} meses.
 		</p>
+	</section>
+
+	<section class="card mb-6">
+		<div class="mb-1 flex flex-wrap items-center justify-between gap-2">
+			<h2 class="font-medium">Movimentos previstos</h2>
+			<button class="btn-secondary" onclick={() => openQuickAdd('transaction', { date: addDays(today(), 1) })}>
+				Adicionar movimento previsto
+			</button>
+		</div>
+		<p class="mb-3 muted">
+			Ocorrências de recorrências e movimentos agendados que entram na previsão. "Não vai acontecer" salta a ocorrência ou elimina o
+			movimento agendado.
+		</p>
+		{#if planned.length === 0}
+			<p class="muted">Sem movimentos previstos neste horizonte.</p>
+		{:else}
+			<Filterable>
+				<div class="max-h-96 overflow-auto">
+					<table class="table-base">
+						<thead>
+							<tr>
+								<th>Data</th>
+								<th>Descrição</th>
+								<th>Origem</th>
+								<th class="text-right">Valor</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each planned as item (item.key)}
+								<tr>
+									<td class="whitespace-nowrap">{formatDate(item.date)}</td>
+									<td>{item.description || '—'}</td>
+									<td class="text-stone-500">{item.occurrence ? (item.credit ? 'Prestação' : 'Recorrência') : 'Agendado'}</td>
+									<td class="text-right"><Amount value={item.amount} /></td>
+									<td class="text-right">
+										<button class="btn-ghost whitespace-nowrap" onclick={() => dismissPlanned(item)}>Não vai acontecer</button>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</Filterable>
+		{/if}
 	</section>
 
 	<section class="card mb-6">

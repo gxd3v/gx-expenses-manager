@@ -1,5 +1,4 @@
 <script lang="ts" module>
-	export type Planned = { key: string; date: string; description: string; amount: number };
 	export type Totals = { realized: number; planned: number; expected: number };
 </script>
 
@@ -9,6 +8,7 @@
 	import Modal from '#lib/components/Modal.svelte';
 	import States from '#lib/components/States.svelte';
 	import { formatDate, today } from '#lib/format.ts';
+	import { dismissPlanned, type Planned } from '#lib/planned.ts';
 
 	const LIMIT = 500;
 
@@ -42,7 +42,12 @@
 	const upcoming = $derived(planned.filter((p) => matches(p.amount)));
 </script>
 
-{#snippet section(name: string, total: number, items: { key: string; date: string; description: string; amount: number; detail?: string }[], empty: string)}
+{#snippet section(
+	name: string,
+	total: number,
+	items: { key: string; date: string; description: string; amount: number; detail?: string; planned?: Planned }[],
+	empty: string
+)}
 	<section>
 		<h3 class="mb-1 flex justify-between text-sm font-medium">
 			<span>{name}</span>
@@ -58,7 +63,18 @@
 							<span class="block truncate">{item.description || '—'}</span>
 							<span class="text-xs text-stone-500">{formatDate(item.date)}{item.detail ? ` · ${item.detail}` : ''}</span>
 						</span>
-						<Amount value={item.amount} />
+						<span class="flex shrink-0 items-center gap-1">
+							<Amount value={item.amount} />
+							{#if item.planned}
+								{@const planned = item.planned}
+								<button
+									class="rounded p-1 text-xs leading-none text-stone-400 hover:bg-stone-100 hover:text-red-600 dark:hover:bg-stone-800"
+									onclick={() => dismissPlanned(planned)}
+									title="Não vai acontecer"
+									aria-label="Remover movimento previsto">✕</button
+								>
+							{/if}
+						</span>
 					</li>
 				{/each}
 			</ul>
@@ -80,7 +96,12 @@
 		{:catch error}
 			<States state="error" {error} />
 		{/await}
-		{@render section('Previsto até ao fim do mês', totals.planned, upcoming, 'Nada previsto.')}
+		{@render section(
+			'Previsto até ao fim do mês',
+			totals.planned,
+			upcoming.map((p) => ({ ...p, planned: p })),
+			'Nada previsto.'
+		)}
 		<p class="flex justify-between border-t border-stone-200 pt-2 text-sm font-semibold dark:border-stone-800">
 			<span>Total esperado</span>
 			<Amount value={totals.expected} />

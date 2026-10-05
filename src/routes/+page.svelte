@@ -4,7 +4,6 @@
 	import { listCredits } from '#lib/api/credits.ts';
 	import { forecast } from '#lib/api/forecasts.ts';
 	import { listGoals } from '#lib/api/goals.ts';
-	import { listOccurrences } from '#lib/api/recurrences.ts';
 	import { balanceHistory, balanceSummary, categoryBreakdown, dismissAlert, listAlerts, monthSummary } from '#lib/api/reports.ts';
 	import { listTransactions, type TransactionFilter } from '#lib/api/transactions.ts';
 	import { describe } from '#lib/background.ts';
@@ -18,8 +17,10 @@
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
+	import MonthDetail, { type Totals } from '#lib/components/MonthDetail.svelte';
 	import TransactionsModal from '#lib/components/TransactionsModal.svelte';
-	import { addDays, formatDate, formatMoney, formatMonth, formatPercent, monthStart, today, weekStart } from '#lib/format.ts';
+	import { listPlanned, type Planned } from '#lib/planned.ts';
+	import { addDays, formatDate, formatMoney, formatMonth, formatPercent, monthEnd, monthStart, today, weekStart } from '#lib/format.ts';
 	import { dataChanged, refs } from '#lib/refs.svelte.ts';
 	import { app } from '#lib/settings.svelte.ts';
 	import { notifyError } from '#lib/toasts.svelte.ts';
@@ -27,17 +28,15 @@
 
 	const UPCOMING_DAYS = 30;
 
-	type Upcoming = { key: string; date: string; description: string; amount: number; credit: boolean };
 
 	async function load() {
 		const now = today();
 		const until = addDays(now, UPCOMING_DAYS);
-		const [accounts, summary, categories, occurrences, future, goals, projection, history, alerts, credits, balances, week] = await Promise.all([
+		const [accounts, summary, categories, upcoming, goals, projection, history, alerts, credits, balances, week] = await Promise.all([
 			listAccounts(),
 			monthSummary(now),
 			categoryBreakdown('OUTCOME', monthStart(now), now),
-			listOccurrences(addDays(now, 1), until),
-			listTransactions({ dateFrom: addDays(now, 1), dateTo: until }, 100),
+			listPlanned(addDays(now, 1), until),
 			listGoals(),
 			forecast({ months: app.settings?.forecastHorizonMonths ?? 6 }),
 			balanceHistory(12),
@@ -47,26 +46,12 @@
 			listTransactions({ kind: 'OUTCOME', dateFrom: weekStart(now, app.settings?.firstDayOfWeek ?? 1), dateTo: now }, 1)
 		]);
 
-		const upcoming: Upcoming[] = [
-			...occurrences
-				.filter((o) => !o.toAccountId)
-				.map((o) => ({
-				key: `${o.recurrenceId}-${o.occurrenceDate}`,
-				date: o.date,
-				description: o.description,
-				amount: o.kind === 'INCOME' ? o.amount : -o.amount,
-				credit: o.creditId !== null
-			})),
-			...future.items
-				.filter((t) => t.kind !== 'TRANSFER')
-				.map((t) => ({ key: t.id, date: t.date, description: t.description, amount: t.amount, credit: false }))
-		].sort((a, b) => a.date.localeCompare(b.date));
-
 		return { accounts, summary, categories, upcoming, goals, projection, history, alerts, credits, weekOutcome: week.outcome, balances };
 	}
 
 	let request = $state<ReturnType<typeof load>>(new Promise(() => {}));
 	let detail = $state<{ title: string; filter: TransactionFilter } | null>(null);
+	let monthDetail = $state<{ title: string; sign: 1 | -1 | 0; totals: Totals } | null>(null);
 
 	async function dismiss(key: string) {
 		try {
@@ -96,7 +81,7 @@
 	</h2>
 {/snippet}
 
-{#snippet upcomingCard(title: string, items: Upcoming[])}
+{#snippet upcomingCard(title: string, items: Planned[])}
 	<section class="card">
 		{@render cardTitle(title, items.reduce((sum, item) => sum + item.amount, 0), true)}
 		{#if items.length === 0}
@@ -158,19 +143,41 @@
 			label="Receitas do mês"
 			value={formatMoney(data.summary.income)}
 			hint="Previsto ainda: {formatMoney(data.summary.pendingIncome)}"
-			ondetail={() => showDetail('Receitas do mês', 'INCOME', monthStart(today()))}
+			ondetail={() =>
+				(monthDetail = {
+					title: 'Receitas do mês',
+					sign: 1,
+					totals: { realized: data.summary.income, planned: data.summary.pendingIncome, expected: data.summary.expectedIncome }
+				})}
 		/>
 		<StatCard
 			privateHint
 			label="Despesas do mês"
 			value={formatMoney(data.summary.outcome)}
 			hint="Previsto ainda: {formatMoney(data.summary.pendingOutcome)}"
-			ondetail={() => showDetail('Despesas do mês', 'OUTCOME', monthStart(today()))}
+			ondetail={() =>
+				(monthDetail = {
+					title: 'Despesas do mês',
+					sign: -1,
+					totals: { realized: -data.summary.outcome, planned: -data.summary.pendingOutcome, expected: -data.summary.expectedOutcome }
+				})}
 		/>
 		<StatCard
 			label="Resultado do mês"
 			value={formatMoney(data.summary.net)}
 			tone={data.summary.net >= 0 ? 'positive' : 'negative'}
+			privateHint
+			hint="Com o previsto: {formatMoney(data.summary.expectedNet)}"
+			ondetail={() =>
+				(monthDetail = {
+					title: 'Resultado do mês',
+					sign: 0,
+					totals: {
+						realized: data.summary.net,
+						planned: data.summary.pendingIncome - data.summary.pendingOutcome,
+						expected: data.summary.expectedNet
+					}
+				})}
 		/>
 	</div>
 
@@ -270,6 +277,17 @@
 			format={(v) => formatMoney(v)}
 		/>
 	</section>
+	{#if monthDetail}
+		<MonthDetail
+			title={monthDetail.title}
+			sign={monthDetail.sign}
+			start={monthStart(today())}
+			end={monthEnd(today())}
+			planned={data.upcoming.filter((u) => u.date <= monthEnd(today()))}
+			totals={monthDetail.totals}
+			onclose={() => (monthDetail = null)}
+		/>
+	{/if}
 {:catch error}
 	<States state="error" {error} />
 {/await}
