@@ -8,6 +8,7 @@
 	import Amount from '#lib/components/Amount.svelte';
 	import Money from '#lib/components/Money.svelte';
 	import TransactionList from '#lib/components/TransactionList.svelte';
+	import MonthDetail, { type Totals } from './MonthDetail.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import StatCard from '#lib/components/StatCard.svelte';
 	import States from '#lib/components/States.svelte';
@@ -17,6 +18,7 @@
 	let month = $state(monthStart(today()));
 	let selectedCategory = $state<{ id: string; name: string } | null>(null);
 	let movements = $state<HTMLElement>();
+	let detail = $state<{ title: string; sign: 1 | -1 | 0; totals: Totals } | null>(null);
 
 	function showCategory(id: string, name: string) {
 		selectedCategory = { id, name };
@@ -83,12 +85,24 @@
 			label="Receitas realizadas"
 			value={formatMoney(summary.income)}
 			hint="Previstas: {formatMoney(summary.pendingIncome)} · Total esperado: {formatMoney(summary.expectedIncome)}"
+			ondetail={() =>
+				(detail = {
+					title: 'Receitas do mês',
+					sign: 1,
+					totals: { realized: summary.income, planned: summary.pendingIncome, expected: summary.expectedIncome }
+				})}
 		/>
 		<StatCard
 			privateHint
 			label="Despesas realizadas"
 			value={formatMoney(summary.outcome)}
 			hint="Previstas: {formatMoney(summary.pendingOutcome)} · Total esperado: {formatMoney(summary.expectedOutcome)}"
+			ondetail={() =>
+				(detail = {
+					title: 'Despesas do mês',
+					sign: -1,
+					totals: { realized: -summary.outcome, planned: -summary.pendingOutcome, expected: -summary.expectedOutcome }
+				})}
 		/>
 		<StatCard
 			privateHint
@@ -96,6 +110,12 @@
 			value={formatMoney(summary.net)}
 			tone={summary.net >= 0 ? 'positive' : 'negative'}
 			hint="Com o previsto: {formatMoney(summary.expectedNet)}"
+			ondetail={() =>
+				(detail = {
+					title: 'Resultado do mês',
+					sign: 0,
+					totals: { realized: summary.net, planned: summary.pendingIncome - summary.pendingOutcome, expected: summary.expectedNet }
+				})}
 		/>
 	</div>
 
@@ -208,6 +228,17 @@
 			<TransactionList initialFilter={{ dateFrom: monthStart(month), dateTo: monthEnd(month), categoryId: selectedCategory?.id ?? null }} />
 		{/key}
 	</section>
+	{#if detail}
+		<MonthDetail
+			title={detail.title}
+			sign={detail.sign}
+			start={monthStart(month)}
+			end={monthEnd(month)}
+			{planned}
+			totals={detail.totals}
+			onclose={() => (detail = null)}
+		/>
+	{/if}
 {:catch error}
 	<States state="error" {error} />
 {/await}
