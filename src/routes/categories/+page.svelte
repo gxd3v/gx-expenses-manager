@@ -2,7 +2,6 @@
 	import { untrack } from 'svelte';
 	import {
 		categoryKinds,
-		categoryLabel,
 		deleteCategory,
 		listCategories,
 		saveCategory,
@@ -10,6 +9,7 @@
 		type Category,
 		type CategoryInput
 	} from '#lib/api/categories.ts';
+	import CategorySelect from '#lib/components/CategorySelect.svelte';
 	import IconPicker from '#lib/components/IconPicker.svelte';
 	import Modal from '#lib/components/Modal.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
@@ -143,15 +143,10 @@
 				Nome
 				<input bind:value={editing.form.name} class="input" required />
 			</label>
-			<label class="label">
+			<div class="label">
 				Categoria principal
-				<select bind:value={editing.form.parentId} class="input">
-					<option value={null}>Nenhuma</option>
-					{#each parents.filter((p) => p.id !== editing?.id) as parent (parent.id)}
-						<option value={parent.id}>{parent.name}</option>
-					{/each}
-				</select>
-			</label>
+				<CategorySelect bind:value={editing.form.parentId} parentsOnly exclude={editing.id} emptyLabel="Nenhuma" />
+			</div>
 			<label class="label">
 				Tipo
 				<select bind:value={editing.form.kind} class="input">
@@ -184,15 +179,10 @@
 				<strong>{removing.category.name}</strong> tem {removing.category.transactionCount} movimentos. Para eliminar uma categoria em uso,
 				é necessária uma categoria de destino para os movimentos, recorrências e templates.
 			</p>
-			<label class="label">
+			<div class="label">
 				Mover para
-				<select bind:value={removing.reassignTo} class="input">
-					<option value={null}>Não mover (só se não estiver em uso)</option>
-					{#each categories.filter((c) => c.id !== removing?.category.id) as category (category.id)}
-						<option value={category.id}>{categoryLabel(category, categories)}</option>
-					{/each}
-				</select>
-			</label>
+				<CategorySelect bind:value={removing.reassignTo} exclude={removing.category.id} emptyLabel="Não mover (só se não estiver em uso)" />
+			</div>
 			<div class="flex justify-end gap-2">
 				<button class="btn-secondary" onclick={() => (removing = null)}>Cancelar</button>
 				<button class="btn-danger" onclick={remove}>Eliminar</button>

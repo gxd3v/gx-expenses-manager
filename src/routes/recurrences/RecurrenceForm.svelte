@@ -98,10 +98,10 @@
 			<AccountSelect bind:value={form.toAccountId} exclude={form.accountId} allowEmpty emptyLabel="Escolher…" />
 		</label>
 	{:else}
-		<label class="label">
+		<div class="label">
 			Categoria
 			<CategorySelect bind:value={form.categoryId} kind={form.kind} />
-		</label>
+		</div>
 	{/if}
 	<label class="label">
 		Periodicidade

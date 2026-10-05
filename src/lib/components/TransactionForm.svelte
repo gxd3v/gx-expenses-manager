@@ -75,10 +75,10 @@
 		Conta
 		<AccountSelect bind:value={form.accountId} />
 	</label>
-	<label class="label">
+	<div class="label">
 		Categoria
 		<CategorySelect bind:value={form.categoryId} kind={form.kind} />
-	</label>
+	</div>
 	<label class="label col-span-2">
 		Descrição
 		<input bind:value={form.description} class="input" placeholder="Ex.: Supermercado" />

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Filterable from '#lib/components/Filterable.svelte';
 	import { untrack } from 'svelte';
 	import {
 		deleteWishlistItem,
@@ -174,6 +175,7 @@
 				hint={result.lowestIfToday >= result.floor ? 'Compra possível hoje' : 'Abaixo do mínimo exigido'}
 			/>
 		</div>
+		<Filterable>
 		<div class="mt-6 overflow-x-auto">
 			<table class="table-base">
 				<thead>
@@ -200,6 +202,7 @@
 				</tbody>
 			</table>
 		</div>
+		</Filterable>
 		<p class="mt-2 text-xs text-stone-500">
 			"Após a compra" considera a compra feita no início de cada mês (no mês atual, hoje) e o saldo mais baixo daí até ao fim do horizonte.
 		</p>
@@ -214,6 +217,7 @@
 		{#if items.length === 0}
 			<p class="muted">Sem artigos na lista de desejos.</p>
 		{:else}
+			<Filterable>
 			<div class="overflow-x-auto">
 				<table class="table-base">
 					<thead>
@@ -260,6 +264,7 @@
 					</tbody>
 				</table>
 			</div>
+			</Filterable>
 			<p class="mt-2 text-xs text-stone-500">
 				As datas previstas seguem a ordem de prioridade: cada artigo conta com as compras dos artigos anteriores.
 			</p>

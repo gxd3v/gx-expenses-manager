@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Filterable from '#lib/components/Filterable.svelte';
 	import { untrack } from 'svelte';
 	import Money from '#lib/components/Money.svelte';
 	import RecurrenceForm from './RecurrenceForm.svelte';
@@ -99,6 +100,7 @@
 			<button class="btn-primary" onclick={() => (editing = null)}>Criar recorrência</button>
 		</States>
 	{:else}
+		<Filterable>
 		<div class="card overflow-x-auto p-0">
 			<table class="table-base">
 				<thead>
@@ -176,6 +178,7 @@
 				</tbody>
 			</table>
 		</div>
+		</Filterable>
 	{/if}
 {:catch error}
 	<States state="error" {error} />

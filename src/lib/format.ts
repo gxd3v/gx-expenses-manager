@@ -91,3 +91,10 @@ export function clampInt(value: unknown, min: number, max: number): number {
 	const number = Math.trunc(Number(value));
 	return Number.isFinite(number) && number >= min ? Math.min(number, max) : min;
 }
+
+export function searchable(text: string): string {
+	return text
+		.normalize('NFD')
+		.replace(/\p{Diacritic}/gu, '')
+		.toLowerCase();
+}

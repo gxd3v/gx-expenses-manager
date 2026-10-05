@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Filterable from '#lib/components/Filterable.svelte';
 	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import {
@@ -156,6 +157,7 @@
 			{#if history.length === 0}
 				<p class="muted">Sem reconciliações nesta conta.</p>
 			{:else}
+				<Filterable>
 				<div class="overflow-x-auto">
 				<table class="table-base">
 					<thead><tr><th>Data</th><th class="text-right">Banco</th><th class="text-right">Calculado</th><th class="text-right">Diferença</th></tr></thead>
@@ -171,6 +173,7 @@
 					</tbody>
 				</table>
 				</div>
+				</Filterable>
 			{/if}
 		</section>
 	{:catch error}

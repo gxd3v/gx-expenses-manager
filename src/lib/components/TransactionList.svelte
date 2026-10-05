@@ -80,15 +80,6 @@
 		Object.entries(filter).filter(([key, value]) => value !== null && value !== undefined && value !== '' && !(key === 'accountId' && fixedAccountId))
 			.length
 	);
-	const categoryOptions = $derived(
-		refs.categories
-			.filter((c) => !c.parentId)
-			.flatMap((parent) => [
-				{ id: parent.id, label: parent.name },
-				...refs.categories.filter((c) => c.parentId === parent.id).map((child) => ({ id: child.id, label: `${parent.name} / ${child.name}` }))
-			])
-	);
-
 	function headerFilter(key: 'categoryId' | 'accountId', value: string) {
 		filter[key] = value || null;
 		load();
@@ -236,10 +227,10 @@
 			<AccountSelect bind:value={filter.accountId as string | null} allowEmpty />
 		</label>
 	{/if}
-	<label class="label">
+	<div class="label">
 		Categoria
 		<CategorySelect bind:value={filter.categoryId as string | null} emptyLabel="Todas" />
-	</label>
+	</div>
 	<label class="label">
 		Tipo
 		<select bind:value={filter.kind} class="input">
@@ -333,17 +324,12 @@
 					<th>Data</th>
 					<th>Descrição</th>
 					<th>
-						<select
-							class="header-filter"
-							value={filter.categoryId ?? ''}
-							onchange={(e) => headerFilter('categoryId', e.currentTarget.value)}
-							aria-label="Filtrar por categoria"
-						>
-							<option value="">Categoria</option>
-							{#each categoryOptions as option (option.id)}
-								<option value={option.id}>{option.label}</option>
-							{/each}
-						</select>
+						<CategorySelect
+							compact
+							value={(filter.categoryId as string | null) ?? null}
+							emptyLabel="Categoria"
+							onchange={(id) => headerFilter('categoryId', id ?? '')}
+						/>
 					</th>
 					{#if !fixedAccountId}
 						<th>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Filterable from '#lib/components/Filterable.svelte';
 	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import {
@@ -208,6 +209,7 @@
 		{#if payments.length === 0}
 			<p class="muted">Ainda não há pagamentos registados.</p>
 		{:else}
+			<Filterable>
 			<div class="overflow-x-auto">
 			<table class="table-base">
 				<thead><tr><th>Data</th><th class="text-right">Total</th><th class="text-right">Capital</th><th class="text-right">Juros</th><th></th></tr></thead>
@@ -224,6 +226,7 @@
 				</tbody>
 			</table>
 			</div>
+			</Filterable>
 		{/if}
 	</section>
 
@@ -232,6 +235,7 @@
 			{showSchedule ? '▾' : '▸'} Plano de pagamentos previsto ({credit.schedule.length})
 		</button>
 		{#if showSchedule}
+			<Filterable>
 			<div class="mt-3 max-h-96 overflow-y-auto">
 				<div class="overflow-x-auto">
 				<table class="table-base">
@@ -251,6 +255,7 @@
 				</table>
 				</div>
 			</div>
+			</Filterable>
 		{/if}
 	</section>
 {:catch error}

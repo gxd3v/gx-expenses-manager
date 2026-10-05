@@ -59,8 +59,3 @@ export async function deleteCategory(id: string, reassignTo: string | null): Pro
 		reassignTo
 	});
 }
-
-export function categoryLabel(category: Category, categories: Category[]): string {
-	const parent = categories.find((c) => c.id === category.parentId);
-	return parent ? `${parent.name} / ${category.name}` : category.name;
-}

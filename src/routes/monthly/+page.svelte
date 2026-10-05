@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Filterable from '#lib/components/Filterable.svelte';
 	import { untrack } from 'svelte';
 	import { listOccurrences } from '#lib/api/recurrences.ts';
 	import { monthSummary } from '#lib/api/reports.ts';
@@ -157,6 +158,7 @@
 		{#if summary.categories.length === 0}
 			<p class="muted">Sem despesas no período.</p>
 		{:else}
+			<Filterable>
 			<div class="overflow-x-auto">
 			<table class="table-base">
 				<thead>
@@ -190,6 +192,7 @@
 				</tbody>
 			</table>
 			</div>
+			</Filterable>
 			<p class="mt-2 text-xs text-stone-500">
 				Diferença positiva indica despesa abaixo da média. Cada categoria abre os respetivos movimentos.
 			</p>

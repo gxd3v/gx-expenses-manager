@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Filterable from '#lib/components/Filterable.svelte';
 	import type { Series } from './scale.ts';
 
 	let { labels, series, format }: { labels: string[]; series: Series[]; format: (value: number) => string } = $props();
@@ -6,6 +7,7 @@
 
 <details class="mt-2 text-sm">
 	<summary class="cursor-pointer muted">Ver tabela</summary>
+	<Filterable>
 	<div class="mt-2 max-h-64 overflow-auto">
 		<table class="table-base">
 			<thead>
@@ -26,4 +28,5 @@
 			</tbody>
 		</table>
 	</div>
+	</Filterable>
 </details>

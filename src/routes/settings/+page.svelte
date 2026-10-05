@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Filterable from '#lib/components/Filterable.svelte';
 	import { onMount, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import {
@@ -321,6 +322,7 @@
 	{#if backups.length === 0}
 		<p class="muted">Ainda não há backups.</p>
 	{:else}
+		<Filterable>
 		<div class="overflow-x-auto">
 		<table class="table-base">
 			<thead><tr><th>Ficheiro</th><th>Data</th><th class="text-right">Tamanho</th><th></th></tr></thead>
@@ -339,6 +341,7 @@
 			</tbody>
 		</table>
 		</div>
+		</Filterable>
 	{/if}
 </section>
 

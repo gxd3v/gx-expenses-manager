@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Filterable from '#lib/components/Filterable.svelte';
 	import { onMount, untrack } from 'svelte';
 	import { forecast, forecastScenario, type Adjustment, type Forecast, type RecurrenceChange } from '#lib/api/forecasts.ts';
 	import { listRecurrences, type Recurrence } from '#lib/api/recurrences.ts';
@@ -188,6 +189,7 @@
 
 	<section class="card mb-6 overflow-x-auto">
 		<h2 class="mb-3 font-medium">Mês a mês</h2>
+		<Filterable>
 		<div class="overflow-x-auto">
 		<table class="table-base">
 			<thead>
@@ -216,6 +218,7 @@
 			</tbody>
 		</table>
 		</div>
+		</Filterable>
 		<p class="mt-2 text-xs text-stone-500">
 			Fixas: recorrências e movimentos futuros registados. Variáveis: média dos movimentos sem recorrência nos últimos {history} meses.
 		</p>
@@ -298,6 +301,7 @@
 	{#if recurrences.length}
 		<details>
 			<summary class="cursor-pointer text-sm font-medium">Alterar recorrências</summary>
+			<Filterable>
 			<div class="overflow-x-auto">
 			<table class="table-base mt-2">
 				<thead><tr><th>Recorrência</th><th class="text-right">Valor atual</th><th>No cenário</th></tr></thead>
@@ -318,6 +322,7 @@
 				</tbody>
 			</table>
 			</div>
+			</Filterable>
 		</details>
 	{/if}
 </section>

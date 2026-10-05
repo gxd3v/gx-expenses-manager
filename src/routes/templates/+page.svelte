@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Filterable from '#lib/components/Filterable.svelte';
 	import { untrack } from 'svelte';
 	import { deleteTemplate, listTemplates, saveTemplate, type Template, type TemplateInput } from '#lib/api/templates.ts';
 	import AccountSelect from '#lib/components/AccountSelect.svelte';
@@ -82,6 +83,7 @@
 			<button class="btn-primary" onclick={() => open(null)}>Criar template</button>
 		</States>
 	{:else}
+		<Filterable>
 		<div class="card overflow-x-auto p-0">
 			<table class="table-base">
 				<thead><tr><th>Nome</th><th>Tipo</th><th>Conta</th><th>Categoria</th><th>Descrição</th><th class="text-right">Valor</th><th></th></tr></thead>
@@ -104,6 +106,7 @@
 				</tbody>
 			</table>
 		</div>
+		</Filterable>
 	{/if}
 {:catch error}
 	<States state="error" {error} />
@@ -127,10 +130,10 @@
 				Conta
 				<AccountSelect bind:value={editing.form.accountId} />
 			</label>
-			<label class="label">
+			<div class="label">
 				Categoria
 				<CategorySelect bind:value={editing.form.categoryId} kind={editing.form.kind} />
-			</label>
+			</div>
 			<label class="label">
 				Descrição
 				<input bind:value={editing.form.description} class="input" />
