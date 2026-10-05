@@ -1,6 +1,6 @@
 [package]
 name = "gx-expenses-manager"
-version = "0.7.5"
+version = "0.8.0"
 description = "Personal expense manager"
 authors = ["gxd3v"]
 edition = "2024"
