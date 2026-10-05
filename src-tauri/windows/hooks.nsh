@@ -16,7 +16,7 @@
   ${EndIf}
 !macroend
 
-!macro NSIS_HOOK_PREINSTALL
+!macro NSIS_HOOK_POSTINSTALL
   SetShellVarContext current
   !insertmacro EXPENSES_REMOVE_OLD_INSTALL "Expenses Manager"
   !insertmacro EXPENSES_REMOVE_OLD_INSTALL "GX Expenses"
