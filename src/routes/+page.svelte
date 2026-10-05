@@ -87,19 +87,31 @@
 	});
 </script>
 
-{#snippet upcomingList(items: Upcoming[], empty: string)}
-	{#if items.length === 0}
-		<p class="muted">{empty}</p>
-	{:else}
-		<ul class="divide-y divide-stone-100 text-sm dark:divide-stone-800">
-			{#each items.slice(0, 6) as item (item.key)}
-				<li class="flex justify-between gap-3 py-1.5">
-					<span class="truncate"><span class="text-stone-500">{formatDate(item.date)}</span> · {item.description}</span>
-					<Amount value={item.amount} />
-				</li>
-			{/each}
-		</ul>
-	{/if}
+{#snippet cardTitle(title: string, total: number, signed: boolean)}
+	<h2 class="mb-3 flex items-baseline justify-between gap-3 font-medium">
+		<span>{title}</span>
+		<span class="text-sm">
+			{#if signed}<Amount value={total} />{:else}<Money value={total} />{/if}
+		</span>
+	</h2>
+{/snippet}
+
+{#snippet upcomingCard(title: string, items: Upcoming[])}
+	<section class="card">
+		{@render cardTitle(title, items.reduce((sum, item) => sum + item.amount, 0), true)}
+		{#if items.length === 0}
+			<p class="muted">Nada nos próximos 30 dias.</p>
+		{:else}
+			<ul class="max-h-64 divide-y divide-stone-100 overflow-y-auto text-sm dark:divide-stone-800">
+				{#each items as item (item.key)}
+					<li class="flex justify-between gap-3 py-1.5">
+						<span class="truncate"><span class="text-stone-500">{formatDate(item.date)}</span> · {item.description}</span>
+						<Amount value={item.amount} />
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</section>
 {/snippet}
 
 {#await request}
@@ -164,7 +176,7 @@
 
 	<div class="mb-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
 		<section class="card">
-			<h2 class="mb-3 font-medium">Saldo por conta</h2>
+			{@render cardTitle('Saldo por conta', data.balances.total, false)}
 			{#if data.accounts.length === 0}
 				<p class="muted">Sem contas. <a class="underline" href="/accounts">Criar conta</a></p>
 			{:else}
@@ -183,27 +195,25 @@
 			{/if}
 		</section>
 		<section class="card">
-			<h2 class="mb-3 font-medium">Gastos por categoria (este mês)</h2>
+			{@render cardTitle('Gastos por categoria (este mês)', data.categories.reduce((sum, c) => sum + c.amount, 0), false)}
 			{#if data.categories.length === 0}
 				<p class="muted">Sem despesas este mês.</p>
 			{:else}
-				<HBarChart items={data.categories.map((c) => ({ label: c.name, value: c.amount, color: c.color }))} format={(v) => formatMoney(v)} />
+				<HBarChart
+					items={data.categories.map((c) => ({ label: c.name, value: c.amount, color: c.color }))}
+					format={(v) => formatMoney(v)}
+					limit={data.categories.length}
+				/>
 			{/if}
 		</section>
 		<BalanceRecords selectable />
 	</div>
 
 	<div class="mb-6 grid gap-4 xl:grid-cols-3">
+		{@render upcomingCard('Próximas despesas', data.upcoming.filter((u) => u.amount < 0 && !u.credit))}
+		{@render upcomingCard('Próximos rendimentos', data.upcoming.filter((u) => u.amount > 0))}
 		<section class="card">
-			<h2 class="mb-3 font-medium">Próximas despesas</h2>
-			{@render upcomingList(data.upcoming.filter((u) => u.amount < 0 && !u.credit), 'Nada nos próximos 30 dias.')}
-		</section>
-		<section class="card">
-			<h2 class="mb-3 font-medium">Próximos rendimentos</h2>
-			{@render upcomingList(data.upcoming.filter((u) => u.amount > 0), 'Nada nos próximos 30 dias.')}
-		</section>
-		<section class="card">
-			<h2 class="mb-3 font-medium">Próximos pagamentos de créditos</h2>
+			{@render cardTitle('Próximos pagamentos de créditos', -data.credits.reduce((sum, c) => sum + c.installment, 0), true)}
 			{#if data.credits.length === 0}
 				<p class="muted">Sem créditos ativos.</p>
 			{:else}
