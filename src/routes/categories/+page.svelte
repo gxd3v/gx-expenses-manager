@@ -96,7 +96,10 @@
 </script>
 
 {#snippet row(category: Category, nested: boolean)}
-	<li class="flex flex-wrap items-center gap-3 py-2 {nested ? 'pl-8' : ''}" class:opacity-60={category.archivedAt}>
+	<li
+		class="flex flex-wrap items-center gap-3 px-4 py-2 transition-colors duration-100 hover:bg-stone-100/70 md:px-5 dark:hover:bg-stone-800/50 {nested ? 'pl-12 md:pl-13' : ''}"
+		class:opacity-60={category.archivedAt}
+	>
 		<span class="size-3 rounded-full" style:background-color={category.color ?? 'transparent'}></span>
 		<button class="flex-1 text-left hover:underline {nested ? '' : 'font-medium'}" onclick={() => (viewing = category)}>
 			{category.icon ?? ''} {category.name}
@@ -126,7 +129,7 @@
 {:else if categories.length === 0}
 	<States state="empty" message="Sem categorias." />
 {:else}
-	<ul class="card divide-y divide-stone-100 py-1 dark:divide-stone-800">
+	<ul class="card divide-y divide-stone-100 overflow-hidden px-0 py-1 md:px-0 dark:divide-stone-800">
 		{#each parents as parent (parent.id)}
 			{@render row(parent, false)}
 			{#each childrenOf(parent.id) as child (child.id)}

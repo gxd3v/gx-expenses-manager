@@ -32,6 +32,7 @@
 	let occurrences = $state<Occurrence[]>([]);
 	let changing = $state<{ occurrence: Occurrence; amount: number | null; date: string } | null>(null);
 	let request = $state<Promise<Recurrence[]>>(new Promise(() => {}));
+	let filters = $state({ frequency: '', account: '', status: '' });
 
 	$effect(() => {
 		refs.version;
@@ -43,6 +44,12 @@
 
 	const ended = (r: Recurrence) => r.endDate !== null && r.endDate < today();
 	const statusLabel = (r: Recurrence) => (ended(r) ? 'Terminada' : r.pausedAt ? 'Em pausa' : 'Ativa');
+	const frequency = (r: Recurrence) => frequencyLabel(r.unit, r.interval);
+	const distinct = (values: string[]) => [...new Set(values)].sort((a, b) => a.localeCompare(b));
+	const visible = (r: Recurrence) =>
+		(!filters.frequency || frequency(r) === filters.frequency) &&
+		(!filters.account || r.accountName === filters.account) &&
+		(!filters.status || statusLabel(r) === filters.status);
 
 	async function loadOccurrences(id: string) {
 		const all = await listOccurrences(today(), addMonths(today(), 24), id).catch(() => []);
@@ -86,6 +93,15 @@
 	}
 </script>
 
+{#snippet filterHeader(label: string, key: keyof typeof filters, options: string[])}
+	<th>
+		<select class="header-filter" bind:value={filters[key]} aria-label="Filtrar por {label.toLowerCase()}">
+			<option value="">{label}</option>
+			{#each options as option (option)}<option value={option}>{option}</option>{/each}
+		</select>
+	</th>
+{/snippet}
+
 <PageHeader title="Recorrências" subtitle="Despesas e receitas que se repetem. Alimentam as previsões.">
 	{#snippet actions()}
 		<button class="btn-primary" onclick={() => (editing = null)}>Nova recorrência</button>
@@ -106,16 +122,16 @@
 				<thead>
 					<tr>
 						<th>Descrição</th>
-						<th>Periodicidade</th>
-						<th>Conta</th>
+						{@render filterHeader('Periodicidade', 'frequency', distinct(recurrences.map(frequency)))}
+						{@render filterHeader('Conta', 'account', distinct(recurrences.map((r) => r.accountName)))}
 						<th>Próxima</th>
-						<th>Estado</th>
+						{@render filterHeader('Estado', 'status', ['Ativa', 'Em pausa', 'Terminada'])}
 						<th class="text-right">Valor</th>
 						<th></th>
 					</tr>
 				</thead>
 				<tbody>
-					{#each recurrences as recurrence (recurrence.id)}
+					{#each recurrences.filter(visible) as recurrence (recurrence.id)}
 						<tr class:opacity-60={ended(recurrence) || recurrence.pausedAt}>
 							<td>
 								<button class="text-left hover:underline" onclick={() => toggle(recurrence)} aria-expanded={expanded === recurrence.id}>
@@ -132,7 +148,7 @@
 									</p>
 								{/if}
 							</td>
-							<td>{frequencyLabel(recurrence.unit, recurrence.interval)}</td>
+							<td>{frequency(recurrence)}</td>
 							<td><a class="hover:underline" href="/accounts/{recurrence.accountId}">{recurrence.accountName}</a></td>
 							<td>{formatDate(recurrence.nextDate)}</td>
 							<td><span class="badge">{statusLabel(recurrence)}</span></td>
