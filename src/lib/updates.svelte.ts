@@ -1,5 +1,6 @@
 import { relaunch } from '@tauri-apps/plugin-process';
 import { check, type Update } from '@tauri-apps/plugin-updater';
+import { saveWindowState, StateFlags } from '@tauri-apps/plugin-window-state';
 import { isTauri } from './graphql.ts';
 import { lock } from './session.ts';
 
@@ -42,6 +43,7 @@ export async function installUpdate() {
 			if (event.event === 'Progress') received += event.data.chunkLength;
 			updates.progress = total ? Math.round((received / total) * 100) : null;
 		});
+		await saveWindowState(StateFlags.ALL);
 		await lock();
 		try {
 			await update.install();
