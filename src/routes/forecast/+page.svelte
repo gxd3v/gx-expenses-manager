@@ -23,7 +23,7 @@
 	const horizons = [1, 2, 4, 6, 12];
 
 	let months = $state(untrack(() => app.settings?.forecastHorizonMonths ?? 6));
-	let method = $state<ForecastMethod>(untrack(() => app.settings?.forecastMethod ?? 'HISTORY'));
+	let method = $state<ForecastMethod>(untrack(() => app.settings?.forecastMethod ?? 'RECURRING'));
 	let historyMonths = $state(untrack(() => app.settings?.forecastHistoryMonths ?? 6));
 	let adjustments = $state<(Adjustment & { label: string })[]>([]);
 	const kindLabels: Record<AdjustmentKind, string> = { expense: 'Despesa', income: 'Receita', saving: 'Poupança' };

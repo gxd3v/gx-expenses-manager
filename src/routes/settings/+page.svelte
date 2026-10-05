@@ -22,6 +22,7 @@
 	import { changePassword, resetData, restoreBackup, status } from '#lib/session.ts';
 	import { app, loadSettings, saveSettings, type Settings } from '#lib/settings.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
+	import { checkNow } from '#lib/updates.svelte.ts';
 
 	let form = $state<Settings>(untrack(() => ({ ...app.settings! })));
 	let backups = $state<BackupFile[]>([]);
@@ -31,6 +32,20 @@
 	let reset = $state({ password: '', phrase: '' });
 
 	const RESET_PHRASE = 'APAGAR TUDO';
+
+	let checking = $state(false);
+
+	async function checkUpdatesNow() {
+		checking = true;
+		try {
+			const update = await checkNow();
+			if (!update) notify('A aplicação está atualizada');
+		} catch {
+			notify('Não foi possível verificar se existem atualizações', 'error');
+		} finally {
+			checking = false;
+		}
+	}
 	let busy = $state(false);
 	let importing = $state<{ path: string; password: string; preview: ImportPreview | null } | null>(null);
 
@@ -254,7 +269,14 @@
 
 	<section class="card space-y-2">
 		<h2 class="font-medium">Atualizações</h2>
-		<Toggle bind:checked={form.checkUpdates} label="Procurar novas versões automaticamente" />
+		<div class="flex flex-wrap items-center justify-between gap-3">
+			<Toggle bind:checked={form.checkUpdates} label="Procurar novas versões automaticamente" />
+			{#if isTauri}
+				<button type="button" class="btn-secondary" disabled={checking} onclick={checkUpdatesNow}>
+					{checking ? 'A procurar…' : 'Procurar atualizações'}
+				</button>
+			{/if}
+		</div>
 		<p class="muted">
 			Única ligação à internet da aplicação: descarrega um ficheiro público do GitHub para verificar se existe uma versão nova. Os dados
 			nunca saem do computador.

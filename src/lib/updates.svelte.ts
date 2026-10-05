@@ -8,7 +8,8 @@ export const updates = $state<{
 	dismissed: string | null;
 	installing: boolean;
 	progress: number | null;
-}>({ available: null, dismissed: null, installing: false, progress: null });
+	notesOpen: boolean;
+}>({ available: null, dismissed: null, installing: false, progress: null, notesOpen: false });
 
 export async function checkForUpdates() {
 	if (!isTauri || updates.installing) return;
@@ -18,6 +19,15 @@ export async function checkForUpdates() {
 	} catch {
 		return;
 	}
+}
+
+export async function checkNow(): Promise<Update | null> {
+	if (!isTauri) return null;
+	const update = await check();
+	updates.available = update;
+	updates.dismissed = null;
+	updates.notesOpen = update !== null;
+	return update;
 }
 
 export async function installUpdate() {

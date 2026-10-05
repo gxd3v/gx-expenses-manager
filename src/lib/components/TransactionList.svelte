@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { exportCsv } from '#lib/api/backups.ts';
 	import {
 		deleteSavedFilter,
@@ -21,9 +22,11 @@
 	import { confirmAction, pickSavePath } from '#lib/dialogs.ts';
 	import { formatDate, today } from '#lib/format.ts';
 	import { dataChanged, refs } from '#lib/refs.svelte.ts';
+	import { openQuickAdd } from '#lib/ui.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 	import AccountSelect from './AccountSelect.svelte';
 	import Amount from './Amount.svelte';
+	import ContextMenu, { type MenuItem } from './ContextMenu.svelte';
 	import CategorySelect from './CategorySelect.svelte';
 	import Modal from './Modal.svelte';
 	import MoneyInput from './MoneyInput.svelte';
@@ -155,6 +158,40 @@
 	async function toggleConfirmed(transaction: Transaction) {
 		await setConfirmed([transaction.id], !transaction.confirmed).catch(notifyError);
 		transaction.confirmed = !transaction.confirmed;
+	}
+
+	let menu = $state<{ x: number; y: number; transaction: Transaction } | null>(null);
+
+	function openMenu(event: MouseEvent, transaction: Transaction) {
+		event.preventDefault();
+		menu = { x: event.clientX, y: event.clientY, transaction };
+	}
+
+	function menuItems(transaction: Transaction): MenuItem[] {
+		const entry: MenuItem[] = transaction.transferId
+			? []
+			: [
+					{ label: transaction.oneOff ? 'Remover marcação de pontual' : 'Marcar como pontual', run: () => toggleOneOff(transaction) },
+					{ label: 'Duplicar', run: () => openQuickAdd('transaction', { ...toInput(transaction), date: today(), confirmed: false }) }
+				];
+		const account: MenuItem[] = fixedAccountId ? [] : [{ label: 'Abrir conta', run: () => goto(`/accounts/${transaction.accountId}`) }];
+		return [
+			{ label: 'Editar', run: () => edit(transaction) },
+			{ label: transaction.confirmed ? 'Marcar como por confirmar' : 'Marcar como confirmado', run: () => toggleConfirmed(transaction) },
+			...entry,
+			...account,
+			{ label: 'Eliminar', run: () => remove(transaction), danger: true }
+		];
+	}
+
+	async function toggleOneOff(transaction: Transaction) {
+		try {
+			await saveTransaction(transaction.id, { ...toInput(transaction), oneOff: !transaction.oneOff });
+			notify(transaction.oneOff ? 'Marcação de pontual removida' : 'Marcado como pontual');
+			await dataChanged();
+		} catch (e) {
+			notifyError(e);
+		}
 	}
 
 	async function confirmSelected() {
@@ -330,7 +367,7 @@
 			</thead>
 			<tbody>
 				{#each items as transaction (transaction.id)}
-					<tr class={transaction.date > today() ? 'text-stone-400' : ''}>
+					<tr class={transaction.date > today() ? 'text-stone-400' : ''} oncontextmenu={(e) => openMenu(e, transaction)}>
 						<td><input type="checkbox" bind:group={selected} value={transaction.id} aria-label="Selecionar" /></td>
 						<td class="whitespace-nowrap">{formatDate(transaction.date)}</td>
 						<td>
@@ -387,3 +424,6 @@
 	<p class="mt-4 muted">É necessária pelo menos uma conta para registar movimentos.</p>
 {/if}
 
+{#if menu}
+	<ContextMenu x={menu.x} y={menu.y} items={menuItems(menu.transaction)} onclose={() => (menu = null)} />
+{/if}

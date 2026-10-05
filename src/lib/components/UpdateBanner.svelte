@@ -3,8 +3,6 @@
 	import { installUpdate, updates } from '#lib/updates.svelte.ts';
 	import Modal from './Modal.svelte';
 
-	let open = $state(false);
-
 	const update = $derived(updates.available);
 	const visible = $derived(update !== null && updates.dismissed !== update.version);
 	const lines = $derived((update?.body ?? '').split('\n').map((line) => line.trim()).filter(Boolean));
@@ -24,14 +22,14 @@
 	>
 		<span>Está disponível uma nova versão ({update.version}).</span>
 		<span class="flex items-center gap-2">
-			<button class="btn-primary" onclick={() => (open = true)}>Ver novidades</button>
+			<button class="btn-primary" onclick={() => (updates.notesOpen = true)}>Ver novidades</button>
 			<button class="btn-ghost" onclick={() => (updates.dismissed = update.version)} aria-label="Lembrar mais tarde" title="Mais tarde">✕</button>
 		</span>
 	</div>
 {/if}
 
-{#if open && update}
-	<Modal title="Novidades da versão {update.version}" onclose={() => !updates.installing && (open = false)}>
+{#if updates.notesOpen && update}
+	<Modal title="Novidades da versão {update.version}" onclose={() => !updates.installing && (updates.notesOpen = false)}>
 		<div class="max-h-[50vh] space-y-1 overflow-y-auto text-sm">
 			{#each lines as line, index (index)}
 				{#if line.startsWith('#')}
@@ -49,7 +47,7 @@
 			{:else}
 				<span class="muted mr-auto">A aplicação fecha e reabre automaticamente. Os dados mantêm-se.</span>
 			{/if}
-			<button class="btn-secondary" disabled={updates.installing} onclick={() => (open = false)}>Mais tarde</button>
+			<button class="btn-secondary" disabled={updates.installing} onclick={() => (updates.notesOpen = false)}>Mais tarde</button>
 			<button class="btn-primary" disabled={updates.installing} onclick={install}>Atualizar agora</button>
 		</div>
 	</Modal>

@@ -98,13 +98,13 @@
 		<section class="card">
 			<h2 class="mb-3 font-medium">Gastos por categoria</h2>
 			{#if parents.length === 0}<p class="muted">Sem despesas no período.</p>{:else}
-				<HBarChart items={parents.map((c) => ({ label: c.name, value: c.amount }))} format={money} limit={10} />
+				<HBarChart items={parents.map((c) => ({ label: c.name, value: c.amount, color: c.color }))} format={money} limit={10} />
 			{/if}
 		</section>
 		<section class="card">
 			<h2 class="mb-3 font-medium">Gastos por subcategoria</h2>
 			{#if leaves.length === 0}<p class="muted">Sem despesas no período.</p>{:else}
-				<HBarChart items={leaves.map((c) => ({ label: c.name, value: c.amount }))} format={money} limit={12} />
+				<HBarChart items={leaves.map((c) => ({ label: c.name, value: c.amount, color: c.color }))} format={money} limit={12} />
 			{/if}
 		</section>
 	</div>
