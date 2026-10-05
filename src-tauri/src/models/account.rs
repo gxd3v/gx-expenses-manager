@@ -34,7 +34,11 @@ pub struct Account {
 
 impl Account {
     pub fn counts_in_total(&self) -> bool {
-        self.kind != AccountKind::CreditCard
+        !matches!(self.kind, AccountKind::CreditCard | AccountKind::Meal)
+    }
+
+    pub fn counts_in_estimates(&self) -> bool {
+        self.kind != AccountKind::Meal
     }
 }
 

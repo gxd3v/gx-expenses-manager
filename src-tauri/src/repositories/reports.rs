@@ -47,7 +47,7 @@ const ACCOUNT_MONTHS: &str = "SELECT account_id, substr(date, 1, 7) AS month, SU
 const DAILY_CHANGES: &str = "SELECT t.date, SUM(t.amount) AS amount FROM transactions t \
      JOIN accounts a ON a.id = t.account_id \
      WHERE t.date <= ?1 AND (?2 IS NULL OR t.account_id = ?2) \
-     AND (?2 IS NOT NULL OR (a.archived_at IS NULL AND a.kind <> 'credit_card')) \
+     AND (?2 IS NOT NULL OR (a.archived_at IS NULL AND a.kind NOT IN ('credit_card', 'meal'))) \
      GROUP BY t.date ORDER BY t.date";
 
 const VARIABLE_AVERAGES: &str = "SELECT t.account_id, \

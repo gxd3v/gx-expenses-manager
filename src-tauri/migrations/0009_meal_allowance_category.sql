@@ -1,0 +1,5 @@
+INSERT INTO categories (id, parent_id, name, kind, created_at, updated_at)
+SELECT '00000000-0000-7000-8000-000000000005', '00000000-0000-7000-8000-000000000001', 'Subsídio de refeição', 'income',
+       '2026-10-05T00:00:00Z', '2026-10-05T00:00:00Z'
+WHERE EXISTS (SELECT 1 FROM categories WHERE id = '00000000-0000-7000-8000-000000000001')
+  AND NOT EXISTS (SELECT 1 FROM categories WHERE id = '00000000-0000-7000-8000-000000000005' OR name = 'Subsídio de refeição');

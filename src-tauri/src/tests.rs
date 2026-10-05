@@ -969,6 +969,67 @@ async fn purchases_wait_until_future_payments_stay_covered() {
     assert!(bought.purchased_at.is_some());
 }
 
+#[tokio::test]
+async fn meal_cards_stay_out_of_totals_and_estimates() {
+    let db = TestDatabase::new().await;
+    let module = module(&db);
+    account(&module, "Principal", 100_000).await;
+    let meal = AccountInput {
+        name: "Refeição".into(),
+        kind: AccountKind::Meal,
+        currency: "EUR".into(),
+        initial_balance: 19_000,
+        color: None,
+        icon: None,
+        interest: None,
+        overdraft_limit: 0,
+    };
+    let meal = module.accounts.create(today(), meal).await.unwrap();
+    let allowance = module
+        .categories
+        .list(true)
+        .await
+        .unwrap()
+        .into_iter()
+        .find(|c| c.name == "Subsídio de refeição")
+        .unwrap();
+    let subsidy = RecurrenceInput {
+        account_id: meal.id,
+        category_id: Some(allowance.id),
+        kind: EntryKind::Income,
+        amount: 19_800,
+        description: "Subsídio de refeição".into(),
+        start_date: today().checked_add_days(Days::new(1)).unwrap(),
+        end_date: None,
+        frequency: monthly(),
+        to_account_id: None,
+        variable_amount: false,
+    };
+    module.recurrences.create(subsidy).await.unwrap();
+
+    let summary = module.reports.balance_summary(today()).await.unwrap();
+    assert_eq!(summary.total, 100_000);
+    assert_eq!(summary.debt, 0);
+
+    let request = ForecastRequest {
+        months: 3,
+        method: ForecastMethod::Recurring,
+        history_months: 6,
+        adjustments: Vec::new(),
+        recurrence_changes: Vec::new(),
+    };
+    let forecast = module.forecasts.forecast(today(), &request).await.unwrap();
+    assert!(forecast.months.iter().all(|m| m.income == 0));
+    assert_eq!(forecast.months[2].total, 100_000);
+
+    let month = module
+        .reports
+        .month_summary(today(), add_months(today(), 1))
+        .await
+        .unwrap();
+    assert_eq!(month.pending_income, 0);
+}
+
 async fn populated(module: &Module) -> Account {
     let main = account(module, "Principal", 100_000).await;
     let savings = account(module, "Poupança", 0).await;

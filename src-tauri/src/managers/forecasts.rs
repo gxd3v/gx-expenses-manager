@@ -96,6 +96,11 @@ impl ForecastsManager {
             .filter(|a| !a.counts_in_total())
             .map(|a| a.id)
             .collect();
+        let ignored: Vec<Uuid> = accounts
+            .iter()
+            .filter(|a| !a.counts_in_estimates())
+            .map(|a| a.id)
+            .collect();
         let balances = accounts
             .into_iter()
             .map(|a| AccountBalance {
@@ -109,12 +114,14 @@ impl ForecastsManager {
             self.recurrence_events(today, end, &request.recurrence_changes)
                 .await?,
         );
+        events.retain(|e| !ignored.contains(&e.account_id));
         events.extend(request.adjustments.iter().flat_map(Adjustment::events));
 
-        let averages = match request.method {
+        let mut averages = match request.method {
             ForecastMethod::History => self.averages(today, request.history_months).await?,
             ForecastMethod::Recurring => Vec::new(),
         };
+        averages.retain(|a| !ignored.contains(&a.account_id));
 
         let months = project(&ForecastInput {
             today,

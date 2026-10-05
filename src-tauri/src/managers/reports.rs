@@ -7,9 +7,9 @@ use super::recurrences::RecurrencesManager;
 use crate::errors::AppError;
 use crate::models::dates::{add_months, month_end, month_start, months_between};
 use crate::models::{
-    Account, BalancePoint, BalanceRecord, BalanceSummary, CategoryAmount, CategoryComparison,
-    CategoryGrouping, Credit, CreditPayment, EntryKind, MonthComparison, MonthSummary,
-    MonthlyTotal, RecordPeriod, TransactionKind, balance_record, week_start,
+    Account, AccountKind, BalancePoint, BalanceRecord, BalanceSummary, CategoryAmount,
+    CategoryComparison, CategoryGrouping, Credit, CreditPayment, EntryKind, MonthComparison,
+    MonthSummary, MonthlyTotal, RecordPeriod, TransactionKind, balance_record, week_start,
 };
 use crate::repositories::accounts::AccountsRepository;
 use crate::repositories::credits::CreditsRepository;
@@ -92,7 +92,11 @@ impl ReportsManager {
             .into_iter()
             .partition(Account::counts_in_total);
         let credits = self.credits.list(false).await?;
-        let card_debt: i64 = cards.iter().map(|c| (-c.balance).max(0)).sum();
+        let card_debt: i64 = cards
+            .iter()
+            .filter(|c| c.kind == AccountKind::CreditCard)
+            .map(|c| (-c.balance).max(0))
+            .sum();
         Ok(BalanceSummary {
             total: accounts.iter().map(|a| a.balance).sum(),
             available: accounts.iter().map(|a| a.available_balance).sum(),
@@ -316,17 +320,26 @@ impl ReportsManager {
             return Ok((0, 0));
         }
 
+        let ignored: Vec<Uuid> = self
+            .accounts
+            .list(today, true)
+            .await?
+            .into_iter()
+            .filter(|a| !a.counts_in_estimates())
+            .map(|a| a.id)
+            .collect();
         let future = self.transactions.future(today).await?;
         let transactions = future
             .iter()
             .filter(|t| t.kind != TransactionKind::Transfer && t.date >= from && t.date <= end)
+            .filter(|t| !ignored.contains(&t.account_id))
             .map(|t| t.amount);
         let occurrences = self.recurrences.occurrences(from, end, None).await?;
         let amounts: Vec<i64> = transactions
             .chain(
                 occurrences
                     .iter()
-                    .filter(|o| o.to_account_id.is_none())
+                    .filter(|o| o.to_account_id.is_none() && !ignored.contains(&o.account_id))
                     .map(|o| o.kind.signed(o.amount)),
             )
             .collect();
