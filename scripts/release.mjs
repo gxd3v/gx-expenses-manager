@@ -15,7 +15,7 @@ if (!notesPath) {
 const { version, productName } = JSON.parse(readFileSync('src-tauri/tauri.conf.json', 'utf8'));
 const notes = readFileSync(notesPath, 'utf8').trim();
 const tag = `v${version}`;
-const installer = `${productName.replaceAll(' ', '')}_${version}_x64-setup.exe`;
+const installer = `${productName.replaceAll(' ', '')}_x64-setup.exe`;
 const out = join('release', tag);
 
 execSync('npm run tauri build -- --config src-tauri/tauri.release.conf.json', {
@@ -30,6 +30,15 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 copyFileSync(bundle, join(out, installer));
 writeFileSync(join(out, 'notes.txt'), notes);
+writeFileSync(
+	join(out, 'github.txt'),
+	`${notes}
+
+## Instalação
+- Instalador para Windows: [${installer}](https://github.com/${REPO}/releases/latest/download/${installer}).
+- Em instalações existentes, a atualização é feita pela própria aplicação.
+`
+);
 writeFileSync(
 	join(out, 'latest.json'),
 	JSON.stringify(
@@ -55,7 +64,7 @@ if (flag === '--publish') {
 	execFileSync('git', ['push', 'origin', 'HEAD:main'], { stdio: 'inherit' });
 	execFileSync(
 		'gh',
-		['release', 'create', tag, join(out, installer), join(out, 'latest.json'), '--repo', REPO, '--target', 'main', '--title', `${productName} ${version}`, '--notes-file', join(out, 'notes.txt')],
+		['release', 'create', tag, join(out, installer), join(out, 'latest.json'), '--repo', REPO, '--target', 'main', '--title', `${productName} ${version}`, '--notes-file', join(out, 'github.txt')],
 		{ stdio: 'inherit' }
 	);
 }

@@ -11,6 +11,8 @@ Sem conta, sem cloud, sem subscrição. Os dados ficam num único ficheiro encri
 - **Créditos.** Plano de amortização, divisão de cada prestação em capital e juros, e simulação de amortizações antecipadas.
 - **Contas com juros.** Taxa fixa ou por escalões e periodicidade do vencimento, com os juros líquidos incluídos nas previsões.
 - **Objetivos.** Metas de poupança com acompanhamento do progresso.
+- **Modo simulação.** Movimentos, transferências e recorrências virtuais sobre uma cópia temporária dos dados, para ver o efeito nos saldos e nas previsões. Ao terminar, a cópia é descartada.
+- **Compras planeadas.** Simulação da data mais cedo para uma compra e lista de desejos com datas previstas.
 - **Previsões.** Saldo previsto para os próximos meses, com gastos fixos e variáveis separados e cenários hipotéticos. Movimentos pontuais ficam fora das médias.
 - **Vista mensal e gráficos.** Comparação entre o previsto e o realizado, gastos por categoria, receitas contra despesas, evolução do património e máximos e mínimos de saldo.
 - **Ferramentas do dia a dia.**
@@ -48,7 +50,7 @@ A password não é guardada em lado nenhum. A aplicação deriva dela a chave qu
 
 ## Instalação (Windows)
 
-1. Descarregar o instalador da página de [Releases](https://github.com/gxd3v/gx-expenses-manager/releases): `GestordeDespesas_x.y.z_x64-setup.exe`. Instala apenas para o utilizador atual e não precisa de permissões de administrador.
+1. Descarregar o instalador da versão mais recente: **[GestordeDespesas_x64-setup.exe](https://github.com/gxd3v/gx-expenses-manager/releases/latest/download/GestordeDespesas_x64-setup.exe)**. Cada [release](https://github.com/gxd3v/gx-expenses-manager/releases) inclui sempre este ficheiro. Instala apenas para o utilizador atual e não precisa de permissões de administrador.
 2. Executar o instalador. Não tem assinatura de código, por isso o Windows SmartScreen pode mostrar um aviso: **Mais informações → Executar mesmo assim**.
 3. Abrir o **Gestor de Despesas** a partir do menu Iniciar.
 4. No primeiro arranque, definir a password (mínimo de 8 caracteres).
