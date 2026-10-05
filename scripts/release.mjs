@@ -12,10 +12,10 @@ if (!notesPath) {
 	process.exit(1);
 }
 
-const version = JSON.parse(readFileSync('src-tauri/tauri.conf.json', 'utf8')).version;
+const { version, productName } = JSON.parse(readFileSync('src-tauri/tauri.conf.json', 'utf8'));
 const notes = readFileSync(notesPath, 'utf8').trim();
 const tag = `v${version}`;
-const installer = `ExpensesManager_${version}_x64-setup.exe`;
+const installer = `${productName.replaceAll(' ', '')}_${version}_x64-setup.exe`;
 const out = join('release', tag);
 
 execSync('npm run tauri build -- --config src-tauri/tauri.release.conf.json', {
@@ -24,7 +24,7 @@ execSync('npm run tauri build -- --config src-tauri/tauri.release.conf.json', {
 });
 
 const metadata = JSON.parse(execSync('cargo metadata --format-version 1 --no-deps --manifest-path src-tauri/Cargo.toml').toString());
-const bundle = join(metadata.target_directory, 'release', 'bundle', 'nsis', `Expenses Manager_${version}_x64-setup.exe`);
+const bundle = join(metadata.target_directory, 'release', 'bundle', 'nsis', `${productName}_${version}_x64-setup.exe`);
 
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
@@ -55,7 +55,7 @@ if (flag === '--publish') {
 	execFileSync('git', ['push', 'origin', 'HEAD:main'], { stdio: 'inherit' });
 	execFileSync(
 		'gh',
-		['release', 'create', tag, join(out, installer), join(out, 'latest.json'), '--repo', REPO, '--target', 'main', '--title', `Expenses Manager ${version}`, '--notes-file', join(out, 'notes.txt')],
+		['release', 'create', tag, join(out, installer), join(out, 'latest.json'), '--repo', REPO, '--target', 'main', '--title', `${productName} ${version}`, '--notes-file', join(out, 'notes.txt')],
 		{ stdio: 'inherit' }
 	);
 }
