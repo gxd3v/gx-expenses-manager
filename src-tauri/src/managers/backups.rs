@@ -209,7 +209,7 @@ impl BackupsManager {
 
         let latest = self.list().await?.into_iter().next();
         let due = latest.is_none_or(|b| {
-            (Utc::now() - b.created_at).num_days() >= settings.backup_frequency_days.into()
+            (Utc::now() - b.created_at).num_days() >= i64::from(settings.backup_frequency_days)
         });
         if !due {
             return Ok(None);
