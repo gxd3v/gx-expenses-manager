@@ -51,7 +51,7 @@
 	]);
 </script>
 
-<div class="card mb-4 overflow-x-auto p-0 md:p-0">
+<div class="card mt-4 overflow-x-auto p-0 md:p-0">
 	<table class="table-base">
 		<thead>
 			<tr>

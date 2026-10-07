@@ -117,7 +117,6 @@
 			<button class="btn-primary" onclick={() => (editing = null)}>Criar recorrência</button>
 		</States>
 	{:else}
-		<RecurrenceTotals {recurrences} />
 		<Filterable>
 		<div class="card overflow-x-auto p-0">
 			<table class="table-base">
@@ -197,6 +196,7 @@
 			</table>
 		</div>
 		</Filterable>
+		<RecurrenceTotals {recurrences} />
 	{/if}
 {:catch error}
 	<States state="error" {error} />
