@@ -3,6 +3,7 @@
 	import { untrack } from 'svelte';
 	import Money from '#lib/components/Money.svelte';
 	import RecurrenceForm from './RecurrenceForm.svelte';
+	import RecurrenceTotals from './RecurrenceTotals.svelte';
 	import {
 		endRecurrence,
 		frequencyLabel,
@@ -116,6 +117,7 @@
 			<button class="btn-primary" onclick={() => (editing = null)}>Criar recorrência</button>
 		</States>
 	{:else}
+		<RecurrenceTotals {recurrences} />
 		<Filterable>
 		<div class="card overflow-x-auto p-0">
 			<table class="table-base">
