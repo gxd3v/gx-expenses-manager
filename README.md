@@ -1,6 +1,6 @@
 # Gestor de Despesas
 
-Aplicação de finanças pessoais para computador. Regista para onde vai o dinheiro e mostra para onde caminha o saldo. Funciona inteiramente no próprio computador.
+Aplicação de finanças pessoais para computador (Windows e Linux). Regista para onde vai o dinheiro e mostra para onde caminha o saldo. Funciona inteiramente no próprio computador.
 
 Sem conta, sem cloud, sem subscrição. Os dados ficam num único ficheiro encriptado, que só a password abre.
 
@@ -40,7 +40,7 @@ Os dados nunca saem do computador.
 
 Existe um único pedido de rede: a **verificação de atualizações**. Com a aplicação desbloqueada, é descarregado um pequeno ficheiro público (`latest.json`) das releases deste repositório para saber se existe uma versão nova. Nenhuma informação pessoal ou financeira é enviada. A verificação pode ser desligada em **Definições → Atualizações**, e a partir daí a aplicação não faz qualquer pedido de rede.
 
-O instalador pode ainda descarregar o Microsoft WebView2, caso não esteja instalado. O Windows 11 e o Windows 10 atualizado já o incluem.
+No Windows, o instalador pode ainda descarregar o Microsoft WebView2, caso não esteja instalado. O Windows 11 e o Windows 10 atualizado já o incluem.
 
 ### Password
 
@@ -55,36 +55,51 @@ A password não é guardada em lado nenhum. A aplicação deriva dela a chave qu
 3. Abrir o **Gestor de Despesas** a partir do menu Iniciar.
 4. No primeiro arranque, definir a password (mínimo de 8 caracteres).
 
-### Atualizações
+## Instalação (Linux)
 
-Quando existe uma versão nova, aparece uma barra no topo da aplicação. **Ver novidades** mostra as notas da versão e **Atualizar agora** descarrega o instalador, verifica a assinatura, instala e reabre a aplicação. Os dados mantêm-se, e a base de dados é copiada automaticamente antes de qualquer atualização que altere a sua estrutura.
+Requer uma distribuição de 64 bits recente, como o Ubuntu 22.04, o Debian 12 ou o Fedora 38, ou posterior.
 
-Também é possível atualizar manualmente, executando o instalador mais recente sobre a instalação existente.
+**AppImage** (qualquer distribuição):
 
-### Desinstalação
+1. Descarregar **[GestordeDespesas_amd64.AppImage](https://github.com/gxd3v/gx-expenses-manager/releases/latest/download/GestordeDespesas_amd64.AppImage)**.
+2. Dar permissão de execução: `chmod +x GestordeDespesas_amd64.AppImage`.
+3. Executar o ficheiro. Em algumas distribuições é preciso instalar o `libfuse2` (no Ubuntu: `sudo apt install libfuse2`).
 
-Em **Definições do Windows → Aplicações → Gestor de Despesas → Desinstalar**. Os dados são **mantidos** por omissão, pelo que uma reinstalação retoma o estado anterior.
+**Pacote .deb** (Debian, Ubuntu e derivadas):
 
-Para apagar tudo, basta marcar no desinstalador a opção de eliminar os dados da aplicação.
+1. Descarregar **[GestordeDespesas_amd64.deb](https://github.com/gxd3v/gx-expenses-manager/releases/latest/download/GestordeDespesas_amd64.deb)**.
+2. Instalar com `sudo apt install ./GestordeDespesas_amd64.deb`.
+3. Abrir o **Gestor de Despesas** a partir do menu de aplicações.
 
-### Localização dos dados
+## Atualizações
 
-| O quê | Onde |
-|---|---|
-| Base de dados | `%APPDATA%\com.gxd3v.expenses\expenses.db` |
-| Backups (por omissão) | `%APPDATA%\com.gxd3v.expenses\backups\` |
-| Registos (apenas erros, sem valores) | `%LOCALAPPDATA%\com.gxd3v.expenses\logs\` |
+Quando existe uma versão nova, aparece uma barra no topo da aplicação. **Ver novidades** mostra as notas da versão e **Atualizar agora** descarrega a versão nova, verifica a assinatura, instala e reabre a aplicação. Os dados mantêm-se, e a base de dados é copiada automaticamente antes de qualquer atualização que altere a sua estrutura.
 
-A pasta dos backups pode ser alterada nas Definições. Uma pasta sincronizada com a cloud é segura, porque os backups também estão encriptados.
+Também é possível atualizar manualmente, instalando a versão mais recente sobre a existente. No Linux, com o pacote .deb, a atualização pede a password de administrador.
+
+## Desinstalação
+
+- **Windows:** em **Definições do Windows → Aplicações → Gestor de Despesas → Desinstalar**. Para apagar tudo, basta marcar no desinstalador a opção de eliminar os dados da aplicação.
+- **Linux:** apagar o ficheiro AppImage, ou `sudo apt remove gestor-de-despesas` no caso do pacote .deb. A pasta dos dados, indicada abaixo, pode ser apagada à mão.
+
+Os dados são **mantidos** por omissão, pelo que uma reinstalação retoma o estado anterior.
+
+## Localização dos dados
+
+| O quê | Windows | Linux |
+|---|---|---|
+| Base de dados | `%APPDATA%\com.gxd3v.expenses\expenses.db` | `~/.local/share/com.gxd3v.expenses/expenses.db` |
+| Backups (por omissão) | `%APPDATA%\com.gxd3v.expenses\backups\` | `~/.local/share/com.gxd3v.expenses/backups/` |
+| Registos (apenas erros, sem valores) | `%LOCALAPPDATA%\com.gxd3v.expenses\logs\` | `~/.local/share/com.gxd3v.expenses/logs/` |
+
+A pasta dos backups pode ser alterada nas Definições. Uma pasta sincronizada com a cloud é segura, porque os backups também estão encriptados. Para passar os dados de um sistema para o outro, basta exportar um backup num e importá-lo no outro.
 
 ## Compilar a partir do código
 
-Requisitos:
+Requisitos comuns: [Node.js](https://nodejs.org) 22.17 ou superior e [Rust](https://rustup.rs).
 
-- Windows 10/11
-- [Node.js](https://nodejs.org) 22.17 ou superior
-- [Rust](https://rustup.rs) (toolchain MSVC) e Visual Studio C++ Build Tools
-- [Strawberry Perl](https://strawberryperl.com). A compilação gera o OpenSSL usado pelo SQLCipher, e o Perl incluído no Git não serve.
+- **Windows 10/11:** toolchain MSVC do Rust, Visual Studio C++ Build Tools e [Strawberry Perl](https://strawberryperl.com). A compilação gera o OpenSSL usado pelo SQLCipher, e o Perl incluído no Git não serve.
+- **Linux:** as [dependências de sistema do Tauri](https://v2.tauri.app/start/prerequisites/#linux). No Ubuntu: `sudo apt install build-essential curl file perl pkg-config libssl-dev libwebkit2gtk-4.1-dev libxdo-dev libayatana-appindicator3-dev librsvg2-dev`.
 
 ```bash
 git clone https://github.com/gxd3v/gx-expenses-manager.git
@@ -93,9 +108,11 @@ npm install
 npm run tauri build
 ```
 
-Os instaladores ficam em `src-tauri/target/release/bundle/` (`nsis/` e `msi/`).
+Os pacotes ficam em `src-tauri/target/release/bundle/`: `nsis/` e `msi/` no Windows, `appimage/` e `deb/` no Linux.
 
-> Se a compilação do OpenSSL falhar por caminhos demasiado longos, basta apontar o Cargo para uma pasta mais curta, por exemplo `CARGO_TARGET_DIR=C:\cx`.
+> No Windows, se a compilação do OpenSSL falhar por caminhos demasiado longos, basta apontar o Cargo para uma pasta mais curta, por exemplo `CARGO_TARGET_DIR=C:\cx`.
+
+As releases são geradas a partir do Windows com `node scripts/release.mjs <notas.txt>`, que compila também os pacotes Linux num contentor Docker (`scripts/linux/`). Para isso, o Docker Desktop tem de estar a correr.
 
 ### Desenvolvimento
 
