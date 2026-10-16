@@ -8,6 +8,7 @@ pub mod graphql;
 mod managers;
 mod models;
 pub mod module;
+mod profiles;
 mod repositories;
 mod transformers;
 
@@ -49,6 +50,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::status,
             commands::unlock,
+            commands::create_user,
+            commands::migrate_user,
+            commands::update_user,
+            commands::delete_user,
             commands::lock,
             commands::graphql,
             commands::change_password,

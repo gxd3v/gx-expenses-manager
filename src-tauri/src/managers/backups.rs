@@ -4,11 +4,13 @@ use std::path::{Path, PathBuf};
 use age::secrecy::SecretString;
 use chrono::{DateTime, Utc};
 use serde_json::{Map, Value, json};
+use uuid::Uuid;
 
 use super::transactions::TransactionsManager;
 use crate::database;
 use crate::errors::AppError;
 use crate::models::TransactionFilter;
+use crate::profiles::Profile;
 use crate::repositories::backups::{BackupsRepository, LoadResult, TABLES, rows};
 use crate::repositories::settings::SettingsRepository;
 
@@ -53,6 +55,7 @@ pub struct BackupsManager {
     data_dir: PathBuf,
     password: SecretString,
     simulation: bool,
+    tag: String,
 }
 
 impl BackupsManager {
@@ -63,6 +66,7 @@ impl BackupsManager {
         data_dir: PathBuf,
         password: SecretString,
         simulation: bool,
+        user: Uuid,
     ) -> Self {
         Self {
             repository,
@@ -71,6 +75,7 @@ impl BackupsManager {
             data_dir,
             password,
             simulation,
+            tag: Profile::backup_tag(user),
         }
     }
 
@@ -178,7 +183,8 @@ impl BackupsManager {
         let dir = self.backup_dir().await?;
         fs::create_dir_all(&dir)?;
         let name = format!(
-            "{FILE_PREFIX}{prefix}{}.db",
+            "{FILE_PREFIX}{}-{prefix}{}.db",
+            self.tag,
             Utc::now().format("%Y%m%d-%H%M%S-%3f")
         );
         let path = dir.join(&name);
@@ -194,7 +200,7 @@ impl BackupsManager {
 
         let mut files: Vec<BackupFile> = fs::read_dir(dir)?
             .filter_map(|entry| entry.ok().map(|e| e.path()))
-            .filter(|path| is_backup(path))
+            .filter(|path| is_backup(path) && self.owns(path))
             .map(|path| backup_file(&path))
             .collect::<Result<_, _>>()?;
         files.sort_by_key(|file| std::cmp::Reverse(file.created_at));
@@ -207,7 +213,11 @@ impl BackupsManager {
             return Ok(None);
         }
 
-        let latest = self.list().await?.into_iter().next();
+        let latest = self
+            .list()
+            .await?
+            .into_iter()
+            .find(|b| self.automatic(&b.name));
         let due = latest.is_none_or(|b| {
             (Utc::now() - b.created_at).num_days() >= i64::from(settings.backup_frequency_days)
         });
@@ -230,11 +240,26 @@ impl BackupsManager {
             .list()
             .await?
             .into_iter()
-            .filter(|b| is_automatic(&b.name));
+            .filter(|b| self.automatic(&b.name));
         for backup in automatic.skip(keep) {
             fs::remove_file(backup.path)?;
         }
         Ok(())
+    }
+
+    fn automatic(&self, name: &str) -> bool {
+        name.starts_with(&format!("{FILE_PREFIX}{}-{AUTO_PREFIX}", self.tag))
+    }
+
+    fn owns(&self, path: &Path) -> bool {
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default();
+        match name.strip_prefix(FILE_PREFIX).and_then(tag_of) {
+            Some(tag) => tag == self.tag,
+            None => true,
+        }
     }
 
     async fn backup_dir(&self) -> Result<PathBuf, AppError> {
@@ -343,10 +368,12 @@ fn is_backup(path: &Path) -> bool {
         && name.ends_with(".db")
 }
 
-fn is_automatic(name: &str) -> bool {
-    [FILE_PREFIX, LEGACY_FILE_PREFIX]
-        .iter()
-        .any(|prefix| name.starts_with(&format!("{prefix}{AUTO_PREFIX}")))
+fn tag_of(rest: &str) -> Option<&str> {
+    let tag = rest.get(..9)?;
+    let tagged = tag.starts_with('u')
+        && tag[1..].chars().all(|c| c.is_ascii_hexdigit())
+        && rest[9..].starts_with('-');
+    tagged.then_some(tag)
 }
 
 fn backup_file(path: &Path) -> Result<BackupFile, AppError> {

@@ -21,6 +21,7 @@ fn module(db: &TestDatabase) -> Module {
         data_dir: db.dir.clone(),
         password: SecretString::from(PASSWORD.to_string()),
         simulation: false,
+        user: Uuid::nil(),
     };
     Module::new(db.pool.clone(), context)
 }
@@ -1048,6 +1049,7 @@ async fn simulations_work_on_a_disposable_copy() {
             data_dir: db.dir.clone(),
             password: SecretString::from(PASSWORD.to_string()),
             simulation: true,
+            user: Uuid::nil(),
         },
     );
     simulated
@@ -1223,6 +1225,7 @@ async fn restore_replaces_database_and_keeps_safety_copy() {
             data_dir: db.dir.clone(),
             password: SecretString::from(PASSWORD.to_string()),
             simulation: false,
+            user: Uuid::nil(),
         },
     );
     let balance = restored
@@ -1256,6 +1259,7 @@ async fn reset_starts_clean_with_the_same_password() {
             data_dir: db.dir.clone(),
             password: SecretString::from(PASSWORD.to_string()),
             simulation: false,
+            user: Uuid::nil(),
         },
     );
     assert!(fresh.accounts.list(today(), true).await.unwrap().is_empty());
@@ -1298,6 +1302,7 @@ async fn introspection_fits_query_limits() {
         data_dir: db.dir.clone(),
         password: SecretString::from(PASSWORD.to_string()),
         simulation: false,
+        user: Uuid::nil(),
     };
     let schema = crate::graphql::schema(db.pool.clone(), context);
     let query = "query { __schema { types { name fields { name args { name type { ...Ref } } type { ...Ref } } } } } \
@@ -1355,4 +1360,37 @@ async fn credits_expose_history_and_link_one_recurrence() {
         module.credits.add_recurrence(credit.id, today()).await,
         Err(AppError::Conflict(_))
     ));
+}
+
+#[tokio::test]
+async fn users_sharing_a_backup_folder_keep_their_own_backups() {
+    let first = TestDatabase::new().await;
+    let second = TestDatabase::new().await;
+    let context = |user: Uuid| AppContext {
+        data_dir: first.dir.clone(),
+        password: SecretString::from(PASSWORD.to_string()),
+        simulation: false,
+        user,
+    };
+    let ana = Module::new(first.pool.clone(), context(Uuid::now_v7()));
+    let rui = Module::new(second.pool.clone(), context(Uuid::now_v7()));
+    let mut settings = rui.settings.get().await.unwrap();
+    settings.backup_keep = 1;
+    settings.backup_frequency_days = 1;
+    rui.settings.update(settings).await.unwrap();
+
+    ana.backups.create_backup("auto-").await.unwrap();
+    ana.backups.create_backup("auto-").await.unwrap();
+    std::fs::write(
+        first
+            .dir
+            .join("backups")
+            .join("expenses-manager-20260101-000000-000.db"),
+        b"",
+    )
+    .unwrap();
+    assert!(rui.backups.auto_backup().await.unwrap().is_some());
+
+    assert_eq!(ana.backups.list().await.unwrap().len(), 3);
+    assert_eq!(rui.backups.list().await.unwrap().len(), 2);
 }

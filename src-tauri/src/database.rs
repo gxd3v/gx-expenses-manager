@@ -146,13 +146,13 @@ fn wait_released(database: &Path) {
     }
 }
 
-fn sidecar(database: &Path, suffix: &str) -> PathBuf {
+pub fn sidecar(database: &Path, suffix: &str) -> PathBuf {
     let mut path = database.as_os_str().to_owned();
     path.push(suffix);
     PathBuf::from(path)
 }
 
-fn retry(mut operation: impl FnMut() -> std::io::Result<()>) -> std::io::Result<()> {
+pub fn retry(mut operation: impl FnMut() -> std::io::Result<()>) -> std::io::Result<()> {
     for _ in 1..FILE_RETRIES {
         match operation() {
             Err(error) if error.raw_os_error() == Some(SHARING_VIOLATION) => {

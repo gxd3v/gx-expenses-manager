@@ -22,6 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         data_dir,
         password: SecretString::from(password),
         simulation: false,
+        user: uuid::Uuid::nil(),
     };
     let schema = graphql::schema(pool, context);
 

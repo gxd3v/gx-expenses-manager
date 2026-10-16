@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use age::secrecy::SecretString;
 use sqlx::SqlitePool;
+use uuid::Uuid;
 
 use crate::managers::accounts::AccountsManager;
 use crate::managers::alerts::AlertsManager;
@@ -39,6 +40,7 @@ pub struct AppContext {
     pub data_dir: PathBuf,
     pub password: SecretString,
     pub simulation: bool,
+    pub user: Uuid,
 }
 
 pub struct Module {
@@ -134,6 +136,7 @@ impl Module {
                 context.data_dir,
                 context.password,
                 context.simulation,
+                context.user,
             ),
             transactions: transactions_manager,
             recurrences: recurrences_manager,
