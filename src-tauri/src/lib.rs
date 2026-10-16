@@ -5,6 +5,7 @@ mod commands;
 pub mod database;
 pub mod errors;
 pub mod graphql;
+mod joint;
 mod managers;
 mod models;
 pub mod module;
@@ -54,6 +55,11 @@ pub fn run() {
             commands::migrate_user,
             commands::update_user,
             commands::delete_user,
+            commands::add_member,
+            commands::remove_member,
+            commands::switch_to_joint,
+            commands::switch_back,
+            commands::member_recurrences,
             commands::lock,
             commands::graphql,
             commands::change_password,

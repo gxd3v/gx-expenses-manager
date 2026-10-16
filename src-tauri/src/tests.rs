@@ -1394,3 +1394,27 @@ async fn users_sharing_a_backup_folder_keep_their_own_backups() {
     assert_eq!(ana.backups.list().await.unwrap().len(), 3);
     assert_eq!(rui.backups.list().await.unwrap().len(), 2);
 }
+
+#[tokio::test]
+async fn joint_keys_are_stored_replaced_and_forgotten() {
+    let db = TestDatabase::new().await;
+    let (casa, praia) = (Uuid::now_v7(), Uuid::now_v7());
+
+    crate::joint::store(&db.pool, casa, "old-password")
+        .await
+        .unwrap();
+    crate::joint::store(&db.pool, casa, "new-password")
+        .await
+        .unwrap();
+    crate::joint::store(&db.pool, praia, "beach-password")
+        .await
+        .unwrap();
+    let key = crate::joint::key(&db.pool, casa).await.unwrap();
+    assert_eq!(key.as_deref(), Some("new-password"));
+
+    crate::joint::forget_others(&db.pool, &[praia])
+        .await
+        .unwrap();
+    assert!(crate::joint::key(&db.pool, casa).await.unwrap().is_none());
+    assert!(crate::joint::key(&db.pool, praia).await.unwrap().is_some());
+}

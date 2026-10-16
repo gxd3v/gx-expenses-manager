@@ -23,6 +23,10 @@ pub struct Profile {
     pub name: String,
     pub color: String,
     pub created_at: DateTime<Utc>,
+    #[serde(default)]
+    pub joint: bool,
+    #[serde(default)]
+    pub members: Vec<Uuid>,
 }
 
 impl Profile {
@@ -57,12 +61,14 @@ pub fn has_legacy(base: &Path) -> bool {
     base.join(DATABASE_FILE).exists()
 }
 
-pub fn create(base: &Path, name: &str, color: &str) -> Result<Profile, AppError> {
+pub fn create(base: &Path, name: &str, color: &str, joint: bool) -> Result<Profile, AppError> {
     let profile = Profile {
         id: Uuid::now_v7(),
         name: validate(base, None, name, color)?,
         color: color.to_string(),
         created_at: Utc::now(),
+        joint,
+        members: Vec::new(),
     };
     fs::create_dir_all(dir(base, profile.id))?;
     write(base, &profile)?;
@@ -73,6 +79,15 @@ pub fn update(base: &Path, id: Uuid, name: &str, color: &str) -> Result<Profile,
     let profile = Profile {
         name: validate(base, Some(id), name, color)?,
         color: color.to_string(),
+        ..get(base, id)?
+    };
+    write(base, &profile)?;
+    Ok(profile)
+}
+
+pub fn set_members(base: &Path, id: Uuid, members: Vec<Uuid>) -> Result<Profile, AppError> {
+    let profile = Profile {
+        members,
         ..get(base, id)?
     };
     write(base, &profile)?;
@@ -101,7 +116,7 @@ pub fn migrate_legacy(base: &Path, name: &str, color: &str) -> Result<Profile, A
     let safety = backups.join(format!("{LEGACY_BACKUP_PREFIX}pre-users-{stamp}.db"));
     database::retry(|| fs::copy(base.join(DATABASE_FILE), &safety).map(drop))?;
 
-    let profile = create(base, name, color)?;
+    let profile = create(base, name, color, false)?;
     let target = dir(base, profile.id);
     let database = base.join(DATABASE_FILE);
     let moves: Vec<(PathBuf, PathBuf)> = [
@@ -223,14 +238,14 @@ mod tests {
     #[test]
     fn users_are_listed_in_creation_order_with_unique_names() {
         let base = Base::new();
-        let ana = create(&base.0, " Ana ", COLOR).unwrap();
-        let rui = create(&base.0, "Rui", "#F8C8DC").unwrap();
+        let ana = create(&base.0, " Ana ", COLOR, false).unwrap();
+        let rui = create(&base.0, "Rui", "#F8C8DC", false).unwrap();
 
         assert_eq!(ana.name, "Ana");
         assert_eq!(list(&base.0).unwrap(), vec![ana.clone(), rui.clone()]);
-        assert!(create(&base.0, "ana", COLOR).is_err());
-        assert!(create(&base.0, "", COLOR).is_err());
-        assert!(create(&base.0, "Maria", "azul").is_err());
+        assert!(create(&base.0, "ana", COLOR, false).is_err());
+        assert!(create(&base.0, "", COLOR, false).is_err());
+        assert!(create(&base.0, "Maria", "azul", false).is_err());
         assert!(update(&base.0, rui.id, "Ana", COLOR).is_err());
 
         let renamed = update(&base.0, rui.id, "Rui Pedro", COLOR).unwrap();
@@ -280,6 +295,33 @@ mod tests {
         );
         assert!(backups.iter().any(|name| name.contains("-pre-users-")));
         assert_eq!(list(&base.0).unwrap(), vec![profile]);
+    }
+
+    #[test]
+    fn joint_users_keep_their_members() {
+        let base = Base::new();
+        let ana = create(&base.0, "Ana", COLOR, false).unwrap();
+        let casa = create(&base.0, "Casa", COLOR, true).unwrap();
+        assert!(casa.joint && casa.members.is_empty());
+
+        set_members(&base.0, casa.id, vec![ana.id]).unwrap();
+        let renamed = update(&base.0, casa.id, "Casa Nova", "#F8C8DC").unwrap();
+        assert!(renamed.joint);
+        assert_eq!(renamed.members, vec![ana.id]);
+    }
+
+    #[test]
+    fn profiles_written_before_joint_users_still_load() {
+        let base = Base::new();
+        let id = Uuid::now_v7();
+        fs::create_dir_all(dir(&base.0, id)).unwrap();
+        let json = format!(
+            r##"{{"id":"{id}","name":"Ana","color":"#BFDDF7","createdAt":"2026-10-10T10:00:00Z"}}"##
+        );
+        fs::write(dir(&base.0, id).join(PROFILE_FILE), json).unwrap();
+
+        let profile = get(&base.0, id).unwrap();
+        assert!(!profile.joint && profile.members.is_empty());
     }
 
     #[test]
