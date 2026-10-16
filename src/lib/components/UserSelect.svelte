@@ -13,7 +13,7 @@
 
 	let mode = $state<Mode>(initialMode());
 	let selected = $state<Profile | null>(null);
-	let form = $state({ name: '', color: USER_COLORS[0], password: '', confirmation: '' });
+	let form = $state({ name: '', color: USER_COLORS[0], password: '', confirmation: '', joint: false });
 	let error = $state('');
 	let busy = $state(false);
 
@@ -23,7 +23,7 @@
 		mode = next;
 		selected = user;
 		error = '';
-		form = { name: '', color: USER_COLORS[status.users.length % USER_COLORS.length], password: '', confirmation: '' };
+		form = { name: '', color: USER_COLORS[status.users.length % USER_COLORS.length], password: '', confirmation: '', joint: false };
 	}
 
 	function validate(): string {
@@ -38,7 +38,7 @@
 	function run(): Promise<void> {
 		if (mode === 'unlock' && selected) return unlock(selected.id, form.password);
 		if (mode === 'migrate') return migrateUser(form.name, form.color, form.password);
-		return createUser(form.name, form.color, form.password);
+		return createUser(form.name, form.color, form.password, form.joint);
 	}
 
 	async function submit(event: SubmitEvent) {
@@ -79,7 +79,7 @@
 							: ''}"
 						onclick={() => open('unlock', user)}
 					>
-						<UserAvatar color={user.color} size="lg" />
+						<UserAvatar color={user.color} joint={user.joint} size="lg" />
 						<span class="w-full truncate text-sm font-medium">{user.name}</span>
 					</button>
 				{/each}
@@ -93,7 +93,7 @@
 		<form onsubmit={submit} class="card w-full max-w-sm space-y-4 shadow">
 			{#if mode === 'unlock' && selected}
 				<div class="flex flex-col items-center gap-2 text-center">
-					<UserAvatar color={selected.color} size="lg" />
+					<UserAvatar color={selected.color} joint={selected.joint} size="lg" />
 					<h1 class="text-lg font-semibold">{selected.name}</h1>
 				</div>
 			{:else}
@@ -122,7 +122,7 @@
 								aria-label="Cor {color}"
 								aria-pressed={form.color === color}
 							>
-								<UserAvatar {color} size="md" />
+								<UserAvatar {color} joint={form.joint} size="md" />
 							</button>
 						{/each}
 					</div>
@@ -130,6 +130,13 @@
 			{/if}
 
 			{#if mode === 'create'}
+				<label class="flex items-start gap-2 text-sm">
+					<input type="checkbox" bind:checked={form.joint} class="mt-0.5" />
+					<span>
+						Conta conjunta
+						<span class="block text-xs text-stone-500">Partilhada por vários utilizadores, que depois podem ser associados como membros.</span>
+					</span>
+				</label>
 				<p class="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
 					Os dados ficam encriptados com esta password. Sem ela não é possível recuperá-los; recomenda-se guardá-la num gestor de passwords.
 				</p>

@@ -3,9 +3,16 @@
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import PrivacyToggle from './PrivacyToggle.svelte';
 	import UserAvatar from './UserAvatar.svelte';
-	import { current } from '#lib/user.svelte.ts';
+	import { current, jointsOf } from '#lib/user.svelte.ts';
+	import type { Profile } from '#lib/session.ts';
 
-	let { onlock }: { onlock?: () => void } = $props();
+	let {
+		onlock,
+		onjoint,
+		onback
+	}: { onlock?: () => void; onjoint?: (joint: Profile) => void; onback?: () => void } = $props();
+
+	const joints = $derived(jointsOf(current.user));
 
 	const appWindow = getCurrentWindow();
 
@@ -35,6 +42,21 @@
 
 	<div class="flex h-full">
 		<PrivacyToggle compact />
+		{#if onback && current.returnTo}
+			<button class="titlebar-button !w-auto gap-2 !px-3 text-xs" onclick={onback} title="Voltar para {current.returnTo.name}">
+				<span aria-hidden="true">←</span>
+				<UserAvatar color={current.returnTo.color} size="sm" />
+				<span class="max-w-32 truncate">{current.returnTo.name}</span>
+			</button>
+		{/if}
+		{#if onjoint}
+			{#each joints as joint (joint.id)}
+				<button class="titlebar-button !w-auto gap-2 !px-3 text-xs" onclick={() => onjoint(joint)} title="Trocar para {joint.name}">
+					<UserAvatar color={joint.color} joint size="sm" />
+					<span class="max-w-32 truncate">{joint.name}</span>
+				</button>
+			{/each}
+		{/if}
 		{#if onlock && current.user}
 			<button
 				class="titlebar-button !w-auto gap-2 !px-3 text-xs"
@@ -42,8 +64,8 @@
 				aria-label="Trocar de utilizador (Ctrl+L)"
 				title="Trocar de utilizador (Ctrl+L)"
 			>
-				<UserAvatar color={current.user.color} size="sm" />
-				<span class="max-w-40 truncate">{current.user.name}</span>
+				<UserAvatar color={current.user.color} joint={current.user.joint} size="sm" />
+				<span class="max-w-40 truncate font-medium">{current.user.name}</span>
 			</button>
 		{/if}
 		<button class="titlebar-button" onclick={() => appWindow.minimize()} aria-label="Minimizar" title="Minimizar">

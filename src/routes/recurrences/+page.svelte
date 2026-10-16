@@ -4,6 +4,8 @@
 	import Money from '#lib/components/Money.svelte';
 	import RecurrenceForm from './RecurrenceForm.svelte';
 	import RecurrenceTotals from './RecurrenceTotals.svelte';
+	import ImportRecurrences from './ImportRecurrences.svelte';
+	import { current, membersOf } from '#lib/user.svelte.ts';
 	import {
 		endRecurrence,
 		frequencyLabel,
@@ -33,6 +35,8 @@
 	let occurrences = $state<Occurrence[]>([]);
 	let changing = $state<{ occurrence: Occurrence; amount: number | null; date: string } | null>(null);
 	let request = $state<Promise<Recurrence[]>>(new Promise(() => {}));
+	let importing = $state(false);
+	const canImport = $derived(current.user?.joint && membersOf(current.user).length > 0);
 	let filters = $state({ frequency: '', account: '', status: '' });
 
 	$effect(() => {
@@ -105,6 +109,7 @@
 
 <PageHeader title="Recorrências" subtitle="Despesas e receitas que se repetem. Alimentam as previsões.">
 	{#snippet actions()}
+		{#if canImport}<button class="btn-secondary" onclick={() => (importing = true)}>Importar de um membro</button>{/if}
 		<button class="btn-primary" onclick={() => (editing = null)}>Nova recorrência</button>
 	{/snippet}
 </PageHeader>
@@ -213,6 +218,10 @@
 			oncancel={() => (editing = undefined)}
 		/>
 	</Modal>
+{/if}
+
+{#if importing}
+	<ImportRecurrences onclose={() => (importing = false)} />
 {/if}
 
 {#if changing}

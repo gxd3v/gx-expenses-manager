@@ -1,8 +1,26 @@
-import type { Profile } from './session.ts';
+import type { Profile, Status } from './session.ts';
 
 const LAST_USER_KEY = 'expenses-manager-last-user';
 
-export const current = $state<{ user: Profile | null }>({ user: null });
+export const current = $state<{ user: Profile | null; users: Profile[]; returnTo: Profile | null }>({
+	user: null,
+	users: [],
+	returnTo: null
+});
+
+export function setSession(status: Status) {
+	current.users = status.users;
+	current.returnTo = status.returnTo;
+	setCurrentUser(status.user);
+}
+
+export function jointsOf(user: Profile | null): Profile[] {
+	return user ? current.users.filter((u) => u.joint && u.members.includes(user.id)) : [];
+}
+
+export function membersOf(user: Profile | null): Profile[] {
+	return user ? current.users.filter((u) => user.members.includes(u.id)) : [];
+}
 
 export function setCurrentUser(user: Profile | null) {
 	current.user = user;

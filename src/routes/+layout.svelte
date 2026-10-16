@@ -15,14 +15,16 @@
 	import UserSelect from '#lib/components/UserSelect.svelte';
 	import { errorMessage, isTauri } from '#lib/graphql.ts';
 	import { dataChanged, loadRefs, refs } from '#lib/refs.svelte.ts';
-	import { lock, status, type Status } from '#lib/session.ts';
+	import { lock, status, switchBack, switchToJoint, type Profile, type Status } from '#lib/session.ts';
+	import Modal from '#lib/components/Modal.svelte';
+	import { notifyError } from '#lib/toasts.svelte.ts';
 	import { loadPrivacy, togglePrivacy } from '#lib/privacy.svelte.ts';
 	import { app, loadSettings, restoreTheme } from '#lib/settings.svelte.ts';
 	import { openQuickAdd, ui } from '#lib/ui.svelte.ts';
 	import { today } from '#lib/format.ts';
 	import { simulation, toggleSimulation } from '#lib/simulation.svelte.ts';
 	import { checkForUpdates, updates } from '#lib/updates.svelte.ts';
-	import { current, setCurrentUser } from '#lib/user.svelte.ts';
+	import { current, setSession } from '#lib/user.svelte.ts';
 
 	let { children } = $props();
 
@@ -68,7 +70,7 @@
 
 	async function refresh() {
 		session = await status();
-		setCurrentUser(session.user);
+		setSession(session);
 		loadPrivacy();
 		simulation.active = session.simulation;
 		ready = false;
@@ -85,6 +87,31 @@
 		} catch (e) {
 			startupError = errorMessage(e);
 		}
+	}
+
+	let jointPrompt = $state<{ joint: Profile; password: string; error: string } | null>(null);
+
+	async function enterJoint(joint: Profile, password: string | null = null) {
+		clearTimeout(idleTimer);
+		try {
+			await switchToJoint(joint.id, password);
+			jointPrompt = null;
+		} catch (e) {
+			jointPrompt = { joint, password: '', error: password === null ? '' : String(e) };
+			return;
+		}
+		await refresh();
+	}
+
+	async function leaveJoint() {
+		clearTimeout(idleTimer);
+		await switchBack().catch(notifyError);
+		await refresh();
+	}
+
+	function submitJointPassword(event: SubmitEvent) {
+		event.preventDefault();
+		if (jointPrompt) enterJoint(jointPrompt.joint, jointPrompt.password);
 	}
 
 	async function handleLock() {
@@ -161,7 +188,7 @@
 
 <div class="flex h-screen flex-col">
 {#if isTauri}
-	<TitleBar onlock={ready ? handleLock : undefined} />
+	<TitleBar onlock={ready ? handleLock : undefined} onjoint={ready ? enterJoint : undefined} onback={ready ? leaveJoint : undefined} />
 {/if}
 <div class="relative min-h-0 flex-1">
 {#if session && !session.unlocked}
@@ -183,7 +210,7 @@
 				<PrivacyToggle />
 				{#if current.user}
 					<button class="btn-ghost" onclick={handleLock} aria-label="Trocar de utilizador" title="Trocar de utilizador">
-						<UserAvatar color={current.user.color} size="sm" />
+						<UserAvatar color={current.user.color} joint={current.user.joint} size="sm" />
 					</button>
 				{/if}
 				<button class="btn-primary" onclick={() => openQuickAdd()} aria-label="Adicionar">+</button>
@@ -265,5 +292,22 @@
 {/if}
 </div>
 </div>
+
+{#if jointPrompt}
+	<Modal title="Trocar para {jointPrompt.joint.name}" onclose={() => (jointPrompt = null)}>
+		<form onsubmit={submitJointPassword} class="space-y-4">
+			<p class="muted">É necessária a password da conta conjunta. Fica guardada nos dados deste utilizador para as próximas trocas.</p>
+			<label class="label">
+				Password da conta conjunta
+				<input type="password" bind:value={jointPrompt.password} class="input" autocomplete="off" required />
+			</label>
+			{#if jointPrompt.error}<p class="text-sm text-red-600" role="alert">{jointPrompt.error}</p>{/if}
+			<div class="flex justify-end gap-2">
+				<button type="button" class="btn-secondary" onclick={() => (jointPrompt = null)}>Cancelar</button>
+				<button type="submit" class="btn-primary">Trocar</button>
+			</div>
+		</form>
+	</Modal>
+{/if}
 
 <Toasts />

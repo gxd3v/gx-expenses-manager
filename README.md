@@ -7,6 +7,7 @@ Sem conta, sem cloud, sem subscrição. Os dados ficam num único ficheiro encri
 ## Funcionalidades
 
 - **Vários utilizadores.** Cada pessoa da casa tem o seu utilizador, com os seus dados e a sua password, no mesmo computador. Ao abrir, a aplicação mostra a lista de utilizadores.
+- **Contas conjuntas.** Um utilizador pode ser marcado como conta conjunta e ter membros. Cada membro troca para a conta conjunta a partir da sua própria conta, sem escrever a password dela, e as recorrências dos membros podem ser copiadas para a conta conjunta, com a opção de inverter o sentido (por exemplo, uma ajuda à casa passa a contribuição).
 - **Contas e movimentos.** Contas à ordem, poupança, cartões, cartão refeição e dinheiro físico. Receitas, despesas e transferências entre contas, organizadas por categorias e subcategorias.
 - **Recorrências.** Salário, renda, subscrições e transferências periódicas. Cada ocorrência pode ser saltada ou alterada, e os valores variáveis ficam a aguardar confirmação.
 - **Créditos.** Plano de amortização, divisão de cada prestação em capital e juros, e simulação de amortizações antecipadas.

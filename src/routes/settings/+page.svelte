@@ -20,12 +20,23 @@
 	import { formatDate, today } from '#lib/format.ts';
 	import { errorMessage, isTauri } from '#lib/graphql.ts';
 	import { dataChanged } from '#lib/refs.svelte.ts';
-	import { changePassword, deleteUser, resetData, restoreBackup, status, updateUser, USER_COLORS } from '#lib/session.ts';
+	import {
+		addMember,
+		changePassword,
+		deleteUser,
+		removeMember,
+		resetData,
+		restoreBackup,
+		status,
+		updateUser,
+		USER_COLORS,
+		type Profile
+	} from '#lib/session.ts';
 	import { app, loadSettings, saveSettings, type Settings } from '#lib/settings.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 	import { checkNow } from '#lib/updates.svelte.ts';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
-	import { current, setCurrentUser } from '#lib/user.svelte.ts';
+	import { current, membersOf, setCurrentUser, setSession } from '#lib/user.svelte.ts';
 
 	let form = $state<Settings>(untrack(() => ({ ...app.settings! })));
 	let backups = $state<BackupFile[]>([]);
@@ -35,6 +46,9 @@
 	let reset = $state({ password: '', phrase: '' });
 	let profile = $state(untrack(() => ({ name: current.user?.name ?? '', color: current.user?.color ?? USER_COLORS[0] })));
 	let removal = $state({ password: '', phrase: '' });
+	let membership = $state({ userId: '', password: '' });
+
+	const candidates = $derived(current.users.filter((u) => !u.joint && !current.user?.members.includes(u.id)));
 
 	const RESET_PHRASE = 'APAGAR TUDO';
 	const DELETE_PHRASE = 'APAGAR UTILIZADOR';
@@ -203,6 +217,30 @@
 		try {
 			setCurrentUser(await updateUser(profile.name, profile.color));
 			notify('Utilizador guardado');
+		} catch (e) {
+			notifyError(e);
+		}
+	}
+
+	async function submitMember(event: SubmitEvent) {
+		event.preventDefault();
+		const userId = membership.userId || candidates[0]?.id;
+		if (!userId) return;
+		try {
+			await addMember(userId, membership.password);
+			membership = { userId: '', password: '' };
+			setSession(await status());
+			notify('Membro adicionado');
+		} catch (e) {
+			notifyError(e);
+		}
+	}
+
+	async function dropMember(member: Profile) {
+		if (!(await confirmAction(`Remover "${member.name}" dos membros desta conta?`))) return;
+		try {
+			await removeMember(member.id);
+			setSession(await status());
 		} catch (e) {
 			notifyError(e);
 		}
@@ -409,13 +447,51 @@
 						aria-label="Cor {color}"
 						aria-pressed={profile.color === color}
 					>
-						<UserAvatar {color} size="md" />
+						<UserAvatar {color} joint={current.user?.joint} size="md" />
 					</button>
 				{/each}
 			</div>
 		</div>
 		<div class="flex items-end"><button class="btn-secondary w-full">Guardar</button></div>
 	</form>
+
+	{#if current.user?.joint}
+		<section class="card mt-6 space-y-4">
+			<div>
+				<h2 class="font-medium">Membros</h2>
+				<p class="muted">
+					Os membros trocam para esta conta a partir da sua própria conta, sem escrever a password desta, e as suas recorrências podem ser
+					importadas para aqui.
+				</p>
+			</div>
+			<ul class="space-y-2">
+				{#each membersOf(current.user) as member (member.id)}
+					<li class="flex items-center gap-3">
+						<UserAvatar color={member.color} size="sm" />
+						<span class="flex-1 text-sm">{member.name}</span>
+						<button class="btn-ghost text-red-600" onclick={() => dropMember(member)}>Remover</button>
+					</li>
+				{:else}
+					<li class="muted">Sem membros.</li>
+				{/each}
+			</ul>
+			{#if candidates.length}
+				<form onsubmit={submitMember} class="grid grid-cols-2 gap-4 md:grid-cols-4">
+					<label class="label">
+						Utilizador
+						<select bind:value={membership.userId} class="input">
+							{#each candidates as candidate (candidate.id)}<option value={candidate.id}>{candidate.name}</option>{/each}
+						</select>
+					</label>
+					<label class="label">
+						Password do utilizador
+						<input type="password" bind:value={membership.password} class="input" autocomplete="off" required />
+					</label>
+					<div class="flex items-end"><button class="btn-secondary w-full">Adicionar membro</button></div>
+				</form>
+			{/if}
+		</section>
+	{/if}
 
 	<form onsubmit={updatePassword} class="card mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
 		<h2 class="col-span-2 font-medium md:col-span-4">Alterar password</h2>
