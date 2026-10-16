@@ -20,10 +20,12 @@
 	import { formatDate, today } from '#lib/format.ts';
 	import { errorMessage, isTauri } from '#lib/graphql.ts';
 	import { dataChanged } from '#lib/refs.svelte.ts';
-	import { changePassword, resetData, restoreBackup, status } from '#lib/session.ts';
+	import { changePassword, deleteUser, resetData, restoreBackup, status, updateUser, USER_COLORS } from '#lib/session.ts';
 	import { app, loadSettings, saveSettings, type Settings } from '#lib/settings.svelte.ts';
 	import { notify, notifyError } from '#lib/toasts.svelte.ts';
 	import { checkNow } from '#lib/updates.svelte.ts';
+	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import { current, setCurrentUser } from '#lib/user.svelte.ts';
 
 	let form = $state<Settings>(untrack(() => ({ ...app.settings! })));
 	let backups = $state<BackupFile[]>([]);
@@ -31,8 +33,11 @@
 	let passwords = $state({ current: '', next: '', confirm: '' });
 	let exportPassword = $state('');
 	let reset = $state({ password: '', phrase: '' });
+	let profile = $state(untrack(() => ({ name: current.user?.name ?? '', color: current.user?.color ?? USER_COLORS[0] })));
+	let removal = $state({ password: '', phrase: '' });
 
 	const RESET_PHRASE = 'APAGAR TUDO';
+	const DELETE_PHRASE = 'APAGAR UTILIZADOR';
 
 	let checking = $state(false);
 
@@ -189,6 +194,30 @@
 		} catch (e) {
 			notifyError(e);
 		} finally {
+			busy = false;
+		}
+	}
+
+	async function saveProfile(event: SubmitEvent) {
+		event.preventDefault();
+		try {
+			setCurrentUser(await updateUser(profile.name, profile.color));
+			notify('Utilizador guardado');
+		} catch (e) {
+			notifyError(e);
+		}
+	}
+
+	async function removeUser(event: SubmitEvent) {
+		event.preventDefault();
+		if (removal.phrase !== DELETE_PHRASE) return;
+		if (!(await confirmAction(`Apagar o utilizador "${current.user?.name}" e todos os seus dados? Não é possível desfazer.`))) return;
+		busy = true;
+		try {
+			await deleteUser(removal.password);
+			window.location.assign('/');
+		} catch (e) {
+			notifyError(e);
 			busy = false;
 		}
 	}
@@ -363,6 +392,31 @@
 </section>
 
 {#if isTauri}
+	<form onsubmit={saveProfile} class="card mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+		<h2 class="col-span-2 font-medium md:col-span-4">Utilizador</h2>
+		<label class="label">
+			Nome
+			<input bind:value={profile.name} class="input" maxlength="40" required />
+		</label>
+		<div class="label md:col-span-2">
+			Cor
+			<div class="flex flex-wrap gap-2">
+				{#each USER_COLORS as color (color)}
+					<button
+						type="button"
+						class="rounded-full p-0.5 ring-2 {profile.color === color ? 'ring-indigo-500' : 'ring-transparent'}"
+						onclick={() => (profile.color = color)}
+						aria-label="Cor {color}"
+						aria-pressed={profile.color === color}
+					>
+						<UserAvatar {color} size="md" />
+					</button>
+				{/each}
+			</div>
+		</div>
+		<div class="flex items-end"><button class="btn-secondary w-full">Guardar</button></div>
+	</form>
+
 	<form onsubmit={updatePassword} class="card mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
 		<h2 class="col-span-2 font-medium md:col-span-4">Alterar password</h2>
 		<label class="label">
@@ -397,6 +451,25 @@
 		</label>
 		<div class="flex items-end md:col-span-2">
 			<button class="btn-danger" disabled={busy || reset.phrase !== RESET_PHRASE}>Apagar tudo</button>
+		</div>
+	</form>
+
+	<form onsubmit={removeUser} class="card mt-6 grid grid-cols-2 gap-4 border-red-300 md:grid-cols-4 dark:border-red-900">
+		<h2 class="col-span-2 font-medium text-red-700 md:col-span-4 dark:text-red-400">Zona perigosa · apagar utilizador</h2>
+		<p class="col-span-2 muted md:col-span-4">
+			Apaga este utilizador, a sua base de dados e os backups na pasta por omissão. Os backups numa pasta personalizada mantêm-se. Não é
+			possível desfazer.
+		</p>
+		<label class="label">
+			Password
+			<input type="password" bind:value={removal.password} class="input" autocomplete="current-password" required />
+		</label>
+		<label class="label">
+			Confirmação: "{DELETE_PHRASE}"
+			<input bind:value={removal.phrase} class="input" autocomplete="off" required />
+		</label>
+		<div class="flex items-end md:col-span-2">
+			<button class="btn-danger" disabled={busy || removal.phrase !== DELETE_PHRASE}>Apagar utilizador</button>
 		</div>
 	</form>
 {/if}

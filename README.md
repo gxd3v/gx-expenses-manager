@@ -6,6 +6,7 @@ Sem conta, sem cloud, sem subscrição. Os dados ficam num único ficheiro encri
 
 ## Funcionalidades
 
+- **Vários utilizadores.** Cada pessoa da casa tem o seu utilizador, com os seus dados e a sua password, no mesmo computador. Ao abrir, a aplicação mostra a lista de utilizadores.
 - **Contas e movimentos.** Contas à ordem, poupança, cartões, cartão refeição e dinheiro físico. Receitas, despesas e transferências entre contas, organizadas por categorias e subcategorias.
 - **Recorrências.** Salário, renda, subscrições e transferências periódicas. Cada ocorrência pode ser saltada ou alterada, e os valores variáveis ficam a aguardar confirmação.
 - **Créditos.** Plano de amortização, divisão de cada prestação em capital e juros, e simulação de amortizações antecipadas.
@@ -24,7 +25,7 @@ Sem conta, sem cloud, sem subscrição. Os dados ficam num único ficheiro encri
   - Exportação CSV
 - **Avisos.** Pagamentos próximos, agendamentos a terminar, saldo baixo e previsão negativa.
 - **Privacidade.**
-  - Bloqueio com `Ctrl+L` ou automático por inatividade.
+  - Bloqueio e troca de utilizador com `Ctrl+L` ou automático por inatividade.
   - Ocultação de todos os valores no ecrã com `Ctrl+H`.
 - **Backups.** Backups automáticos e exportação para outro computador, com encriptação opcional.
 - **Tema claro e escuro.**
@@ -53,7 +54,7 @@ A password não é guardada em lado nenhum. A aplicação deriva dela a chave qu
 1. Descarregar o instalador da versão mais recente: **[GestordeDespesas_x64-setup.exe](https://github.com/gxd3v/gx-expenses-manager/releases/latest/download/GestordeDespesas_x64-setup.exe)**. Cada [release](https://github.com/gxd3v/gx-expenses-manager/releases) inclui sempre este ficheiro. Instala apenas para o utilizador atual e não precisa de permissões de administrador.
 2. Executar o instalador. Não tem assinatura de código, por isso o Windows SmartScreen pode mostrar um aviso: **Mais informações → Executar mesmo assim**.
 3. Abrir o **Gestor de Despesas** a partir do menu Iniciar.
-4. No primeiro arranque, definir a password (mínimo de 8 caracteres).
+4. No primeiro arranque, criar o utilizador: nome, cor e password (mínimo de 8 caracteres).
 
 ## Instalação (Linux)
 
@@ -86,13 +87,23 @@ Os dados são **mantidos** por omissão, pelo que uma reinstalação retoma o es
 
 ## Localização dos dados
 
+Cada utilizador tem uma pasta própria, `users\<id>\`, dentro da pasta da aplicação:
+
 | O quê | Windows | Linux |
 |---|---|---|
-| Base de dados | `%APPDATA%\com.gxd3v.expenses\expenses.db` | `~/.local/share/com.gxd3v.expenses/expenses.db` |
-| Backups (por omissão) | `%APPDATA%\com.gxd3v.expenses\backups\` | `~/.local/share/com.gxd3v.expenses/backups/` |
+| Pasta da aplicação | `%APPDATA%\com.gxd3v.expenses\` | `~/.local/share/com.gxd3v.expenses/` |
+| Nome e cor do utilizador | `users\<id>\profile.json` | `users/<id>/profile.json` |
+| Base de dados do utilizador | `users\<id>\expenses.db` | `users/<id>/expenses.db` |
+| Backups do utilizador (por omissão) | `users\<id>\backups\` | `users/<id>/backups/` |
 | Registos (apenas erros, sem valores) | `%LOCALAPPDATA%\com.gxd3v.expenses\logs\` | `~/.local/share/com.gxd3v.expenses/logs/` |
 
-A pasta dos backups pode ser alterada nas Definições. Uma pasta sincronizada com a cloud é segura, porque os backups também estão encriptados. Para passar os dados de um sistema para o outro, basta exportar um backup num e importá-lo no outro.
+O nome e a cor de cada utilizador não são encriptados, para poderem aparecer no ecrã inicial. Os dados financeiros ficam na base de dados do utilizador, encriptada com a sua password.
+
+A pasta dos backups pode ser alterada nas Definições. Uma pasta sincronizada com a cloud é segura, porque os backups também estão encriptados. Vários utilizadores podem partilhar a mesma pasta: cada backup tem o identificador do seu utilizador. Para passar os dados de um sistema para o outro, basta exportar um backup num e importá-lo no outro.
+
+Um utilizador apaga-se em **Definições → Zona perigosa · apagar utilizador**, com a sua password. Se a password estiver esquecida, os dados já não são recuperáveis, e basta apagar a pasta `users\<id>\` com a aplicação fechada. O `<id>` de cada utilizador está no seu `profile.json`.
+
+As instalações anteriores aos utilizadores continuam a funcionar: no primeiro arranque depois da atualização, a aplicação pede um nome e a password atual, e os dados existentes passam a pertencer a esse utilizador. Antes disso é guardada uma cópia de segurança da base de dados.
 
 ## Compilar a partir do código
 

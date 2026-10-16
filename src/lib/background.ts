@@ -4,6 +4,7 @@ import { materializeDue } from './api/recurrences.ts';
 import { listAlerts, type Alert } from './api/reports.ts';
 import { formatDate, formatMonth } from './format.ts';
 import { isTauri } from './graphql.ts';
+import { readUserItem, writeUserItem } from './user.svelte.ts';
 
 const NOTIFIED_KEY = 'gx-notified-alerts';
 const MAX_REMEMBERED = 500;
@@ -40,16 +41,12 @@ async function permitted(): Promise<boolean> {
 
 function readNotified(): string[] {
 	try {
-		return JSON.parse(localStorage.getItem(NOTIFIED_KEY) ?? '[]');
+		return JSON.parse(readUserItem(NOTIFIED_KEY) ?? '[]');
 	} catch {
 		return [];
 	}
 }
 
 function writeNotified(keys: string[]) {
-	try {
-		localStorage.setItem(NOTIFIED_KEY, JSON.stringify(keys));
-	} catch {
-		return;
-	}
+	writeUserItem(NOTIFIED_KEY, JSON.stringify(keys));
 }

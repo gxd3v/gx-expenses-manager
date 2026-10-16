@@ -11,21 +11,22 @@
 	import TitleBar from '#lib/components/TitleBar.svelte';
 	import UpdateBanner from '#lib/components/UpdateBanner.svelte';
 	import Toasts from '#lib/components/Toasts.svelte';
-	import UnlockScreen from '#lib/components/UnlockScreen.svelte';
+	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import UserSelect from '#lib/components/UserSelect.svelte';
 	import { errorMessage, isTauri } from '#lib/graphql.ts';
 	import { dataChanged, loadRefs, refs } from '#lib/refs.svelte.ts';
 	import { lock, status, type Status } from '#lib/session.ts';
-	import { applyPrivacy, togglePrivacy } from '#lib/privacy.svelte.ts';
+	import { loadPrivacy, togglePrivacy } from '#lib/privacy.svelte.ts';
 	import { app, loadSettings, restoreTheme } from '#lib/settings.svelte.ts';
 	import { openQuickAdd, ui } from '#lib/ui.svelte.ts';
 	import { today } from '#lib/format.ts';
 	import { simulation, toggleSimulation } from '#lib/simulation.svelte.ts';
 	import { checkForUpdates, updates } from '#lib/updates.svelte.ts';
+	import { current, setCurrentUser } from '#lib/user.svelte.ts';
 
 	let { children } = $props();
 
 	restoreTheme();
-	applyPrivacy();
 
 	const BACKGROUND_INTERVAL = 60 * 60 * 1000;
 	const CHECK_INTERVAL = 60 * 1000;
@@ -67,8 +68,11 @@
 
 	async function refresh() {
 		session = await status();
+		setCurrentUser(session.user);
+		loadPrivacy();
 		simulation.active = session.simulation;
 		ready = false;
+		startupError = '';
 		if (!session.unlocked) return;
 
 		try {
@@ -161,7 +165,7 @@
 {/if}
 <div class="relative min-h-0 flex-1">
 {#if session && !session.unlocked}
-	<UnlockScreen initialized={session.initialized} onunlock={refresh} />
+	<UserSelect status={session} onunlock={refresh} />
 {:else if startupError}
 	<div class="flex h-full items-center justify-center p-8">
 		<div class="card max-w-lg space-y-3">
@@ -177,12 +181,11 @@
 			<span class="font-semibold">Gestor de Despesas</span>
 			<div class="flex items-center gap-1">
 				<PrivacyToggle />
-				<button class="btn-ghost" onclick={handleLock} aria-label="Bloquear" title="Bloquear">
-					<svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-						<rect x="5" y="11" width="14" height="10" rx="2" />
-						<path d="M8 11V7a4 4 0 0 1 8 0v4" />
-					</svg>
-				</button>
+				{#if current.user}
+					<button class="btn-ghost" onclick={handleLock} aria-label="Trocar de utilizador" title="Trocar de utilizador">
+						<UserAvatar color={current.user.color} size="sm" />
+					</button>
+				{/if}
 				<button class="btn-primary" onclick={() => openQuickAdd()} aria-label="Adicionar">+</button>
 			</div>
 		</header>
